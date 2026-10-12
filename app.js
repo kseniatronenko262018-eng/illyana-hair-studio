@@ -185,7 +185,7 @@ function selectMainCategory(category) {
         selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, durationHours: 1.5, durationText: "1.5 год" };
         updateSummaryCard();
     }
-    renderTimeSlots(); // Перераховуємо слоти з урахуванням тривалості нової послуги
+    renderTimeSlots();
 }
 
 function selectHaircutReference(imgName, element) {
@@ -202,12 +202,13 @@ function renderSubmenuItems() {
         <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся', this)">
             <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Доступні всі техніки фарбування</div></div>
         </div>
-        <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване волосся', this)">
+        <div class="sub-service-card" onclick="selectHaircondition('colored', 'Фарбоване волосся', this)">
             <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Корінь, тонування, однотон</div></div>
         </div>
     `;
 }
 
+// Виправлено назву функції всередині HTML-шаблону вище (condition)
 function selectHairCondition(conditionKey, conditionTitle, element) {
     document.querySelectorAll('.sub-service-card').forEach(card => card.classList.remove('selected'));
     element.classList.add('selected');
@@ -355,17 +356,23 @@ function renderTimeSlots() {
         return;
     }
 
-    const slots = ["10:00", "12:00", "14:00", "16:00", "18:00"];
+    const slots = ["10:00", "12:00", "14:00", "16:00", "18:00", "19:00"];
     let bookedForDay = bookedSlotsCache[selectedDate] || [];
 
-    // Тривалість поточної послуги в годинах (за замовчуванням 1.5 год для стрижки)
     let serviceDuration = selectedServiceData ? selectedServiceData.durationHours : 1.5;
+    let isOnlyHaircut = (selectedCategory === 'cut');
 
     let now = new Date();
     let isToday = (selectedDate === now.toISOString().split('T')[0]);
 
     slots.forEach(timeStr => {
         let [hours, minutes] = timeStr.split(':').map(Number);
+        
+        // На 19:00 можна записатись ТІЛЬКИ на чисту стрижку
+        if (timeStr === "19:00" && !isOnlyHaircut) {
+            return;
+        }
+
         let slotEndHour = hours + serviceDuration;
 
         let cell = document.createElement('div');
@@ -373,14 +380,14 @@ function renderTimeSlots() {
         cell.innerText = timeStr;
 
         let isDisabled = false;
-        let reason = "";
 
-        // 1. Правило: робочий день закінчується о 19:00 (процедура має завершитись <= 19:00)
-        if (slotEndHour > 19) {
+        // Для стрижки дозволяємо завершення до 20:30, для фарбування — до 19:00
+        let maxAllowedEndHour = isOnlyHaircut ? 20.5 : 19;
+        if (slotEndHour > maxAllowedEndHour) {
             isDisabled = true;
         }
 
-        // 2. Правило: запис на сьогодні не пізніше ніж за 3 години до процедури
+        // Запис на сьогодні не пізніше ніж за 3 години до процедури
         if (isToday) {
             let slotTime = new Date();
             slotTime.setHours(hours, minutes, 0, 0);
@@ -391,7 +398,7 @@ function renderTimeSlots() {
             }
         }
 
-        // 3. Перевірка на вже зайняті слоти
+        // Перевірка на вже зайняті слоти
         if (bookedForDay.includes(timeStr)) {
             isDisabled = true;
             cell.classList.add('booked');
