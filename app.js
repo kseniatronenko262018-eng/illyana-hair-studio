@@ -355,11 +355,18 @@ function renderTimeSlots() {
         return;
     }
 
-    const slots = ["10:00", "12:00", "14:00", "16:00", "18:00", "19:00"];
     let bookedForDay = bookedSlotsCache[selectedDate] || [];
 
     let serviceDuration = selectedServiceData ? selectedServiceData.durationHours : 1.5;
     let isOnlyHaircut = (selectedCategory === 'cut');
+
+    // Якщо це стрижка, генеруємо слоти з кроком 1.5 години (10:00, 11:30, 13:00, 14:30, 16:00, 17:30, 19:00)
+    let slots = [];
+    if (isOnlyHaircut) {
+        slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
+    } else {
+        slots = ["10:00", "12:00", "14:00", "16:00", "18:00", "19:00"];
+    }
 
     let now = new Date();
     let isToday = (selectedDate === now.toISOString().split('T')[0]);
@@ -371,7 +378,7 @@ function renderTimeSlots() {
             return;
         }
 
-        let slotEndHour = hours + serviceDuration;
+        let slotEndHour = hours + (minutes / 60) + serviceDuration;
 
         let cell = document.createElement('div');
         cell.className = 'time-cell';
