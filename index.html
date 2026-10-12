@@ -236,7 +236,7 @@
         </div>
     </div>
 
-    <!-- Модальне вікно оферти (виправлене ім'я) -->
+    <!-- Модальне вікно оферти -->
     <div id="offerModal">
         <div class="modal-body">
             <h3 data-i18n="modal_title">ПУБЛІЧНИЙ ДОГОВІР ОФЕРТИ</h3>
@@ -284,6 +284,55 @@
     <div id="imageLightboxModal" onclick="closeLightbox()">
         <img id="lightboxImage" src="" alt="Збільшене фото">
     </div>
+
+    <!-- Безпечне ввімкнення блоків вибору категорії та довжини -->
+    <script>
+        function selectMainCategory(category) {
+            // Знімаємо виділення з усіх карток
+            document.querySelectorAll('.service-card-mini').forEach(card => card.classList.remove('selected'));
+            
+            // Виділяємо обрану картку
+            if (category === 'cut') {
+                const el = document.getElementById('mainCardCut');
+                if (el) el.classList.add('selected');
+                const refSec = document.getElementById('haircutExamplesSection');
+                if (refSec) refSec.style.display = 'block';
+                const subMenu = document.getElementById('categorySubmenu');
+                if (subMenu) subMenu.style.display = 'none';
+                const colOpt = document.getElementById('coloringSubOptions');
+                if (colOpt) colOpt.style.display = 'none';
+                const photoSec = document.getElementById('photoUploadSection');
+                if (photoSec) photoSec.style.display = 'block';
+            } else if (category === 'color') {
+                const el = document.getElementById('mainCardColor');
+                if (el) el.classList.add('selected');
+                const refSec = document.getElementById('haircutExamplesSection');
+                if (refSec) refSec.style.display = 'none';
+                const subMenu = document.getElementById('categorySubmenu');
+                if (subMenu) subMenu.style.display = 'block';
+                const colOpt = document.getElementById('coloringSubOptions');
+                if (colOpt) colOpt.style.display = 'block';
+                const photoSec = document.getElementById('photoUploadSection');
+                if (photoSec) photoSec.style.display = 'block';
+            } else if (category === 'complex') {
+                const el = document.getElementById('mainCardComplex');
+                if (el) el.classList.add('selected');
+                const refSec = document.getElementById('haircutExamplesSection');
+                if (refSec) refSec.style.display = 'none';
+                const subMenu = document.getElementById('categorySubmenu');
+                if (subMenu) subMenu.style.display = 'block';
+                const colOpt = document.getElementById('coloringSubOptions');
+                if (colOpt) colOpt.style.display = 'block';
+                const photoSec = document.getElementById('photoUploadSection');
+                if (photoSec) photoSec.style.display = 'block';
+            }
+            
+            // Якщо у файлі app.js є своя функція, вона також запрацює поверх
+            if (typeof window.originalSelectMainCategory === 'function') {
+                window.originalSelectMainCategory(category);
+            }
+        }
+    </script>
 
     <script src="app.js"></script>
 </body>
