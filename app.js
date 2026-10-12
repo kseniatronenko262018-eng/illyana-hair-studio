@@ -1,13 +1,12 @@
-﻿// --- Стан додатку ---
-let currentLang = 'ua';
+﻿let currentLang = 'ua';
 let selectedCategory = null;
 let selectedServiceData = null;
 let selectedHaircutRef = null;
 let selectedCondition = null;
 let selectedSpecificService = null;
+let selectedDate = null;
 let selectedTimeSlot = null;
 
-// --- Перемикання мов ---
 const translations = {
     ua: {
         tab_book: "Запис",
@@ -40,7 +39,7 @@ const translations = {
         photo_ref_label: "5. Завантажте фото-референс:",
         selected_service_label: "Обрана послуга та час",
         select_service_placeholder: "Спочатку оберіть категорію вище",
-        date_label: "Дата",
+        date_label: "Дата візиту",
         name_label: "Ім'я",
         name_placeholder: "Як звертатись",
         phone_label: "Телефон",
@@ -86,7 +85,7 @@ const translations = {
         photo_ref_label: "5. Upload reference photo:",
         selected_service_label: "Selected service & time",
         select_service_placeholder: "First select a category above",
-        date_label: "Date",
+        date_label: "Visit Date",
         name_label: "Name",
         name_placeholder: "How to address you",
         phone_label: "Phone",
@@ -102,6 +101,10 @@ const translations = {
         map_btn: "Open in Google Maps"
     }
 };
+
+window.addEventListener('DOMContentLoaded', () => {
+    initCustomCalendar();
+});
 
 function toggleLang() {
     currentLang = currentLang === 'ua' ? 'en' : 'ua';
@@ -121,44 +124,33 @@ function toggleLang() {
             el.setAttribute('placeholder', translations[currentLang][key]);
         }
     });
+    initCustomCalendar();
 }
 
-// --- Перемикання тем ---
 function toggleTheme() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     html.setAttribute('data-theme', newTheme);
-    let themeBtn = document.getElementById('themeToggle');
-    if (themeBtn) themeBtn.innerText = newTheme === 'dark' ? '🌙 / ☀️' : '☀️ / 🌙';
 }
 
-// --- Перемикання вкладок ---
 function switchTab(tabName, element) {
     document.querySelectorAll('.section-pane').forEach(pane => pane.classList.remove('active'));
     document.querySelectorAll('.quick-nav .nav-chip').forEach(chip => chip.classList.remove('active'));
 
-    if (tabName === 'book') {
-        document.getElementById('paneBook').classList.add('active');
-    } else if (tabName === 'works') {
-        document.getElementById('paneWorks').classList.add('active');
-    } else if (tabName === 'loc') {
-        document.getElementById('paneLoc').classList.add('active');
-    }
+    if (tabName === 'book') document.getElementById('paneBook').classList.add('active');
+    if (tabName === 'works') document.getElementById('paneWorks').classList.add('active');
+    if (tabName === 'loc') document.getElementById('paneLoc').classList.add('active');
     if (element) element.classList.add('active');
 }
 
-// --- Вибір категорії послуг ---
 function selectMainCategory(category) {
     selectedCategory = category;
-    
-    // Візуальне виділення карток
     document.querySelectorAll('.service-card-mini').forEach(card => card.classList.remove('selected'));
     if (category === 'cut') document.getElementById('mainCardCut').classList.add('selected');
     if (category === 'color') document.getElementById('mainCardColor').classList.add('selected');
     if (category === 'complex') document.getElementById('mainCardComplex').classList.add('selected');
 
-    // Керування видимістю блоків
     document.getElementById('haircutExamplesSection').style.display = (category === 'cut' || category === 'complex') ? 'block' : 'none';
     document.getElementById('photoUploadSection').style.display = 'block';
     
@@ -182,7 +174,6 @@ function selectMainCategory(category) {
     }
 }
 
-// --- Вибір референсу стрижки ---
 function selectHaircutReference(imgName, element) {
     document.querySelectorAll('.haircut-carousel-item').forEach(item => item.classList.remove('selected'));
     element.classList.add('selected');
@@ -190,21 +181,14 @@ function selectHaircutReference(imgName, element) {
     document.getElementById('selectedRefNotice').style.display = 'block';
 }
 
-// --- Рендеринг стану волосся для фарбування ---
 function renderSubmenuItems() {
     let container = document.getElementById('submenuItems');
     container.innerHTML = `
-        <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся (не фарбоване)', this)">
-            <div>
-                <div class="s-title">Натуральне волосся</div>
-                <div class="s-sub">Рівномірний тон або первинне фарбування</div>
-            </div>
+        <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся', this)">
+            <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Рівномірний тон або первинне</div></div>
         </div>
-        <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване раніше волосся', this)">
-            <div>
-                <div class="s-title">Фарбоване волосся</div>
-                <div class="s-sub">Потребує оновлення або вирівнювання кольору</div>
-            </div>
+        <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване волосся', this)">
+            <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Потребує оновлення кольору</div></div>
         </div>
     `;
 }
@@ -214,14 +198,10 @@ function selectHairCondition(conditionKey, conditionTitle, element) {
     element.classList.add('selected');
     selectedCondition = conditionTitle;
     
-    // Показуємо доступні послуги фарбування
     let specList = document.getElementById('specificServicesList');
     specList.innerHTML = `
         <div class="sub-service-card selected" onclick="selectSpecificColorService('Фарбування в один тон', 2200, this)">
-            <div>
-                <div class="s-title">Фарбування в один тон</div>
-                <div class="s-sub">2200 ₴ • 2 год</div>
-            </div>
+            <div><div class="s-title">Фарбування в один тон</div><div class="s-sub">2200 ₴ • 2 год</div></div>
         </div>
     `;
     selectedServiceData = { title: `Фарбування (${conditionTitle})`, price: 2200, duration: "2 год" };
@@ -248,19 +228,66 @@ function updateSelectedInput(extraInfo = "") {
     if (input && selectedServiceData) {
         let text = `${selectedServiceData.title} — ${selectedServiceData.price} ₴ (${selectedServiceData.duration})`;
         if (extraInfo) text += ` [Довжина: ${extraInfo}]`;
-        if (selectedHaircutRef) text += ` + Референс обрано`;
+        if (selectedHaircutRef) text += ` + Референс`;
         input.value = text;
     }
 }
 
-// --- Таймслоти та дати ---
-function renderTimeSlots() {
-    let dateInput = document.getElementById('clientDate').value;
-    let grid = document.getElementById('timeSlotsGrid');
+// --- Генерація кастомного календаря на найближчі 30 днів ---
+function initCustomCalendar() {
+    let grid = document.getElementById('customCalendarGrid');
+    if (!grid) return;
     grid.innerHTML = '';
 
-    if (!dateInput) {
-        grid.innerHTML = '<span style="font-size:9px; color:var(--text-muted);">Спочатку оберіть дату вище</span>';
+    const daysUa = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    const daysEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const monthsUa = ["січ", "лют", "бер", "квіт", "трав", "черв", "лип", "серп", "вер", "жовт", "лист", "груд"];
+    const monthsEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    let today = new Date();
+    for (let i = 0; i < 30; i++) {
+        let d = new Date();
+        d.setDate(today.getDate() + i);
+        
+        let dayOfWeek = (currentLang === 'ua') ? daysUa[d.getDay()] : daysEn[d.getDay()];
+        let dayNum = d.getDate();
+        let monthName = (currentLang === 'ua') ? monthsUa[d.getMonth()] : monthsEn[d.getMonth()];
+        let isoDate = d.toISOString().split('T')[0];
+
+        let cell = document.createElement('div');
+        cell.className = 'calendar-day-cell';
+        if (i === 0 && !selectedDate) {
+            cell.classList.add('selected');
+            selectedDate = isoDate;
+            renderTimeSlots();
+        } else if (selectedDate === isoDate) {
+            cell.classList.add('selected');
+        }
+
+        cell.innerHTML = `
+            <span class="day-name">${dayOfWeek}</span>
+            <span class="day-num">${dayNum}</span>
+            <span style="font-size:7px; opacity:0.8;">${monthName}</span>
+        `;
+        cell.onclick = () => selectCalendarDate(isoDate, cell);
+        grid.appendChild(cell);
+    }
+}
+
+function selectCalendarDate(isoDate, element) {
+    document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedDate = isoDate;
+    renderTimeSlots();
+}
+
+function renderTimeSlots() {
+    let grid = document.getElementById('timeSlotsGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    if (!selectedDate) {
+        grid.innerHTML = '<span style="font-size:9px; color:var(--text-muted);">Спочатку оберіть дату</span>';
         return;
     }
 
@@ -280,11 +307,9 @@ function selectTimeSlot(time, element) {
     selectedTimeSlot = time;
     
     let notice = document.getElementById('slotNotice');
-    let dateInput = document.getElementById('clientDate').value;
-    notice.innerHTML = `⚡ <b>Слот заброньовано на:</b> ${dateInput} о ${time}`;
+    notice.innerHTML = `⚡ <b>Слот заброньовано на:</b> ${selectedDate} о ${time}`;
 }
 
-// --- Модальні вікна (Оферта та Lightbox) ---
 function openOffer() {
     let modal = document.getElementById('offerModal');
     if (modal) modal.style.display = 'flex';
@@ -309,42 +334,39 @@ function closeLightbox() {
     if (lightbox) lightbox.style.display = 'none';
 }
 
-// --- Відправка запису та створення платежу ---
 async function submitBooking() {
     let name = document.getElementById('clientName').value;
     let phone = document.getElementById('clientPhone').value;
     let email = document.getElementById('clientEmail').value;
-    let date = document.getElementById('clientDate').value;
 
     if (!selectedCategory) {
-        alert("Будь ласка, оберіть категорію послуг!");
+        alert("Оберіть категорію послуг!");
         return;
     }
-    if (!date || !selectedTimeSlot) {
-        alert("Будь ласка, оберіть дату та час візиту!");
+    if (!selectedDate || !selectedTimeSlot) {
+        alert("Оберіть дату та час візиту!");
         return;
     }
     if (!name || !phone || !email) {
-        alert("Будь ласка, заповніть ім'я, телефон та email!");
+        alert("Заповніть ім'я, телефон та email!");
         return;
     }
 
-    // Запит на створення інвойсу в Monobank через сервер
     try {
         let response = await fetch('/api/create-invoice', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, date, time: selectedTimeSlot })
+            body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot })
         });
         let data = await response.json();
         
         if (data.pageUrl) {
-            window.location.href = data.pageUrl; // Перенаправлення на оплату Mono
+            window.location.href = data.pageUrl;
         } else {
             alert("Запис успішно сформовано! Очікуємо підтвердження оплати.");
         }
     } catch (err) {
         console.error(err);
-        alert("Помилка при створенні платежу. Спробуйте ще раз пізніше.");
+        alert("Помилка при створенні платежу.");
     }
 }
