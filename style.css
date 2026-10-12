@@ -451,3 +451,66 @@ option { background: var(--bg-dark); color: var(--text-main); }
 .modal-body h3 { font-size: 12px; color: var(--text-main); margin-bottom: 10px; text-align: center; text-transform: uppercase; }
 .offer-text-content { font-size: 9.5px; color: var(--text-muted); line-height: 1.5; overflow-y: auto; max-height: 50vh; margin-bottom: 12px; }
 #lightboxImage { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 10px; }
+/* --- Кастомний календар (заміна стандартного input date) --- */
+.custom-calendar-grid {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    width: 100%;
+}
+
+.calendar-day-cell {
+    flex: 0 0 54px;
+    height: 58px;
+    background: var(--card-hover);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 10;
+}
+
+.calendar-day-cell .day-name {
+    text-transform: uppercase;
+    font-size: 8px;
+    margin-bottom: 2px;
+}
+
+.calendar-day-cell .day-num {
+    font-size: 13px;
+    color: var(--text-main);
+    font-weight: 800;
+}
+
+.calendar-day-cell.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.calendar-day-cell.selected .day-num,
+.calendar-day-cell.selected .day-name {
+    color: var(--accent-invert);
+}
+
+/* Фікс розповзання рядків інпутів */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+}
+
+@media(max-width: 360px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
