@@ -34,7 +34,6 @@
             background-color: var(--tg-bg) !important;
             color: var(--tg-text) !important;
             padding-bottom: 50px;
-            transition: background 0.35s ease, color 0.35s ease;
             position: relative;
             min-height: 100vh;
         }
@@ -55,7 +54,6 @@
             object-fit: cover;
             filter: blur(14px) brightness(0.32) contrast(1.1);
             transform: scale(1.15);
-            transition: filter 0.4s ease;
         }
         [data-theme="light"] .master-bg img {
             filter: blur(14px) brightness(0.7) contrast(1.05);
@@ -65,7 +63,6 @@
             background: var(--tg-card) !important;
             border: 1px solid var(--tg-border) !important;
             backdrop-filter: blur(20px) !important;
-            -webkit-backdrop-filter: blur(20px) !important;
             border-radius: 20px !important;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
         }
@@ -91,7 +88,6 @@
         .korea-nav-chip {
             background: var(--tg-card);
             border: 1px solid var(--tg-border);
-            backdrop-filter: blur(15px);
             padding: 10px 14px;
             border-radius: 14px;
             font-size: 9px;
@@ -104,13 +100,11 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.25s ease;
         }
         .korea-nav-chip.active {
             background: var(--accent);
             color: var(--accent-invert);
             border-color: var(--accent);
-            box-shadow: 0 4px 15px rgba(216, 140, 154, 0.35);
         }
 
         .tg-search-bar {
@@ -122,7 +116,6 @@
             gap: 8px;
             margin-bottom: 12px;
             border: 1px solid var(--tg-border);
-            backdrop-filter: blur(15px);
         }
         .tg-search-bar input {
             background: transparent;
@@ -132,15 +125,13 @@
             outline: none;
             width: 100%;
         }
-        .tg-search-bar input::placeholder {
-            color: var(--tg-muted);
-        }
 
-        button, input, select, .control-btn, .btn-main, .cal-day {
+        /* Примусове забезпечення клікабельності для всіх елементів керування */
+        button, input, select, .control-btn, .btn-main, .crm-cal-cell {
             position: relative;
-            z-index: 10;
+            z-index: 50 !important;
             pointer-events: auto !important;
-            cursor: pointer;
+            cursor: pointer !important;
         }
 
         .notification-banner {
@@ -154,10 +145,8 @@
             justify-content: space-between; 
             align-items: center; 
             margin-bottom: 12px;
-            backdrop-filter: blur(15px);
         }
 
-        /* Календар та сітка днів у CRM */
         .calendar-controls {
             display: flex;
             justify-content: space-between;
@@ -178,7 +167,6 @@
             text-align: center;
             font-size: 9px;
             font-weight: 700;
-            cursor: pointer;
             color: var(--tg-text);
         }
         .crm-cal-cell.selected {
@@ -209,31 +197,27 @@
         <img id="bgMasterImage" src="" alt="Master Background">
     </div>
 
-    <div class="mobile-container master-body">
+    <div class="mobile-container master-body" style="z-index: 10; position: relative;">
         
         <div class="master-utility-bar">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 38px; height: 38px; border-radius: 50%; overflow:hidden; border:2px solid var(--accent); flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); position:relative; cursor:pointer;" title="Натисніть сюди, щоб обрати ваше фото!">
+                <div style="width: 38px; height: 38px; border-radius: 50%; overflow:hidden; border:2px solid var(--accent); flex-shrink: 0; position:relative; cursor:pointer;">
                     <img id="avatarMasterImage" src="" style="width:100%; height:100%; object-fit:cover;" alt="Ілляна">
-                    <input type="file" accept="image/*" onchange="handleMasterPhotoUpload(event)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:20;">
+                    <input type="file" accept="image/*" onchange="handleMasterPhotoUpload(event)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:100;">
                 </div>
                 <span style="font-family:'Syne',sans-serif; font-size:12px; font-weight:800; color:var(--tg-text); letter-spacing: 0.5px;">ЯВІР ІЛЛЯНА // CRM</span>
             </div>
             <div style="display: flex; gap: 6px;">
-                <label class="control-btn" style="border-radius:50%; width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center; background:var(--tg-card); border-color:var(--tg-border); color:var(--tg-text); font-size:14px; cursor:pointer;" title="Завантажити фото">
-                    📷
-                    <input type="file" accept="image/*" onchange="handleMasterPhotoUpload(event)" style="display:none;">
-                </label>
                 <button class="control-btn" onclick="toggleMasterTheme()" style="border-radius:50%; width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center; background:var(--tg-card); border-color:var(--tg-border); color:var(--tg-text); font-size:15px;">☀️</button>
             </div>
         </div>
 
         <!-- Екран авторизації -->
-        <div id="masterLoginBox" class="form-card master-section" style="text-align: center; margin-top: 40px; padding: 20px;">
+        <div id="masterLoginBox" class="form-card master-section" style="text-align: center; margin-top: 40px; padding: 20px; z-index: 50; position: relative;">
             <h2 style="font-family:'Syne',sans-serif; font-size: 16px; margin-bottom: 12px; color:var(--tg-text);">ДОСТУП ДО CRM</h2>
             <input type="password" id="masterPinInput" class="input-box" placeholder="PIN (1988)" style="text-align: center; margin-bottom: 12px; background: rgba(0,0,0,0.15); border-color:var(--tg-border); color:var(--tg-text);">
-            <button class="btn-main" onclick="loginMainPin()">Увійти</button>
-            <button class="control-btn" onclick="forceBypassPin()" style="margin-top: 8px; width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">Швидкий вхід</button>
+            <button class="btn-main" onclick="loginMainPin()" style="margin-bottom: 8px;">Увійти</button>
+            <button class="control-btn" onclick="forceBypassPin()" style="width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">Швидкий вхід</button>
         </div>
 
         <!-- Панель управління CRM -->
@@ -408,7 +392,7 @@
             body.setAttribute('data-theme', next);
             localStorage.setItem('illiana_master_theme', next);
             
-            let themeBtn = document.querySelector('.master-utility-bar button:last-child');
+            let themeBtn = document.querySelector('.master-utility-bar button');
             if (themeBtn) {
                 themeBtn.innerText = next === 'dark' ? '☀️' : '🌙';
             }
@@ -428,7 +412,7 @@
 
         function bodySetTheme(theme) {
             document.body.setAttribute('data-theme', theme);
-            let themeBtn = document.querySelector('.master-utility-bar button:last-child');
+            let themeBtn = document.querySelector('.master-utility-bar button');
             if (themeBtn) {
                 themeBtn.innerText = theme === 'dark' ? '☀️' : '🌙';
             }
@@ -487,7 +471,9 @@
             if (p === '1988' || p === '') {
                 localStorage.setItem('illiana_master_logged', 'true');
                 showMasterDashboard();
-            } else { alert("Невірний PIN-код!"); }
+            } else { 
+                alert("Невірний PIN-код!"); 
+            }
         }
 
         function forceBypassPin() {
@@ -521,7 +507,6 @@
             } catch(e) {}
         }
 
-        // Логіка календаря CRM
         function changeMonth(dir) {
             currentMasterDate.setMonth(currentMasterDate.getMonth() + dir);
             renderCrmCalendar();
@@ -540,10 +525,9 @@
             if (titleEl) titleEl.innerText = `${monthsUa[month]} ${year}`;
 
             let firstDayIndex = new Date(year, month, 1).getDay();
-            firstDayIndex = (firstDayIndex === 0) ? 6 : firstDayIndex - 1; // Понеділок перший
+            firstDayIndex = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
             let totalDays = new Date(year, month + 1, 0).getDate();
 
-            // Дні тижня
             const daysNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
             daysNames.forEach(d => {
                 let lbl = document.createElement('div');
@@ -552,7 +536,6 @@
                 container.appendChild(lbl);
             });
 
-            // Пусті клітинки на початку місяця
             for (let i = 0; i < firstDayIndex; i++) {
                 let emptyCell = document.createElement('div');
                 container.appendChild(emptyCell);
@@ -565,7 +548,6 @@
                 if (dStr === selectedCrmDate) cell.classList.add('selected');
                 if (blockedDaysCache.includes(dStr)) cell.classList.add('blocked');
 
-                // Перевірка чи є записи на цей день
                 let hasBookings = allBookingsCache.some(b => b.date === dStr);
                 cell.innerHTML = `<div>${day}</div>` + (hasBookings ? `<div style="font-size:6px; color:var(--accent);">● запис</div>` : '');
 
@@ -633,9 +615,8 @@
             }
         }
 
-        // Фінанси та витрати
         function updateFinancesAndExpenses() {
-            let totalIncome = allBookingsCache.reduce((sum, b) => sum + 500,[cite: 3] /* завдаток */);
+            let totalIncome = allBookingsCache.reduce((sum, b) => sum + 500, 0);
             let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
             let totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
@@ -694,7 +675,6 @@
             XLSX.writeFile(wb, "Illiana_Studio_Bookings.xlsx");
         }
 
-        // База клієнтів
         function renderRegularClientsList() {
             let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
             let container = document.getElementById('regularClientsContainer');
