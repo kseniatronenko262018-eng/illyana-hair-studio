@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -70,40 +70,25 @@
                     </div>
                 </div>
 
-                <!-- Карусель референсів -->
-                <div id="haircutExamplesSection" style="margin-top: 10px; display: none;">
-                    <label class="field-label" data-i18n="haircut_ref_title">✨ Оберіть приклад стрижки (натисніть, щоб обрати як референс):</label>
-                    <div class="haircut-carousel">
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('1_20261005_205818_0000.png', this)"><img src="1_20261005_205818_0000.png" alt="Робота 1"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('2_20261005_205818_0001.png', this)"><img src="2_20261005_205818_0001.png" alt="Робота 2"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('3_20261005_205818_0002.png', this)"><img src="3_20261005_205818_0002.png" alt="Робота 3"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('4_20261005_205818_0003.png', this)"><img src="4_20261005_205818_0003.png" alt="Робота 4"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('5_20261005_205818_0004.png', this)"><img src="5_20261005_205818_0004.png" alt="Робота 5"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('6_20261005_205818_0005.png', this)"><img src="6_20261005_205818_0005.png" alt="Робота 6"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('7_20261005_205818_0006.png', this)"><img src="7_20261005_205818_0006.png" alt="Робота 7"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('8_20261005_205818_0007.png', this)"><img src="8_20261005_205818_0007.png" alt="Робота 8"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('9_20261005_205818_0008.png', this)"><img src="9_20261005_205818_0008.png" alt="Робота 9"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('10_20261005_205818_0009.png', this)"><img src="10_20261005_205818_0009.png" alt="Робота 10"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('11_20261005_205818_0010.png', this)"><img src="11_20261005_205818_0010.png" alt="Робота 11"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('12_20261005_205818_0011.png', this)"><img src="12_20261005_205818_0011.png" alt="Робота 12"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('13_20261005_205818_0012.png', this)"><img src="13_20261005_205818_0012.png" alt="Робота 13"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('14_20261005_205818_0013.png', this)"><img src="14_20261005_205818_0013.png" alt="Робота 14"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('15_20261005_205818_0014.png', this)"><img src="15_20261005_205818_0014.png" alt="Робота 15"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('16_20261005_205818_0015.png', this)"><img src="16_20261005_205818_0015.png" alt="Робота 16"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('17_20261005_205818_0016.png', this)"><img src="17_20261005_205818_0016.png" alt="Робота 17"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('18_20261005_205818_0017.png', this)"><img src="18_20261005_205818_0017.png" alt="Робота 18"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('19_20261005_205818_0018.png', this)"><img src="19_20261005_205818_0018.png" alt="Робота 19"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('20_20261005_205818_0019.png', this)"><img src="20_20261005_205818_0019.png" alt="Робота 20"><span data-i18n="choose_btn">Обрати</span></div>
-                        <div class="haircut-carousel-item" onclick="selectHaircutReference('21_20261005_205818_0020.png', this)"><img src="21_20261005_205818_0020.png" alt="Робота 21"><span data-i18n="choose_btn">Обрати</span></div>
+                <!-- Сітка референсів замість нескінченної каруселі -->
+                <div id="haircutExamplesSection" style="margin-top: 12px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="field-label" style="margin: 0;" data-i18n="haircut_ref_title">✨ Оберіть референс стрижки:</label>
+                        <span id="selectedRefNotice" style="font-size: 9px; color: var(--accent); font-weight: 700; display: none;" data-i18n="ref_selected_notice">✓ Обрано</span>
                     </div>
-                    <div id="selectedRefNotice" style="font-size: 10px; color: var(--accent); margin-top: 6px; font-weight: 700; display: none;" data-i18n="ref_selected_notice">
-                        ✓ Обрано фото-референс із портфоліо!
+                    <div class="haircut-grid">
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('1_20261005_205818_0000.png', this)"><img src="1_20261005_205818_0000.png" alt="Рез 1"></div>
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('2_20261005_205818_0001.png', this)"><img src="2_20261005_205818_0001.png" alt="Рез 2"></div>
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('3_20261005_205818_0002.png', this)"><img src="3_20261005_205818_0002.png" alt="Рез 3"></div>
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('4_20261005_205818_0003.png', this)"><img src="4_20261005_205818_0003.png" alt="Рез 4"></div>
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('5_20261005_205818_0004.png', this)"><img src="5_20261005_205818_0004.png" alt="Рез 5"></div>
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('6_20261005_205818_0005.png', this)"><img src="6_20261005_205818_0005.png" alt="Рез 6"></div>
                     </div>
                 </div>
 
                 <!-- 2. Стан волосся -->
                 <div id="categorySubmenu" style="display: none;">
-                    <label class="field-label" style="margin-top: 6px;" data-i18n="step2">2. Оберіть ваш поточний стан волосся:</label>
+                    <label class="field-label" style="margin-top: 10px;" data-i18n="step2">2. Оберіть ваш поточний стан волосся:</label>
                     <div id="submenuItems" style="display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
 
@@ -119,9 +104,15 @@
                             <option value="below_blades" data-i18n="len_below">Нижче лопаток</option>
                         </select>
                     </div>
+                </div>
 
-                    <div class="notice-badge enhanced-notice" style="margin-top: 8px;">
-                        <div class="notice-title" data-i18n="rules_title">📌 Важливі примітки та правила майстра:</div>
+                <!-- Випадаючий акордеон для правил майстра -->
+                <div class="accordion-container" style="margin-top: 10px;">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span data-i18n="rules_title">📌 Важливі примітки та правила майстра</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content">
                         <ul class="notice-list">
                             <li data-i18n="rule_1">Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною.</li>
                             <li data-i18n="rule_2">Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).</li>
@@ -146,26 +137,28 @@
 
             <!-- Форма введення даних та вибору часу -->
             <div class="form-card">
-                <div>
-                    <label class="field-label" data-i18n="selected_service_label">Обрана послуга та час</label>
-                    <input type="text" id="selectedServiceInput" class="input-box" readonly data-i18n-placeholder="select_service_placeholder" value="Спочатку оберіть категорію вище" style="font-weight:700;">
+                <!-- Картка підсумку замовлення (Summary Card) -->
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <span class="field-label" style="margin:0;" data-i18n="selected_service_label">Обрана послуга та час</span>
+                        <span id="summaryPriceBadge" class="summary-price-badge">0 ₴</span>
+                    </div>
+                    <div id="summaryServiceTitle" class="summary-title" data-i18n="select_service_placeholder">Спочатку оберіть категорію вище</div>
+                    <div id="summaryMeta" class="summary-meta" style="display: none;">
+                        <span>⏱ <span id="summaryDuration">1.5 год</span></span>
+                        <span>📅 <span id="summaryDateTime">Дата не обрана</span></span>
+                    </div>
                 </div>
 
                 <!-- Кастомний вибір дати -->
                 <div>
                     <label class="field-label" data-i18n="date_label">Дата візиту</label>
-                    <div class="custom-calendar-grid" id="customCalendarGrid">
-                        <!-- Динамічно заповнюється з app.js -->
-                    </div>
+                    <div class="custom-calendar-grid" id="customCalendarGrid"></div>
                 </div>
 
                 <div>
                     <label class="field-label" data-i18n="slots_label">Доступні слоти часу</label>
                     <div class="time-grid" id="timeSlotsGrid"></div>
-                </div>
-
-                <div class="notice-badge" id="slotNotice" data-i18n="slot_notice_init">
-                    ⚡ <b>Слот заброньовано на:</b> оберіть послугу та час.
                 </div>
 
                 <div class="form-row">
@@ -205,14 +198,15 @@
 
         <!-- ВКЛАДКА: ПРИКЛАДИ РОБІТ -->
         <div id="paneWorks" class="section-pane">
-            <div class="form-card" style="gap: 12px;" id="worksContainerCard">
-                <label class="field-label" style="text-align: center;">✨ Приклади робіт (гортайте вбік)</label>
-                <div class="works-carousel">
+            <div class="form-card" style="gap: 12px;">
+                <label class="field-label" style="text-align: center;">✨ Приклади робіт студії</label>
+                <div class="works-grid-full">
                     <div class="works-carousel-item" onclick="openLightbox('1_20261005_205818_0000.png')"><img src="1_20261005_205818_0000.png" alt="Приклад 1"></div>
                     <div class="works-carousel-item" onclick="openLightbox('2_20261005_205818_0001.png')"><img src="2_20261005_205818_0001.png" alt="Приклад 2"></div>
                     <div class="works-carousel-item" onclick="openLightbox('3_20261005_205818_0002.png')"><img src="3_20261005_205818_0002.png" alt="Приклад 3"></div>
                     <div class="works-carousel-item" onclick="openLightbox('4_20261005_205818_0003.png')"><img src="4_20261005_205818_0003.png" alt="Приклад 4"></div>
                     <div class="works-carousel-item" onclick="openLightbox('5_20261005_205818_0004.png')"><img src="5_20261005_205818_0004.png" alt="Приклад 5"></div>
+                    <div class="works-carousel-item" onclick="openLightbox('6_20261005_205818_0005.png')"><img src="6_20261005_205818_0005.png" alt="Приклад 6"></div>
                 </div>
             </div>
         </div>
@@ -233,39 +227,10 @@
             <h3 data-i18n="modal_title">ПУБЛІЧНИЙ ДОГОВІР ОФЕРТИ</h3>
             <div class="offer-text-content">
                 <b>про надання інформаційно-консультаційних та перукарських послуг</b><br><br>
-                Цей договір є офіційною пропозицією (офертою) фізичної особи-підприємця <b>Явір Ілліяна Володимирівна</b> (далі - «Виконавець»), адресованою невизначеному колу фізичних осіб (далі - «Замовник/Клієнт»), які звертаються за послугами через сайт студії. Відповідно до ст. 633 Цивільного кодексу України, умови цього Договору є однаковими для всіх Замовників[cite: 11].<br><br>
-                
+                Цей договір є офіційною пропозицією (офертою) фізичної особи-підприємця <b>Явір Ілліяна Володимирівна</b>.<br><br>
                 <b>1. ЗАГАЛЬНІ ПОЛОЖЕННЯ</b><br>
-                1.1. Повною та безумовною акцептом (прийняттям) цієї публічної оферти є здійснення Замовником запису на послугу через сайт та/або внесення завдатку (передоплати) за послуги Виконавця[cite: 11].<br>
-                1.2. Виконавець діє на підставі державної реєстрації як фізична особа-підприємець (РНОКПП: 3600209601)[cite: 11].<br><br>
-                
-                <b>2. ПРЕДМЕТ ДОГОВОРУ ТА УМОВИ ЗАПИСУ</b><br>
-                2.1. Виконавець зобов'язується надати Замовнику перукарські послуги (стрижка, фарбування, догляд тощо) у просторі студії за адресою: м. Дніпро, вул. Володимира Вернадського, 35-Б, а Замовник зобов'язується оплатити ці послуги[cite: 11].<br>
-                2.2. Умова броні та завдатку: Для нових клієнтів обов'язковою умовою підтвердження бронювання часу є внесення завдатку у розмірі 500 (п'ятсот) гривень. Завдаток зараховується в рахунок оплати послуги[cite: 11].<br>
-                2.3. Реквізити для оплати: рахунок ФОП UA923220010000026005320084201 або через офіційне платіжне посилання Виконавця[cite: 11].<br><br>
-                
-                <b>3. ПРАВИЛА СКАСУВАННЯ ТА ПОВЕРНЕННЯ КОШТІВ (ЗАХИСТ МАЙСТРА)</b><br>
-                3.1. Замовник має право скасувати або перенести заброньований час не пізніш ніж за 48 годин до початку надання послуги[cite: 11].<br>
-                3.2. У разі скасування замовлення менш ніж за 48 годин до призначеного часу, або в разі неявки Клієнта в студію, внесений завдаток 500 грн не повертається та утримується Виконавцем як компенсація за збитки від простою робочого часу та втрати потенційного клієнта на цей слот[cite: 11].<br>
-                3.3. Виконавець має право в односторонньому порядку скасувати або перенести запис у разі непередбачуваних форс-мажорних обставин (відключення світла, повітряна тривога, хвороба майстра), попередивши Клієнта за першої ж можливості[cite: 11].<br><br>
-                
-                <b>4. ВІДПОВІДАЛЬНІСТЬ ТА ОБМЕЖЕННЯ (ПРАВИЛА СТУДІЇ)</b><br>
-                4.1. Клієнт зобов'язаний правдиво повідомити про історію свого волосся (наявність побутового барвника, хни, біозавивки, кератину, ботоксу, попереднього освітлення тощо)[cite: 11].<br>
-                4.2. Виконавець не несе відповідальності за кінцевий результат фарбування та стан волосся у випадках, якщо Клієнт приховав або надав неправдиву інформацію про попередні процедури на волоссі[cite: 11, 12].<br>
-                4.3. Виконавець залишає за собою право відмовити у наданні послуги (з поверненням завдатку або без, залежно від ситуації) безпосередньо в студії, якщо стан волосся Клієнта унеможливлює безпечне проведення процедури без шкоди для здоров'я волосся[cite: 12].<br><br>
-                
-                <b>5. ФІНАНСОВІ УМОВИ ТА ЦІНИ</b><br>
-                5.1. Остаточна вартість послуг формується відповідно до прайсу на сайті, довжини та стану волосся Клієнта[cite: 12].<br>
-                5.2. Усі розрахунки проводяться у національній валюті України гривні[cite: 12].<br><br>
-                
-                <b>6. ІНШІ УМОВИ</b><br>
-                6.1. Здійснюючи запис на сайті, Клієнт підтверджує, що ознайомлений і повністю згоден з умовами цього Договору оферти[cite: 12].<br>
-                6.2. Виконавець має право вносити зміни до цього Договору в односторонньому порядку шляхом їх публікації на сайті студії[cite: 12].<br><br>
-                
-                <b>Реквізити Виконавця:</b><br>
-                • ФОП: Явір Ілліяна Володимирівна[cite: 12]<br>
-                • РНОКПП: 3600209601[cite: 12]<br>
-                • Рахунок (IBAN): UA923220010000026005320084201[cite: 12]
+                1.1. Акцептом цієї оферти є внесення завдатку за послуги.<br><br>
+                <b>Реквізити Виконавця:</b> ФОП Явір І.В., РНОКПП: 3600209601. IBAN: UA923220010000026005320084201.
             </div>
             <button class="btn-main" onclick="closeOffer()" style="margin-top: 10px;" data-i18n="modal_btn">Зрозуміло</button>
         </div>
