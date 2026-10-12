@@ -5,7 +5,7 @@ let selectedHaircutRef = null;
 let selectedCondition = null;
 let selectedDate = null;
 let selectedTimeSlot = null;
-let bookedSlotsCache = {}; // Кеш зайнятих годин
+let bookedSlotsCache = {};
 
 const translations = {
     ua: {
@@ -45,7 +45,7 @@ const translations = {
         phone_label: "Телефон",
         email_label: "Email (обов'язково)",
         social_label: "Нік / соцмережа",
-        slots_label: "Доступні слоти часу",
+        slots_label: "Доступні слоти часу (студія працює до 19:00)",
         deposit_notice: "⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.",
         pay_btn: "Сплатити завдаток 500 ₴ та забронювати",
         modal_title: "Публічний договір оферти",
@@ -90,7 +90,7 @@ const translations = {
         phone_label: "Phone",
         email_label: "Email (required)",
         social_label: "Nickname / social",
-        slots_label: "Available time slots",
+        slots_label: "Available time slots (studio works until 19:00)",
         deposit_notice: "⚡ <b>Booking term:</b> <b>500 UAH</b> deposit confirms booking.",
         pay_btn: "Pay deposit 500 ₴ & book",
         modal_title: "Public Offer Agreement",
@@ -177,14 +177,15 @@ function selectMainCategory(category) {
     } else if (category === 'complex') {
         subMenu.style.display = 'none';
         coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка + Фарбування коріння (до 2 см)", price: 3000, duration: "3 год" };
+        selectedServiceData = { title: "Стрижка + Фарбування коріння (до 2 см)", price: 3000, durationHours: 3, durationText: "3 год" };
         updateSummaryCard();
     } else {
         subMenu.style.display = 'none';
         coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, duration: "1.5 год" };
+        selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, durationHours: 1.5, durationText: "1.5 год" };
         updateSummaryCard();
     }
+    renderTimeSlots(); // Перераховуємо слоти з урахуванням тривалості нової послуги
 }
 
 function selectHaircutReference(imgName, element) {
@@ -215,22 +216,22 @@ function selectHairCondition(conditionKey, conditionTitle, element) {
     let specList = document.getElementById('specificServicesList');
     if (conditionKey === 'natural') {
         specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, '2.5 год', this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, 2.5, '2.5 год', this)">
                 <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд / яскраві техніки', null, null, this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд / яскраві техніки', null, null, null, this)">
                 <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення з тонуванням</div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, null, this)">
                 <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Фарбування в один тон</div></div>
             </div>
         `;
     } else {
         specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, '2.5 год', this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, 2.5, '2.5 год', this)">
                 <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, null, this)">
                 <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Тонування фарбованого</div></div>
             </div>
         `;
@@ -239,7 +240,7 @@ function selectHairCondition(conditionKey, conditionTitle, element) {
 
 let chosenServiceType = null;
 
-function selectSpecificServiceType(typeKey, title, fixedPrice, fixedDuration, element) {
+function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, fixedDurationText, element) {
     document.querySelectorAll('#specificServicesList .sub-service-card').forEach(c => c.classList.remove('selected'));
     element.classList.add('selected');
     chosenServiceType = typeKey;
@@ -248,11 +249,12 @@ function selectSpecificServiceType(typeKey, title, fixedPrice, fixedDuration, el
     lengthContainer.style.display = 'block';
 
     if (fixedPrice !== null) {
-        selectedServiceData = { title: title, price: fixedPrice, duration: fixedDuration };
+        selectedServiceData = { title: title, price: fixedPrice, durationHours: fixedHours, durationText: fixedDurationText };
     } else {
         updateServiceDetails();
     }
     updateSummaryCard();
+    renderTimeSlots();
 }
 
 function updateServiceDetails() {
@@ -260,15 +262,16 @@ function updateServiceDetails() {
     let lengthVal = lengthSelect ? lengthSelect.value : 'shoulders';
 
     if (chosenServiceType === 'blonde') {
-        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тотал блонд", price: 4000, duration: "3 год" };
-        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тотал блонд", price: 6000, duration: "6 год" };
-        else selectedServiceData = { title: "Тотал блонд", price: 7500, duration: "7+ год" };
+        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тотал блонд", price: 4000, durationHours: 3, durationText: "3 год" };
+        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тотал блонд", price: 6000, durationHours: 6, durationText: "6 год" };
+        else selectedServiceData = { title: "Тотал блонд", price: 7500, durationHours: 7, durationText: "7+ год" };
     } else if (chosenServiceType === 'tone') {
-        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тонування / однотон", price: 3000, duration: "2 год" };
-        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тонування / однотон", price: 3500, duration: "2.5 год" };
-        else selectedServiceData = { title: "Тонування / однотон", price: 5000, duration: "3 год" };
+        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тонування / однотон", price: 3000, durationHours: 2, durationText: "2 год" };
+        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тонування / однотон", price: 3500, durationHours: 2.5, durationText: "2.5 год" };
+        else selectedServiceData = { title: "Тонування / однотон", price: 5000, durationHours: 3, durationText: "3 год" };
     }
     updateSummaryCard();
+    renderTimeSlots();
 }
 
 function updateSummaryCard() {
@@ -283,7 +286,7 @@ function updateSummaryCard() {
         if (selectedHaircutRef) text += " + Референс";
         titleEl.innerText = text;
         priceBadge.innerText = selectedServiceData.price + " ₴";
-        durationEl.innerText = selectedServiceData.duration;
+        durationEl.innerText = selectedServiceData.durationText;
         metaEl.style.display = 'flex';
     } else {
         titleEl.innerText = currentLang === 'ua' ? "Оберіть послугу вище" : "Select service above";
@@ -355,16 +358,54 @@ function renderTimeSlots() {
     const slots = ["10:00", "12:00", "14:00", "16:00", "18:00"];
     let bookedForDay = bookedSlotsCache[selectedDate] || [];
 
-    slots.forEach(time => {
+    // Тривалість поточної послуги в годинах (за замовчуванням 1.5 год для стрижки)
+    let serviceDuration = selectedServiceData ? selectedServiceData.durationHours : 1.5;
+
+    let now = new Date();
+    let isToday = (selectedDate === now.toISOString().split('T')[0]);
+
+    slots.forEach(timeStr => {
+        let [hours, minutes] = timeStr.split(':').map(Number);
+        let slotEndHour = hours + serviceDuration;
+
         let cell = document.createElement('div');
         cell.className = 'time-cell';
-        cell.innerText = time;
+        cell.innerText = timeStr;
 
-        if (bookedForDay.includes(time)) {
+        let isDisabled = false;
+        let reason = "";
+
+        // 1. Правило: робочий день закінчується о 19:00 (процедура має завершитись <= 19:00)
+        if (slotEndHour > 19) {
+            isDisabled = true;
+        }
+
+        // 2. Правило: запис на сьогодні не пізніше ніж за 3 години до процедури
+        if (isToday) {
+            let slotTime = new Date();
+            slotTime.setHours(hours, minutes, 0, 0);
+            
+            let diffHours = (slotTime - now) / (1000 * 60 * 60);
+            if (diffHours < 3) {
+                isDisabled = true;
+            }
+        }
+
+        // 3. Перевірка на вже зайняті слоти
+        if (bookedForDay.includes(timeStr)) {
+            isDisabled = true;
             cell.classList.add('booked');
+        }
+
+        if (isDisabled) {
+            if (!cell.classList.contains('booked')) {
+                cell.classList.add('booked');
+                cell.style.opacity = '0.35';
+                cell.style.pointerEvents = 'none';
+            }
         } else {
-            cell.onclick = () => selectTimeSlot(time, cell);
-            if (selectedTimeSlot === time) cell.classList.add('selected');
+            cell.onclick = () => selectTimeSlot(timeStr, cell);
+            if (selectedTimeSlot === timeStr) cell.classList.add('selected');
         }
         grid.appendChild(cell);
     });
