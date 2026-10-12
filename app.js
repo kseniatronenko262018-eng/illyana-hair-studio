@@ -1,4 +1,14 @@
-﻿const translations = {
+﻿// --- Стан додатку ---
+let currentLang = 'ua';
+let selectedCategory = null;
+let selectedServiceData = null;
+let selectedHaircutRef = null;
+let selectedCondition = null;
+let selectedSpecificService = null;
+let selectedTimeSlot = null;
+
+// --- Перемикання мов ---
+const translations = {
     ua: {
         tab_book: "Запис",
         tab_works: "Приклади робіт",
@@ -98,7 +108,6 @@ function toggleLang() {
     let langBtn = document.getElementById('langToggle');
     if (langBtn) langBtn.innerText = currentLang.toUpperCase() + ' / ' + (currentLang === 'ua' ? 'EN' : 'UA');
 
-    // Оновлюємо всі елементи з атрибутом data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {
         let key = el.getAttribute('data-i18n');
         if (translations[currentLang][key]) {
@@ -106,11 +115,236 @@ function toggleLang() {
         }
     });
 
-    // Оновлюємо плейсхолдери
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         let key = el.getAttribute('data-i18n-placeholder');
         if (translations[currentLang][key]) {
             el.setAttribute('placeholder', translations[currentLang][key]);
         }
     });
+}
+
+// --- Перемикання тем ---
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', newTheme);
+    let themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) themeBtn.innerText = newTheme === 'dark' ? '🌙 / ☀️' : '☀️ / 🌙';
+}
+
+// --- Перемикання вкладок ---
+function switchTab(tabName, element) {
+    document.querySelectorAll('.section-pane').forEach(pane => pane.classList.remove('active'));
+    document.querySelectorAll('.quick-nav .nav-chip').forEach(chip => chip.classList.remove('active'));
+
+    if (tabName === 'book') {
+        document.getElementById('paneBook').classList.add('active');
+    } else if (tabName === 'works') {
+        document.getElementById('paneWorks').classList.add('active');
+    } else if (tabName === 'loc') {
+        document.getElementById('paneLoc').classList.add('active');
+    }
+    if (element) element.classList.add('active');
+}
+
+// --- Вибір категорії послуг ---
+function selectMainCategory(category) {
+    selectedCategory = category;
+    
+    // Візуальне виділення карток
+    document.querySelectorAll('.service-card-mini').forEach(card => card.classList.remove('selected'));
+    if (category === 'cut') document.getElementById('mainCardCut').classList.add('selected');
+    if (category === 'color') document.getElementById('mainCardColor').classList.add('selected');
+    if (category === 'complex') document.getElementById('mainCardComplex').classList.add('selected');
+
+    // Керування видимістю блоків
+    document.getElementById('haircutExamplesSection').style.display = (category === 'cut' || category === 'complex') ? 'block' : 'none';
+    document.getElementById('photoUploadSection').style.display = 'block';
+    
+    let subMenu = document.getElementById('categorySubmenu');
+    let coloringOptions = document.getElementById('coloringSubOptions');
+
+    if (category === 'color') {
+        subMenu.style.display = 'block';
+        coloringOptions.style.display = 'block';
+        renderSubmenuItems();
+    } else if (category === 'complex') {
+        subMenu.style.display = 'none';
+        coloringOptions.style.display = 'block';
+        selectedServiceData = { title: "Стрижка + Фарбування коріння", price: 3000, duration: "3 год" };
+        updateSelectedInput();
+    } else {
+        subMenu.style.display = 'none';
+        coloringOptions.style.display = 'none';
+        selectedServiceData = { title: "Стрижка", price: 1000, duration: "1.5 год" };
+        updateSelectedInput();
+    }
+}
+
+// --- Вибір референсу стрижки ---
+function selectHaircutReference(imgName, element) {
+    document.querySelectorAll('.haircut-carousel-item').forEach(item => item.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedHaircutRef = imgName;
+    document.getElementById('selectedRefNotice').style.display = 'block';
+}
+
+// --- Рендеринг стану волосся для фарбування ---
+function renderSubmenuItems() {
+    let container = document.getElementById('submenuItems');
+    container.innerHTML = `
+        <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся (не фарбоване)', this)">
+            <div>
+                <div class="s-title">Натуральне волосся</div>
+                <div class="s-sub">Рівномірний тон або первинне фарбування</div>
+            </div>
+        </div>
+        <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване раніше волосся', this)">
+            <div>
+                <div class="s-title">Фарбоване волосся</div>
+                <div class="s-sub">Потребує оновлення або вирівнювання кольору</div>
+            </div>
+        </div>
+    `;
+}
+
+function selectHairCondition(conditionKey, conditionTitle, element) {
+    document.querySelectorAll('.sub-service-card').forEach(card => card.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedCondition = conditionTitle;
+    
+    // Показуємо доступні послуги фарбування
+    let specList = document.getElementById('specificServicesList');
+    specList.innerHTML = `
+        <div class="sub-service-card selected" onclick="selectSpecificColorService('Фарбування в один тон', 2200, this)">
+            <div>
+                <div class="s-title">Фарбування в один тон</div>
+                <div class="s-sub">2200 ₴ • 2 год</div>
+            </div>
+        </div>
+    `;
+    selectedServiceData = { title: `Фарбування (${conditionTitle})`, price: 2200, duration: "2 год" };
+    updateSelectedInput();
+}
+
+function selectSpecificColorService(title, price, element) {
+    document.querySelectorAll('#specificServicesList .sub-service-card').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedServiceData = { title: title, price: price, duration: "2 год" };
+    updateSelectedInput();
+}
+
+function updateServiceDetails() {
+    let lengthSelect = document.getElementById('hairLengthSelect');
+    if (selectedServiceData && lengthSelect) {
+        let lengthText = lengthSelect.options[lengthSelect.selectedIndex].text;
+        updateSelectedInput(lengthText);
+    }
+}
+
+function updateSelectedInput(extraInfo = "") {
+    let input = document.getElementById('selectedServiceInput');
+    if (input && selectedServiceData) {
+        let text = `${selectedServiceData.title} — ${selectedServiceData.price} ₴ (${selectedServiceData.duration})`;
+        if (extraInfo) text += ` [Довжина: ${extraInfo}]`;
+        if (selectedHaircutRef) text += ` + Референс обрано`;
+        input.value = text;
+    }
+}
+
+// --- Таймслоти та дати ---
+function renderTimeSlots() {
+    let dateInput = document.getElementById('clientDate').value;
+    let grid = document.getElementById('timeSlotsGrid');
+    grid.innerHTML = '';
+
+    if (!dateInput) {
+        grid.innerHTML = '<span style="font-size:9px; color:var(--text-muted);">Спочатку оберіть дату вище</span>';
+        return;
+    }
+
+    const slots = ["10:00", "12:00", "14:00", "16:00", "18:00"];
+    slots.forEach(time => {
+        let cell = document.createElement('div');
+        cell.className = 'time-cell';
+        cell.innerText = time;
+        cell.onclick = () => selectTimeSlot(time, cell);
+        grid.appendChild(cell);
+    });
+}
+
+function selectTimeSlot(time, element) {
+    document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedTimeSlot = time;
+    
+    let notice = document.getElementById('slotNotice');
+    let dateInput = document.getElementById('clientDate').value;
+    notice.innerHTML = `⚡ <b>Слот заброньовано на:</b> ${dateInput} о ${time}`;
+}
+
+// --- Модальні вікна (Оферта та Lightbox) ---
+function openOffer() {
+    let modal = document.getElementById('offerModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeOffer() {
+    let modal = document.getElementById('offerModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function openLightbox(imgSrc) {
+    let lightbox = document.getElementById('imageLightboxModal');
+    let img = document.getElementById('lightboxImage');
+    if (lightbox && img) {
+        img.src = imgSrc;
+        lightbox.style.display = 'flex';
+    }
+}
+
+function closeLightbox() {
+    let lightbox = document.getElementById('imageLightboxModal');
+    if (lightbox) lightbox.style.display = 'none';
+}
+
+// --- Відправка запису та створення платежу ---
+async function submitBooking() {
+    let name = document.getElementById('clientName').value;
+    let phone = document.getElementById('clientPhone').value;
+    let email = document.getElementById('clientEmail').value;
+    let date = document.getElementById('clientDate').value;
+
+    if (!selectedCategory) {
+        alert("Будь ласка, оберіть категорію послуг!");
+        return;
+    }
+    if (!date || !selectedTimeSlot) {
+        alert("Будь ласка, оберіть дату та час візиту!");
+        return;
+    }
+    if (!name || !phone || !email) {
+        alert("Будь ласка, заповніть ім'я, телефон та email!");
+        return;
+    }
+
+    // Запит на створення інвойсу в Monobank через сервер
+    try {
+        let response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, date, time: selectedTimeSlot })
+        });
+        let data = await response.json();
+        
+        if (data.pageUrl) {
+            window.location.href = data.pageUrl; // Перенаправлення на оплату Mono
+        } else {
+            alert("Запис успішно сформовано! Очікуємо підтвердження оплати.");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Помилка при створенні платежу. Спробуйте ще раз пізніше.");
+    }
 }
