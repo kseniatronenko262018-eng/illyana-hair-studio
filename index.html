@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html><!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ua" data-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -70,7 +70,7 @@
                     </div>
                 </div>
 
-                <!-- 21 фото для вибору референсу (карусель) -->
+                <!-- Карусель референсів -->
                 <div id="haircutExamplesSection" style="margin-top: 10px; display: none;">
                     <label class="field-label" data-i18n="haircut_ref_title">✨ Оберіть приклад стрижки (натисніть, щоб обрати як референс):</label>
                     <div class="haircut-carousel">
@@ -101,7 +101,7 @@
                     </div>
                 </div>
 
-                <!-- 2. Стан волосся (динамічне підменю фарбування) -->
+                <!-- 2. Стан волосся -->
                 <div id="categorySubmenu" style="display: none;">
                     <label class="field-label" style="margin-top: 6px;" data-i18n="step2">2. Оберіть ваш поточний стан волосся:</label>
                     <div id="submenuItems" style="display: flex; flex-direction: column; gap: 6px;"></div>
@@ -131,7 +131,7 @@
                     </div>
                 </div>
 
-                <!-- Блоки завантаження фотографій -->
+                <!-- Фото -->
                 <div id="photoUploadSection" style="display: none;">
                     <div class="photo-upload-container">
                         <label data-i18n="photo_current_label">4. Завантажте фото вашого волосся:</label>
@@ -151,10 +151,11 @@
                     <input type="text" id="selectedServiceInput" class="input-box" readonly data-i18n-placeholder="select_service_placeholder" value="Спочатку оберіть категорію вище" style="font-weight:700;">
                 </div>
 
-                <div class="form-row">
-                    <div>
-                        <label class="field-label" data-i18n="date_label">Дата</label>
-                        <input type="date" id="clientDate" class="input-box" onchange="renderTimeSlots()">
+                <!-- Кастомний вибір дати (Замість стандартного календаря) -->
+                <div>
+                    <label class="field-label" data-i18n="date_label">Дата візиту</label>
+                    <div class="custom-calendar-grid" id="customCalendarGrid">
+                        <!-- Динамічно заповнюється з app.js -->
                     </div>
                 </div>
 
@@ -202,11 +203,10 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА: ПРИКЛАДИ РОБІТ (WORKS) -->
+        <!-- ВКЛАДКА: ПРИКЛАДИ РОБІТ -->
         <div id="paneWorks" class="section-pane">
             <div class="form-card" style="gap: 12px;" id="worksContainerCard">
                 <label class="field-label" style="text-align: center;">✨ Приклади робіт (гортайте вбік)</label>
-                
                 <div class="works-carousel">
                     <div class="works-carousel-item" onclick="openLightbox('1_20261005_205818_0000.png')"><img src="1_20261005_205818_0000.png" alt="Приклад 1"></div>
                     <div class="works-carousel-item" onclick="openLightbox('2_20261005_205818_0001.png')"><img src="2_20261005_205818_0001.png" alt="Приклад 2"></div>
@@ -214,32 +214,10 @@
                     <div class="works-carousel-item" onclick="openLightbox('4_20261005_205818_0003.png')"><img src="4_20261005_205818_0003.png" alt="Приклад 4"></div>
                     <div class="works-carousel-item" onclick="openLightbox('5_20261005_205818_0004.png')"><img src="5_20261005_205818_0004.png" alt="Приклад 5"></div>
                 </div>
-                <div class="works-carousel">
-                    <div class="works-carousel-item" onclick="openLightbox('6_20261005_205818_0005.png')"><img src="6_20261005_205818_0005.png" alt="Приклад 6"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('7_20261005_205818_0006.png')"><img src="7_20261005_205818_0006.png" alt="Приклад 7"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('8_20261005_205818_0007.png')"><img src="8_20261005_205818_0007.png" alt="Приклад 8"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('9_20261005_205818_0008.png')"><img src="9_20261005_205818_0008.png" alt="Приклад 9"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('10_20261005_205818_0009.png')"><img src="10_20261005_205818_0009.png" alt="Приклад 10"></div>
-                </div>
-                <div class="works-carousel">
-                    <div class="works-carousel-item" onclick="openLightbox('11_20261005_205818_0010.png')"><img src="11_20261005_205818_0010.png" alt="Приклад 11"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('12_20261005_205818_0011.png')"><img src="12_20261005_205818_0011.png" alt="Приклад 12"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('13_20261005_205818_0012.png')"><img src="13_20261005_205818_0012.png" alt="Приклад 13"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('14_20261005_205818_0013.png')"><img src="14_20261005_205818_0013.png" alt="Приклад 14"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('15_20261005_205818_0014.png')"><img src="15_20261005_205818_0014.png" alt="Приклад 15"></div>
-                </div>
-                <div class="works-carousel">
-                    <div class="works-carousel-item" onclick="openLightbox('16_20261005_205818_0015.png')"><img src="16_20261005_205818_0015.png" alt="Приклад 16"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('17_20261005_205818_0016.png')"><img src="17_20261005_205818_0016.png" alt="Приклад 17"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('18_20261005_205818_0017.png')"><img src="18_20261005_205818_0017.png" alt="Приклад 18"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('19_20261005_205818_0018.png')"><img src="19_20261005_205818_0018.png" alt="Приклад 19"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('20_20261005_205818_0019.png')"><img src="20_20261005_205818_0019.png" alt="Приклад 20"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('21_20261005_205818_0020.png')"><img src="21_20261005_205818_0020.png" alt="Приклад 21"></div>
-                </div>
             </div>
         </div>
 
-        <!-- ВКЛАДКА: ЛОКАЦІЯ (LOCATION) -->
+        <!-- ВКЛАДКА: ЛОКАЦІЯ -->
         <div id="paneLoc" class="section-pane">
             <div class="info-card" data-i18n="loc_info">
                 📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>
@@ -249,60 +227,23 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНЕ ВІКНО: ПУБЛІЧНИЙ ДОГОВІР ОФЕРТИ -->
+    <!-- Модальне вікно оферти -->
     <div id="offerModal">
         <div class="modal-body">
             <h3 data-i18n="modal_title">ПУБЛІЧНИЙ ДОГОВІР ОФЕРТИ</h3>
             <div class="offer-text-content">
                 <b>про надання інформаційно-консультаційних та перукарських послуг</b><br><br>
-                Цей договір є офіційною пропозицією (офертою) фізичної особи-підприємця <b>Явір Ілляна Володимирівна</b> (далі - «Виконавець»), адресованою невизначеному колу фізичних осіб (далі - «Замовник/Клієнт»), які звертаються за послугами через сайт студії.<br><br>
-                <b>1. Загальні положення</b><br>
-                1.1. Відповідно до ст. 633, 641 Цивільного кодексу України, умови цього договору є публічною офертою та є обов'язковими для обох сторін.<br>
-                1.2. Акцептом (прийняттям) цієї оферти є здійснення Замовником запису на послуги та внесення завдатку через веб-сайт студії.<br><br>
-                <b>2. Предмет договору</b><br>
-                2.1. Виконавець зобов'язується надати Клієнту професійні перукарські послуги (стрижка, фарбування, догляд), а Клієнт зобов'язується оплатити їх на умовах цього договору.<br><br>
-                <b>3. Умови скасування та завдаток</b><br>
-                3.1. Запис на послуги підтверджується внесенням завдатку у розмірі 500 грн.<br>
-                3.2. Зміна або скасування запису можливі не пізніш ніж за 48 годин до початку процедури.<br><br>
-                <b>Реквізити Виконавця:</b><br>
-                • ФОП: Явір Ілляна Володимирівна<br>
-                • РНОКПП: 3600209601<br>
-                • Рахунок (IBAN): UA923220010000026005320084201
+                Цей договір є офіційною пропозицією (офертою) фізичної особи-підприємця <b>Явір Ілляна Володимирівна</b>...
             </div>
             <button class="btn-main" onclick="closeOffer()" style="margin-top: 10px;" data-i18n="modal_btn">Зрозуміло</button>
         </div>
     </div>
 
-    <!-- LIGHTBOX (Збільшення фото робіт) -->
+    <!-- Lightbox -->
     <div id="imageLightboxModal" onclick="closeLightbox()">
         <img id="lightboxImage" src="" alt="Збільшене фото">
     </div>
 
     <script src="app.js"></script>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            let customWorks = JSON.parse(localStorage.getItem('illiana_custom_works') || '[]');
-            if (customWorks.length > 0) {
-                let worksCard = document.getElementById('worksContainerCard');
-                if (worksCard && !document.getElementById('customWorksSection')) {
-                    let section = document.createElement('div');
-                    section.id = 'customWorksSection';
-                    section.innerHTML = `<label class="field-label" style="text-align: center; margin-top: 15px;">✨ Роботи з кабінету майстра</label>`;
-                    let carousel = document.createElement('div');
-                    carousel.className = 'works-carousel';
-                    
-                    customWorks.forEach(w => {
-                        let item = document.createElement('div');
-                        item.className = 'works-carousel-item';
-                        item.onclick = () => openLightbox(w.url);
-                        item.innerHTML = `<img src="${w.url}" alt="${w.title || 'Робота'}">`;
-                        carousel.appendChild(item);
-                    });
-                    section.appendChild(carousel);
-                    worksCard.appendChild(section);
-                }
-            }
-        });
-    </script>
 </body>
 </html>
