@@ -337,20 +337,28 @@ option { background: var(--bg-dark); color: var(--text-main); }
 }
 .haircut-grid-item img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Повна сітка робіт з прокруткою */
 .works-grid-full {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 8px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 .works-carousel-item {
     height: 160px;
-    border-radius: 14px;
+    border-radius: 12px;
     overflow: hidden;
     border: 1px solid var(--border);
     cursor: pointer;
     background: var(--card-hover);
 }
-.works-carousel-item img { width: 100%; height: 100%; object-fit: cover; }
+.works-carousel-item img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
 
 .sub-service-card {
     background: var(--card-hover);
