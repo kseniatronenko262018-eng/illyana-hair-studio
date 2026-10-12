@@ -160,10 +160,13 @@ function selectMainCategory(category) {
     if (category === 'color') {
         subMenu.style.display = 'block';
         coloringOptions.style.display = 'block';
+        selectedServiceData = null;
         renderSubmenuItems();
+        let input = document.getElementById('selectedServiceInput');
+        if (input) input.value = "Будь ласка, оберіть стан та техніку нижче";
     } else if (category === 'complex') {
         subMenu.style.display = 'none';
-        coloringOptions.style.display = 'block';
+        coloringOptions.style.display = 'none';
         selectedServiceData = { title: "Стрижка + Фарбування коріння (до 2 см)", price: 3000, duration: "3 год" };
         updateSelectedInput();
     } else {
@@ -249,11 +252,11 @@ function updateServiceDetails() {
 
     if (chosenServiceType === 'blonde') {
         if (lengthVal === 'shoulders') {
-            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 4250, duration: "3 год" };
+            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 4000, duration: "3 год" };
         } else if (lengthVal === 'shoulder_blades') {
-            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 6250, duration: "6 год" };
+            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 6000, duration: "6 год" };
         } else {
-            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 8750, duration: "7+ год" };
+            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 7500, duration: "7+ год" };
         }
     } else if (chosenServiceType === 'tone') {
         if (lengthVal === 'shoulders') {
@@ -266,7 +269,8 @@ function updateServiceDetails() {
     }
 
     if (selectedServiceData) {
-        let text = `${selectedServiceData.title} — ${selectedServiceData.price} ₴ (${selectedServiceData.duration}) [Довжина: ${lengthText}]`;
+        let text = `${selectedServiceData.title} — ${selectedServiceData.price} ₴ (${selectedServiceData.duration})`;
+        if (selectedCategory === 'color') text += ` [Довжина: ${lengthText}]`;
         if (selectedHaircutRef) text += ` + Референс`;
         let input = document.getElementById('selectedServiceInput');
         if (input) input.value = text;
