@@ -3,7 +3,6 @@ let selectedCategory = null;
 let selectedServiceData = null;
 let selectedHaircutRef = null;
 let selectedCondition = null;
-let selectedSpecificService = null;
 let selectedDate = null;
 let selectedTimeSlot = null;
 
@@ -31,10 +30,11 @@ const translations = {
         len_blades: "Від плечей до лопаток",
         len_below: "Нижче лопаток",
         rules_title: "📌 Важливі примітки та правила майстра:",
-        rule_1: "Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною.",
+        rule_1: "Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною відповідно до довжини.",
         rule_2: "Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).",
         rule_3: "Я не роблю вихід із чорного або рудого.",
         rule_4: "Я не фарбую волосся після біозавивки, ботоксу, кератину.",
+        rule_5: "Якщо ви не знайшли потрібного в переліку — напишіть мені в дірект для консультації.",
         photo_current_label: "4. Завантажте фото вашого волосся:",
         photo_ref_label: "5. Завантажте фото-референс:",
         selected_service_label: "Обрана послуга та час",
@@ -77,10 +77,11 @@ const translations = {
         len_blades: "Shoulder to shoulder blades",
         len_below: "Below shoulder blades",
         rules_title: "📌 Important notes & master rules:",
-        rule_1: "If your roots are over 2 cm, coloring is considered primary.",
+        rule_1: "If roots are over 2 cm, coloring is considered primary based on length.",
         rule_2: "I do not do blonde techniques (AirTouch, balayage, etc.).",
         rule_3: "I do not do black or red color correction.",
         rule_4: "I do not dye hair after perm, botox, or keratin.",
+        rule_5: "If you didn't find what you need, contact me in direct.",
         photo_current_label: "4. Upload your hair photo:",
         photo_ref_label: "5. Upload reference photo:",
         selected_service_label: "Selected service & time",
@@ -130,8 +131,7 @@ function toggleLang() {
 function toggleTheme() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', newTheme);
+    html.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
 }
 
 function switchTab(tabName, element) {
@@ -164,12 +164,12 @@ function selectMainCategory(category) {
     } else if (category === 'complex') {
         subMenu.style.display = 'none';
         coloringOptions.style.display = 'block';
-        selectedServiceData = { title: "Стрижка + Фарбування коріння", price: 3000, duration: "3 год" };
+        selectedServiceData = { title: "Стрижка + Фарбування коріння (до 2 см)", price: 3000, duration: "3 год" };
         updateSelectedInput();
     } else {
         subMenu.style.display = 'none';
         coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка", price: 1000, duration: "1.5 год" };
+        selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, duration: "1.5 год" };
         updateSelectedInput();
     }
 }
@@ -185,10 +185,10 @@ function renderSubmenuItems() {
     let container = document.getElementById('submenuItems');
     container.innerHTML = `
         <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся', this)">
-            <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Рівномірний тон або первинне</div></div>
+            <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Доступні всі техніки фарбування</div></div>
         </div>
         <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване волосся', this)">
-            <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Потребує оновлення кольору</div></div>
+            <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Корінь, тонування, однотон</div></div>
         </div>
     `;
 }
@@ -196,44 +196,87 @@ function renderSubmenuItems() {
 function selectHairCondition(conditionKey, conditionTitle, element) {
     document.querySelectorAll('.sub-service-card').forEach(card => card.classList.remove('selected'));
     element.classList.add('selected');
-    selectedCondition = conditionTitle;
+    selectedCondition = conditionKey;
     
     let specList = document.getElementById('specificServicesList');
-    specList.innerHTML = `
-        <div class="sub-service-card selected" onclick="selectSpecificColorService('Фарбування в один тон', 2200, this)">
-            <div><div class="s-title">Фарбування в один тон</div><div class="s-sub">2200 ₴ • 2 год</div></div>
-        </div>
-    `;
-    selectedServiceData = { title: `Фарбування (${conditionTitle})`, price: 2200, duration: "2 год" };
-    updateSelectedInput();
+    if (conditionKey === 'natural') {
+        specList.innerHTML = `
+            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, '2.5 год', this)">
+                <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
+            </div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд / яскраві техніки', null, null, this)">
+                <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення з тонуванням (тільки натуральне)</div></div>
+            </div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, this)">
+                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Фарбування в один тон</div></div>
+            </div>
+        `;
+    } else {
+        specList.innerHTML = `
+            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, '2.5 год', this)">
+                <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
+            </div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, this)">
+                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Тонування фарбованого / освітленого</div></div>
+            </div>
+        `;
+    }
 }
 
-function selectSpecificColorService(title, price, element) {
+let chosenServiceType = null;
+
+function selectSpecificServiceType(typeKey, title, fixedPrice, fixedDuration, element) {
     document.querySelectorAll('#specificServicesList .sub-service-card').forEach(c => c.classList.remove('selected'));
     element.classList.add('selected');
-    selectedServiceData = { title: title, price: price, duration: "2 год" };
-    updateSelectedInput();
+    chosenServiceType = typeKey;
+
+    let lengthContainer = document.getElementById('lengthContainer');
+
+    if (fixedPrice !== null) {
+        lengthContainer.style.display = 'block';
+        selectedServiceData = { title: title, price: fixedPrice, duration: fixedDuration };
+    } else {
+        lengthContainer.style.display = 'block';
+        updateServiceDetailsByLength();
+    }
+    updateServiceDetails();
 }
 
 function updateServiceDetails() {
     let lengthSelect = document.getElementById('hairLengthSelect');
-    if (selectedServiceData && lengthSelect) {
-        let lengthText = lengthSelect.options[lengthSelect.selectedIndex].text;
-        updateSelectedInput(lengthText);
-    }
-}
+    let lengthVal = lengthSelect ? lengthSelect.value : 'shoulders';
+    let lengthText = lengthSelect ? lengthSelect.options[lengthSelect.selectedIndex].text : '';
 
-function updateSelectedInput(extraInfo = "") {
-    let input = document.getElementById('selectedServiceInput');
-    if (input && selectedServiceData) {
-        let text = `${selectedServiceData.title} — ${selectedServiceData.price} ₴ (${selectedServiceData.duration})`;
-        if (extraInfo) text += ` [Довжина: ${extraInfo}]`;
+    if (chosenServiceType === 'blonde') {
+        if (lengthVal === 'shoulders') {
+            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 4250, duration: "3 год" };
+        } else if (lengthVal === 'shoulder_blades') {
+            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 6250, duration: "6 год" };
+        } else {
+            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 8750, duration: "7+ год" };
+        }
+    } else if (chosenServiceType === 'tone') {
+        if (lengthVal === 'shoulders') {
+            selectedServiceData = { title: "Тонування / однотон", price: 3000, duration: "2 год" };
+        } else if (lengthVal === 'shoulder_blades') {
+            selectedServiceData = { title: "Тонування / однотон", price: 3500, duration: "2.5 год" };
+        } else {
+            selectedServiceData = { title: "Тонування / однотон", price: 5000, duration: "3 год" };
+        }
+    }
+
+    if (selectedServiceData) {
+        let text = `${selectedServiceData.title} — ${selectedServiceData.price} ₴ (${selectedServiceData.duration}) [Довжина: ${lengthText}]`;
         if (selectedHaircutRef) text += ` + Референс`;
-        input.value = text;
+        let input = document.getElementById('selectedServiceInput');
+        if (input) input.value = text;
     }
 }
 
-// --- Генерація кастомного календаря на найближчі 30 днів ---
+function updateServiceDetailsByLength() {
+    updateServiceDetails();
+}
+
 function initCustomCalendar() {
     let grid = document.getElementById('customCalendarGrid');
     if (!grid) return;
