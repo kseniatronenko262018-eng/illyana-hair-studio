@@ -5,6 +5,7 @@ let selectedHaircutRef = null;
 let selectedCondition = null;
 let selectedDate = null;
 let selectedTimeSlot = null;
+let bookedSlotsCache = {}; // Кеш зайнятих годин
 
 const translations = {
     ua: {
@@ -20,21 +21,20 @@ const translations = {
         color_sub: "Підбір за станом",
         complex_title: "Стрижка + Фарбування коріння",
         complex_sub: "3000 ₴ • 3 год (до 2 см)",
-        haircut_ref_title: "✨ Оберіть приклад стрижки (натисніть, щоб обрати як референс):",
+        haircut_ref_title: "✨ Оберіть референс стрижки:",
         choose_btn: "Обрати",
-        ref_selected_notice: "✓ Обрано фото-референс із портфоліо!",
+        ref_selected_notice: "✓ Обрано",
         step2: "2. Оберіть ваш поточний стан волосся:",
         step3: "3. Доступні послуги та довжина:",
         length_label: "Довжина волосся:",
         len_shoulders: "До плечей",
         len_blades: "Від плечей до лопаток",
         len_below: "Нижче лопаток",
-        rules_title: "📌 Важливі примітки та правила майстра:",
+        rules_title: "📌 Важливі примітки та правила майстра",
         rule_1: "Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною відповідно до довжини.",
         rule_2: "Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).",
         rule_3: "Я не роблю вихід із чорного або рудого.",
         rule_4: "Я не фарбую волосся після біозавивки, ботоксу, кератину.",
-        rule_5: "Якщо ви не знайшли потрібного в переліку — напишіть мені в дірект для консультації.",
         photo_current_label: "4. Завантажте фото вашого волосся:",
         photo_ref_label: "5. Завантажте фото-референс:",
         selected_service_label: "Обрана послуга та час",
@@ -46,7 +46,6 @@ const translations = {
         email_label: "Email (обов'язково)",
         social_label: "Нік / соцмережа",
         slots_label: "Доступні слоти часу",
-        slot_notice_init: "⚡ <b>Слот заброньовано на:</b> оберіть послугу та час.",
         deposit_notice: "⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.",
         pay_btn: "Сплатити завдаток 500 ₴ та забронювати",
         modal_title: "Публічний договір оферти",
@@ -67,21 +66,20 @@ const translations = {
         color_sub: "Selection by condition",
         complex_title: "Haircut + Root Coloring",
         complex_sub: "3000 ₴ • 3 hrs (up to 2 cm)",
-        haircut_ref_title: "✨ Choose haircut reference (click to select):",
+        haircut_ref_title: "✨ Choose haircut reference:",
         choose_btn: "Select",
-        ref_selected_notice: "✓ Reference photo selected!",
+        ref_selected_notice: "✓ Selected",
         step2: "2. Select your current hair condition:",
         step3: "3. Available services & length:",
         length_label: "Hair length:",
         len_shoulders: "To shoulders",
         len_blades: "Shoulder to shoulder blades",
         len_below: "Below shoulder blades",
-        rules_title: "📌 Important notes & master rules:",
+        rules_title: "📌 Important notes & master rules",
         rule_1: "If roots are over 2 cm, coloring is considered primary based on length.",
         rule_2: "I do not do blonde techniques (AirTouch, balayage, etc.).",
         rule_3: "I do not do black or red color correction.",
         rule_4: "I do not dye hair after perm, botox, or keratin.",
-        rule_5: "If you didn't find what you need, contact me in direct.",
         photo_current_label: "4. Upload your hair photo:",
         photo_ref_label: "5. Upload reference photo:",
         selected_service_label: "Selected service & time",
@@ -93,7 +91,6 @@ const translations = {
         email_label: "Email (required)",
         social_label: "Nickname / social",
         slots_label: "Available time slots",
-        slot_notice_init: "⚡ <b>Slot status:</b> select service and time.",
         deposit_notice: "⚡ <b>Booking term:</b> <b>500 UAH</b> deposit confirms booking.",
         pay_btn: "Pay deposit 500 ₴ & book",
         modal_title: "Public Offer Agreement",
@@ -105,7 +102,21 @@ const translations = {
 
 window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
+    fetchBookingsData();
 });
+
+async function fetchBookingsData() {
+    try {
+        let res = await fetch('/api/bookings');
+        let data = await res.json();
+        bookedSlotsCache = {};
+        data.forEach(b => {
+            if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
+            bookedSlotsCache[b.date].push(b.time);
+        });
+        renderTimeSlots();
+    } catch(e) { console.error("Could not fetch bookings", e); }
+}
 
 function toggleLang() {
     currentLang = currentLang === 'ua' ? 'en' : 'ua';
@@ -114,16 +125,12 @@ function toggleLang() {
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
         let key = el.getAttribute('data-i18n');
-        if (translations[currentLang][key]) {
-            el.innerHTML = translations[currentLang][key];
-        }
+        if (translations[currentLang][key]) el.innerHTML = translations[currentLang][key];
     });
 
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         let key = el.getAttribute('data-i18n-placeholder');
-        if (translations[currentLang][key]) {
-            el.setAttribute('placeholder', translations[currentLang][key]);
-        }
+        if (translations[currentLang][key]) el.setAttribute('placeholder', translations[currentLang][key]);
     });
     initCustomCalendar();
 }
@@ -132,6 +139,10 @@ function toggleTheme() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
     html.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
+}
+
+function toggleAccordion(header) {
+    header.parentElement.classList.toggle('open');
 }
 
 function switchTab(tabName, element) {
@@ -162,26 +173,26 @@ function selectMainCategory(category) {
         coloringOptions.style.display = 'block';
         selectedServiceData = null;
         renderSubmenuItems();
-        let input = document.getElementById('selectedServiceInput');
-        if (input) input.value = "Будь ласка, оберіть стан та техніку нижче";
+        updateSummaryCard();
     } else if (category === 'complex') {
         subMenu.style.display = 'none';
         coloringOptions.style.display = 'none';
         selectedServiceData = { title: "Стрижка + Фарбування коріння (до 2 см)", price: 3000, duration: "3 год" };
-        updateSelectedInput();
+        updateSummaryCard();
     } else {
         subMenu.style.display = 'none';
         coloringOptions.style.display = 'none';
         selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, duration: "1.5 год" };
-        updateSelectedInput();
+        updateSummaryCard();
     }
 }
 
 function selectHaircutReference(imgName, element) {
-    document.querySelectorAll('.haircut-carousel-item').forEach(item => item.classList.remove('selected'));
+    document.querySelectorAll('.haircut-grid-item').forEach(item => item.classList.remove('selected'));
     element.classList.add('selected');
     selectedHaircutRef = imgName;
     document.getElementById('selectedRefNotice').style.display = 'block';
+    updateSummaryCard();
 }
 
 function renderSubmenuItems() {
@@ -208,7 +219,7 @@ function selectHairCondition(conditionKey, conditionTitle, element) {
                 <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
             </div>
             <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд / яскраві техніки', null, null, this)">
-                <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення з тонуванням (тільки натуральне)</div></div>
+                <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення з тонуванням</div></div>
             </div>
             <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, this)">
                 <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Фарбування в один тон</div></div>
@@ -220,7 +231,7 @@ function selectHairCondition(conditionKey, conditionTitle, element) {
                 <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
             </div>
             <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, this)">
-                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Тонування фарбованого / освітленого</div></div>
+                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Тонування фарбованого</div></div>
             </div>
         `;
     }
@@ -234,51 +245,57 @@ function selectSpecificServiceType(typeKey, title, fixedPrice, fixedDuration, el
     chosenServiceType = typeKey;
 
     let lengthContainer = document.getElementById('lengthContainer');
+    lengthContainer.style.display = 'block';
 
     if (fixedPrice !== null) {
-        lengthContainer.style.display = 'block';
         selectedServiceData = { title: title, price: fixedPrice, duration: fixedDuration };
     } else {
-        lengthContainer.style.display = 'block';
-        updateServiceDetailsByLength();
+        updateServiceDetails();
     }
-    updateServiceDetails();
+    updateSummaryCard();
 }
 
 function updateServiceDetails() {
     let lengthSelect = document.getElementById('hairLengthSelect');
     let lengthVal = lengthSelect ? lengthSelect.value : 'shoulders';
-    let lengthText = lengthSelect ? lengthSelect.options[lengthSelect.selectedIndex].text : '';
 
     if (chosenServiceType === 'blonde') {
-        if (lengthVal === 'shoulders') {
-            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 4000, duration: "3 год" };
-        } else if (lengthVal === 'shoulder_blades') {
-            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 6000, duration: "6 год" };
-        } else {
-            selectedServiceData = { title: "Тотал блонд / яскраві техніки", price: 7500, duration: "7+ год" };
-        }
+        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тотал блонд", price: 4000, duration: "3 год" };
+        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тотал блонд", price: 6000, duration: "6 год" };
+        else selectedServiceData = { title: "Тотал блонд", price: 7500, duration: "7+ год" };
     } else if (chosenServiceType === 'tone') {
-        if (lengthVal === 'shoulders') {
-            selectedServiceData = { title: "Тонування / однотон", price: 3000, duration: "2 год" };
-        } else if (lengthVal === 'shoulder_blades') {
-            selectedServiceData = { title: "Тонування / однотон", price: 3500, duration: "2.5 год" };
-        } else {
-            selectedServiceData = { title: "Тонування / однотон", price: 5000, duration: "3 год" };
-        }
+        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тонування / однотон", price: 3000, duration: "2 год" };
+        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тонування / однотон", price: 3500, duration: "2.5 год" };
+        else selectedServiceData = { title: "Тонування / однотон", price: 5000, duration: "3 год" };
     }
-
-    if (selectedServiceData) {
-        let text = `${selectedServiceData.title} — ${selectedServiceData.price} ₴ (${selectedServiceData.duration})`;
-        if (selectedCategory === 'color') text += ` [Довжина: ${lengthText}]`;
-        if (selectedHaircutRef) text += ` + Референс`;
-        let input = document.getElementById('selectedServiceInput');
-        if (input) input.value = text;
-    }
+    updateSummaryCard();
 }
 
-function updateServiceDetailsByLength() {
-    updateServiceDetails();
+function updateSummaryCard() {
+    let titleEl = document.getElementById('summaryServiceTitle');
+    let priceBadge = document.getElementById('summaryPriceBadge');
+    let metaEl = document.getElementById('summaryMeta');
+    let durationEl = document.getElementById('summaryDuration');
+    let dateTimeEl = document.getElementById('summaryDateTime');
+
+    if (selectedServiceData) {
+        let text = selectedServiceData.title;
+        if (selectedHaircutRef) text += " + Референс";
+        titleEl.innerText = text;
+        priceBadge.innerText = selectedServiceData.price + " ₴";
+        durationEl.innerText = selectedServiceData.duration;
+        metaEl.style.display = 'flex';
+    } else {
+        titleEl.innerText = currentLang === 'ua' ? "Оберіть послугу вище" : "Select service above";
+        priceBadge.innerText = "0 ₴";
+        metaEl.style.display = 'none';
+    }
+
+    if (selectedDate && selectedTimeSlot) {
+        dateTimeEl.innerText = `${selectedDate} о ${selectedTimeSlot}`;
+    } else if (selectedDate) {
+        dateTimeEl.innerText = `${selectedDate} (час не обрано)`;
+    }
 }
 
 function initCustomCalendar() {
@@ -288,8 +305,6 @@ function initCustomCalendar() {
 
     const daysUa = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
     const daysEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const monthsUa = ["січ", "лют", "бер", "квіт", "трав", "черв", "лип", "серп", "вер", "жовт", "лист", "груд"];
-    const monthsEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     let today = new Date();
     for (let i = 0; i < 30; i++) {
@@ -298,7 +313,6 @@ function initCustomCalendar() {
         
         let dayOfWeek = (currentLang === 'ua') ? daysUa[d.getDay()] : daysEn[d.getDay()];
         let dayNum = d.getDate();
-        let monthName = (currentLang === 'ua') ? monthsUa[d.getMonth()] : monthsEn[d.getMonth()];
         let isoDate = d.toISOString().split('T')[0];
 
         let cell = document.createElement('div');
@@ -306,7 +320,6 @@ function initCustomCalendar() {
         if (i === 0 && !selectedDate) {
             cell.classList.add('selected');
             selectedDate = isoDate;
-            renderTimeSlots();
         } else if (selectedDate === isoDate) {
             cell.classList.add('selected');
         }
@@ -314,11 +327,11 @@ function initCustomCalendar() {
         cell.innerHTML = `
             <span class="day-name">${dayOfWeek}</span>
             <span class="day-num">${dayNum}</span>
-            <span style="font-size:7px; opacity:0.8;">${monthName}</span>
         `;
         cell.onclick = () => selectCalendarDate(isoDate, cell);
         grid.appendChild(cell);
     }
+    renderTimeSlots();
 }
 
 function selectCalendarDate(isoDate, element) {
@@ -326,6 +339,7 @@ function selectCalendarDate(isoDate, element) {
     element.classList.add('selected');
     selectedDate = isoDate;
     renderTimeSlots();
+    updateSummaryCard();
 }
 
 function renderTimeSlots() {
@@ -339,11 +353,19 @@ function renderTimeSlots() {
     }
 
     const slots = ["10:00", "12:00", "14:00", "16:00", "18:00"];
+    let bookedForDay = bookedSlotsCache[selectedDate] || [];
+
     slots.forEach(time => {
         let cell = document.createElement('div');
         cell.className = 'time-cell';
         cell.innerText = time;
-        cell.onclick = () => selectTimeSlot(time, cell);
+
+        if (bookedForDay.includes(time)) {
+            cell.classList.add('booked');
+        } else {
+            cell.onclick = () => selectTimeSlot(time, cell);
+            if (selectedTimeSlot === time) cell.classList.add('selected');
+        }
         grid.appendChild(cell);
     });
 }
@@ -352,20 +374,11 @@ function selectTimeSlot(time, element) {
     document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected'));
     element.classList.add('selected');
     selectedTimeSlot = time;
-    
-    let notice = document.getElementById('slotNotice');
-    notice.innerHTML = `⚡ <b>Слот заброньовано на:</b> ${selectedDate} о ${time}`;
+    updateSummaryCard();
 }
 
-function openOffer() {
-    let modal = document.getElementById('offerModal');
-    if (modal) modal.style.display = 'flex';
-}
-
-function closeOffer() {
-    let modal = document.getElementById('offerModal');
-    if (modal) modal.style.display = 'none';
-}
+function openOffer() { document.getElementById('offerModal').style.display = 'flex'; }
+function closeOffer() { document.getElementById('offerModal').style.display = 'none'; }
 
 function openLightbox(imgSrc) {
     let lightbox = document.getElementById('imageLightboxModal');
@@ -375,19 +388,15 @@ function openLightbox(imgSrc) {
         lightbox.style.display = 'flex';
     }
 }
-
-function closeLightbox() {
-    let lightbox = document.getElementById('imageLightboxModal');
-    if (lightbox) lightbox.style.display = 'none';
-}
+function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
 
 async function submitBooking() {
     let name = document.getElementById('clientName').value;
     let phone = document.getElementById('clientPhone').value;
     let email = document.getElementById('clientEmail').value;
 
-    if (!selectedCategory) {
-        alert("Оберіть категорію послуг!");
+    if (!selectedCategory || !selectedServiceData) {
+        alert("Оберіть послугу!");
         return;
     }
     if (!selectedDate || !selectedTimeSlot) {
