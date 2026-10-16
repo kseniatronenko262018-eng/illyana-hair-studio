@@ -8,9 +8,9 @@ app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// Дані вашого проєкту Supabase
+// Дані вашого проєкту Supabase з новим ключем service_role
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_cC6BJwKvsZdoAX-gcVQGgw_Fzv9z4Gh';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
 
 const supabaseHeaders = {
     "apikey": SUPABASE_KEY,
