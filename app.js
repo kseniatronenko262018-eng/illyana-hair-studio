@@ -482,42 +482,44 @@ async function submitBooking() {
             reference: selectedHaircutRef || ''
         };
 
-        if (checkData.isRegular) {
-            let bookRes = await fetch('/api/bookings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingPayload)
-            });
-            let bookData = await bookRes.json();
+        // Завжди зберігаємо запис у базі
+        let bookRes = await fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookingPayload)
+        });
+        let bookData = await bookRes.json();
 
-            if (bookData.success) {
+        if (checkData.isRegular) {
+            if (bookData.success !== false) {
                 alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено без завдатку.");
                 location.reload();
             } else {
-                alert("Помилка при збереженні запису.");
+                alert("Помилка при збереженні запису в базі.");
             }
         } else {
-            await fetch('/api/bookings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingPayload)
-            });
-
-            let response = await fetch('/api/create-invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot })
-            });
-            let data = await response.json();
-            
-            if (data.pageUrl) {
-                window.location.href = data.pageUrl;
-            } else {
-                alert("Запис успішно сформовано! Очікуємо підтвердження оплати.");
+            // Для нових клієнтів пробуємо створити інвойс
+            try {
+                let invoiceRes = await fetch('/api/create-invoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, email, date: selectedDate, time: selectedTimeSlot })
+                });
+                let invoiceData = await invoiceRes.json();
+                
+                if (invoiceData && invoiceData.pageUrl) {
+                    window.location.href = invoiceData.pageUrl;
+                    return;
+                }
+            } catch (invErr) {
+                console.warn("Інвойс не створено, але бронь збережено:", invErr);
             }
+
+            alert("✨ Запис успішно сформовано! Очікуємо підтвердження.");
+            location.reload();
         }
     } catch (err) {
-        console.error(err);
-        alert("Помилка при оформленні запису.");
+        console.error("Помилка оформлення:", err);
+        alert("Сталася помилка при зв'язку з сервером.");
     }
 }
