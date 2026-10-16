@@ -496,6 +496,23 @@ async function submitBooking() {
                 alert("Помилка при збереженні запису.");
             }
         } else {
+            // Для нових клієнтів також перед оплатою збережемо бронь в таблицю bookings із позначкою неоплачено, 
+            // щоб майстриня одразу бачила спробу запису в кабінеті
+            let bookingPayload = {
+                name,
+                phone,
+                email,
+                social,
+                service: selectedServiceData.title,
+                date: selectedDate,
+                time: selectedTimeSlot
+            };
+            await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingPayload)
+            });
+
             let response = await fetch('/api/create-invoice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
