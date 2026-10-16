@@ -8,10 +8,16 @@ app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// Сховища в пам'яті сервера для синхронізації
-let blockedDays = [];
-let studioBookings = [];
-let studioRegularClients = []; // База постійних клієнтів на сервері
+// Дані вашого проєкту Supabase
+const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_cC6BJwKvsZdoAX-gcVQGgw_Fzv9z4Gh';
+
+const supabaseHeaders = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`,
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+};
 
 // Головна сторінка для клієнтів
 app.get('/', (req, res) => {
@@ -23,12 +29,12 @@ app.get('/master', (req, res) => {
     res.sendFile(path.join(__dirname, 'master.html'));
 });
 
-// API: Отримати список вихідних днів
+// API: Отримати список вихідних днів (зберігаємо у пам'яті сервера або можна винести в Supabase)
+let blockedDays = [];
 app.get('/api/blocked-days', (req, res) => {
     res.json(blockedDays);
 });
 
-// API: Блокування дня майстром (потрібен PIN 1988)
 app.post('/api/block-day', (req, res) => {
     const { date, password } = req.body;
     if (password !== '1988') {
@@ -40,7 +46,6 @@ app.post('/api/block-day', (req, res) => {
     res.json({ success: true, blockedDays });
 });
 
-// API: Розблокування дня майстром
 app.post('/api/unblock-day', (req, res) => {
     const { date, password } = req.body;
     if (password !== '1988') {
@@ -50,48 +55,36 @@ app.post('/api/unblock-day', (req, res) => {
     res.json({ success: true, blockedDays });
 });
 
-// API: Отримати всі записи для CRM майстра
-app.get('/api/bookings', (req, res) => {
-    res.json(studioBookings);
+// API: Отримати всі записи з хмари Supabase (таблиця bookings)
+app.get('/api/bookings', async (req, res) => {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        const data = await response.json();
+        res.json(Array.isArray(data) ? data : []);
+    } catch (error) {
+        console.error("Помилка отримання записів з Supabase:", error);
+        res.status(500).json([]);
+    }
 });
 
-// API: Додати новий запис від клієнта
-app.post('/api/bookings', (req, res) => {
+// API: Додати новий запис від клієнта напряму в хмару Supabase
+app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
-    if (booking) {
-        studioBookings.push(booking);
-        res.json({ success: true, bookings: studioBookings });
-    } else {
-        res.status(400).json({ error: 'Невірні дані запису' });
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
+            method: 'POST',
+            headers: supabaseHeaders,
+            body: JSON.stringify(booking)
+        });
+        const data = await response.json();
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error("Помилка збереження запису в Supabase:", error);
+        res.status(500).json({ error: 'Не вдалося зберегти запис у хмару' });
     }
-});
-
-// API: Отримати базу постійних клієнтів
-app.get('/api/regular-clients', (req, res) => {
-    res.json(studioRegularClients);
-});
-
-// API: Додати або оновити базу постійних клієнтів (з перевіркою PIN 1988)
-app.post('/api/regular-clients', (req, res) => {
-    const { name, phone, password, clientsArray } = req.body;
-    
-    if (password !== '1988') {
-        return res.status(403).json({ error: 'Невірний PIN-код майстра!' });
-    }
-
-    // Якщо передано цілий масив (наприклад, при імпорті з Excel)
-    if (Array.isArray(clientsArray)) {
-        studioRegularClients = clientsArray;
-        return res.json({ success: true, regularClients: studioRegularClients });
-    }
-
-    // Якщо додається один клієнт вручну
-    if (name && phone) {
-        studioRegularClients.push({ name, phone });
-        return res.json({ success: true, regularClients: studioRegularClients });
-    }
-
-    res.status(400).json({ error: 'Невірні дані клієнта' });
 });
 
 // Ендпоінт для створення платежу через еквайринг Monobank
@@ -127,5 +120,5 @@ app.post('/api/create-invoice', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Сервер запущено на порту ${PORT}`);
+    console.log(`Сервер запущено на порту ${PORT} з підключенням до Supabase хмари!`);
 });
