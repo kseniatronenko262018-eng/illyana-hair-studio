@@ -74,7 +74,6 @@ app.get('/api/bookings', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
     try {
-        // 1. Зберігаємо запис у таблицю bookings
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
             method: 'POST',
             headers: supabaseHeaders,
@@ -82,7 +81,6 @@ app.post('/api/bookings', async (req, res) => {
         });
         const data = await response.json();
 
-        // 2. Перевіряємо, чи є такий клієнт у таблиці clients за телефоном (гнучкий пошук)
         const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
             method: 'GET',
             headers: supabaseHeaders
@@ -94,7 +92,6 @@ app.post('/api/bookings', async (req, res) => {
             return dbPhone && dbPhone === cleanInputPhone;
         });
 
-        // Якщо клієнта ще немає в базі, додаємо його автоматично
         if (!clientExists) {
             await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
                 method: 'POST',
@@ -115,7 +112,7 @@ app.post('/api/bookings', async (req, res) => {
     }
 });
 
-// API: Перевірка, чи є клієнт постійним (гнучкий пошук за останніми цифрами номера)
+// API: Перевірка клієнта за останками 9 цифр (ігнорує +38, пробіли тощо)
 app.post('/api/check-client', async (req, res) => {
     const { phone } = req.body;
     try {
@@ -155,7 +152,7 @@ app.post('/api/create-invoice', async (req, res) => {
                 "X-Token": MONO_TOKEN
             },
             body: JSON.stringify({
-                amount: 50000, // 500 грн у копійках
+                amount: 50000,
                 ccy: 980,
                 merchantPaymInfo: {
                     destination: "Завдаток за послугу (ФОП Явір І.В.)",
@@ -176,5 +173,5 @@ app.post('/api/create-invoice', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Сервер запущено на порту ${PORT} з підключенням до Supabase!`);
+    console.log(`Сервер запущено на порту ${PORT}!`);
 });
