@@ -360,7 +360,6 @@ function renderTimeSlots() {
     let serviceDuration = selectedServiceData ? selectedServiceData.durationHours : 1.5;
     let isOnlyHaircut = (selectedCategory === 'cut');
 
-    // Якщо це стрижка, генеруємо слоти з кроком 1.5 години (10:00, 11:30, 13:00, 14:30, 16:00, 17:30, 19:00)
     let slots = [];
     if (isOnlyHaircut) {
         slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
@@ -441,9 +440,10 @@ function openLightbox(imgSrc) {
 function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
 
 async function submitBooking() {
-    let name = document.getElementById('clientName').value;
-    let phone = document.getElementById('clientPhone').value;
-    let email = document.getElementById('clientEmail').value;
+    let name = document.getElementById('clientName').value.trim();
+    let phone = document.getElementById('clientPhone').value.trim();
+    let email = document.getElementById('clientEmail').value.trim();
+    let social = document.getElementById('clientSocial')?.value.trim() || '';
 
     if (!selectedCategory || !selectedServiceData) {
         alert("Оберіть послугу!");
@@ -459,20 +459,56 @@ async function submitBooking() {
     }
 
     try {
-        let response = await fetch('/api/create-invoice', {
+        // 1. Перевіряємо, чи є цей номер телефону серед постійних клієнтів
+        let checkRes = await fetch('/api/check-client', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot })
+            body: JSON.stringify({ phone })
         });
-        let data = await response.json();
-        
-        if (data.pageUrl) {
-            window.location.href = data.pageUrl;
+        let checkData = await checkRes.json();
+
+        // 2. Якщо клієнт є в базі — бронюємо одразу без передоплати
+        if (checkData.isRegular) {
+            let bookingPayload = {
+                name,
+                phone,
+                email,
+                social,
+                service: selectedServiceData.title,
+                date: selectedDate,
+                time: selectedTimeSlot
+            };
+
+            let bookRes = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingPayload)
+            });
+            let bookData = await bookRes.json();
+
+            if (bookData.success) {
+                alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено без завдатку.");
+                location.reload();
+            } else {
+                alert("Помилка при збереженні запису.");
+            }
         } else {
-            alert("Запис успішно сформовано! Очікуємо підтвердження оплати.");
+            // 3. Якщо новий клієнт — перенаправляємо на оплату завдатку через Monobank
+            let response = await fetch('/api/create-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot })
+            });
+            let data = await response.json();
+            
+            if (data.pageUrl) {
+                window.location.href = data.pageUrl;
+            } else {
+                alert("Запис успішно сформовано! Очікуємо підтвердження оплати.");
+            }
         }
     } catch (err) {
         console.error(err);
-        alert("Помилка при створенні платежу.");
+        alert("Помилка при оформленні запису.");
     }
 }
