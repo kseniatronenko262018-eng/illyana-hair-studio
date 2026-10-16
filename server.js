@@ -8,7 +8,7 @@ app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// Дані вашого проєкту Supabase з новим ключем service_role
+// Дані вашого проєкту Supabase з ключем service_role
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
 
@@ -74,41 +74,55 @@ app.get('/api/bookings', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
     try {
+        console.log("Спроба зберегти запис:", booking);
+
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
             method: 'POST',
             headers: supabaseHeaders,
             body: JSON.stringify(booking)
         });
-        const data = await response.json();
 
-        const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
-            method: 'GET',
-            headers: supabaseHeaders
-        });
-        const clientsList = await checkClient.json();
-        const cleanInputPhone = (booking.phone || '').replace(/\D/g, '').slice(-9);
-        const clientExists = clientsList.some(c => {
-            const dbPhone = (c.phone || '').replace(/\D/g, '').slice(-9);
-            return dbPhone && dbPhone === cleanInputPhone;
-        });
-
-        if (!clientExists) {
-            await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
-                method: 'POST',
-                headers: supabaseHeaders,
-                body: JSON.stringify({
-                    name: booking.name,
-                    phone: booking.phone,
-                    email: booking.email || '',
-                    social: booking.social || ''
-                })
-            });
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error("Помилка від Supabase при збереженні броні:", errText);
+            return res.status(500).json({ success: false, error: errText });
         }
 
-        res.json({ success: true, data });
+        const data = await response.json();
+
+        // Перевірка та збереження клієнта в базу
+        try {
+            const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
+                method: 'GET',
+                headers: supabaseHeaders
+            });
+            const clientsList = await checkClient.json();
+            const cleanInputPhone = (booking.phone || '').replace(/\D/g, '').slice(-9);
+            const clientExists = Array.isArray(clientsList) && clientsList.some(c => {
+                const dbPhone = (c.phone || '').replace(/\D/g, '').slice(-9);
+                return dbPhone && dbPhone === cleanInputPhone;
+            });
+
+            if (!clientExists) {
+                await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+                    method: 'POST',
+                    headers: supabaseHeaders,
+                    body: JSON.stringify({
+                        name: booking.name,
+                        phone: booking.phone,
+                        email: booking.email || '',
+                        social: booking.social || ''
+                    })
+                });
+            }
+        } catch (clientErr) {
+            console.error("Помилка при оновленні списку клієнтів (не критично):", clientErr);
+        }
+
+        return res.json({ success: true, data });
     } catch (error) {
-        console.error("Помилка збереження запису в Supabase:", error);
-        res.status(500).json({ error: 'Не вдалося зберегти запис у хмару' });
+        console.error("Критична помилка збереження запису в Supabase:", error);
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -124,19 +138,19 @@ app.post('/api/check-client', async (req, res) => {
         });
         const clients = await response.json();
         
-        const found = clients.find(c => {
+        const found = Array.isArray(clients) && clients.find(c => {
             const dbPhone = (c.phone || '').replace(/\D/g, '').slice(-9);
             return dbPhone && dbPhone === cleanInputPhone;
         });
         
         if (found) {
-            res.json({ isRegular: true, client: found });
+            return res.json({ isRegular: true, client: found });
         } else {
-            res.json({ isRegular: false });
+            return res.json({ isRegular: false });
         }
     } catch (error) {
         console.error("Помилка перевірки клієнта:", error);
-        res.status(500).json({ isRegular: false });
+        return res.status(500).json({ isRegular: false });
     }
 });
 
