@@ -1,4 +1,4 @@
-﻿let currentLang = 'ua';
+let currentLang = 'ua';
 let selectedCategory = null;
 let selectedServiceData = null;
 let selectedHaircutRef = null;
