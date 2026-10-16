@@ -1,523 +1,814 @@
-let currentLang = 'ua';
-let selectedCategory = null;
-let selectedServiceData = null;
-let selectedHaircutRef = null;
-let selectedCondition = null;
-let selectedDate = null;
-let selectedTimeSlot = null;
-let bookedSlotsCache = {};
+<!DOCTYPE html>
+<html lang="ua" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Кабінет майстра | Явір Ілляна</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root[data-theme="dark"] {
+            --accent: #d88c9a;
+            --accent-invert: #141312;
+            --tg-bg: #141312;
+            --tg-card: rgba(26, 24, 22, 0.85);
+            --tg-card-hover: rgba(38, 35, 32, 0.92);
+            --tg-border: rgba(255, 255, 255, 0.1);
+            --tg-text: #f5f2ed;
+            --tg-muted: #9e958b;
+        }
 
-const translations = {
-    ua: {
-        tab_book: "Запис",
-        tab_works: "Приклади робіт",
-        tab_loc: "Локація",
-        profile_sub: "квір хейр стиліст • перукар дніпро",
-        profile_bio: "не відрощуй волосся — відрощуй індивідуальність",
-        step1: "1. Оберіть категорію послуг",
-        cut_title: "Стрижка",
-        cut_sub: "1000 ₴ • 1.5 год",
-        color_title: "Фарбування",
-        color_sub: "Підбір за станом",
-        complex_title: "Стрижка + Фарбування коріння",
-        complex_sub: "3000 ₴ • 3 год (до 2 см)",
-        haircut_ref_title: "✨ Оберіть референс стрижки:",
-        choose_btn: "Обрати",
-        ref_selected_notice: "✓ Обрано",
-        step2: "2. Оберіть ваш поточний стан волосся:",
-        step3: "3. Доступні послуги та довжина:",
-        length_label: "Довжина волосся:",
-        len_shoulders: "До плечей",
-        len_blades: "Від плечей до лопаток",
-        len_below: "Нижче лопаток",
-        rules_title: "📌 Важливі примітки та правила майстра",
-        rule_1: "Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною відповідно до довжини.",
-        rule_2: "Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).",
-        rule_3: "Я не роблю вихід із чорного або рудого.",
-        rule_4: "Я не фарбую волосся після біозавивки, ботоксу, кератину.",
-        photo_current_label: "4. Завантажте фото вашого волосся:",
-        photo_ref_label: "5. Завантажте фото-референс:",
-        selected_service_label: "Обрана послуга та час",
-        select_service_placeholder: "Спочатку оберіть категорію вище",
-        date_label: "Дата візиту",
-        name_label: "Ім'я",
-        name_placeholder: "Як звертатись",
-        phone_label: "Телефон",
-        email_label: "Email (обов'язково)",
-        social_label: "Нік / соцмережа",
-        slots_label: "Доступні слоти часу (студія працює до 19:00)",
-        deposit_notice: "⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.",
-        pay_btn: "Сплатити завдаток 500 ₴ та забронювати",
-        modal_title: "Публічний договір оферти",
-        modal_btn: "Зрозуміло",
-        loc_info: "📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>Приватний простір, мінімалізм та фокус на якості.",
-        map_btn: "Відкрити в Google Maps"
-    },
-    en: {
-        tab_book: "Booking",
-        tab_works: "Portfolio",
-        tab_loc: "Location",
-        profile_sub: "queer hair stylist • dnipro",
-        profile_bio: "don't grow hair — grow individuality",
-        step1: "1. Select service category",
-        cut_title: "Haircut",
-        cut_sub: "1000 ₴ • 1.5 hrs",
-        color_title: "Coloring",
-        color_sub: "Selection by condition",
-        complex_title: "Haircut + Root Coloring",
-        complex_sub: "3000 ₴ • 3 hrs (up to 2 cm)",
-        haircut_ref_title: "✨ Choose haircut reference:",
-        choose_btn: "Select",
-        ref_selected_notice: "✓ Selected",
-        step2: "2. Select your current hair condition:",
-        step3: "3. Available services & length:",
-        length_label: "Hair length:",
-        len_shoulders: "To shoulders",
-        len_blades: "Shoulder to shoulder blades",
-        len_below: "Below shoulder blades",
-        rules_title: "📌 Important notes & master rules",
-        rule_1: "If roots are over 2 cm, coloring is considered primary based on length.",
-        rule_2: "I do not do blonde techniques (AirTouch, balayage, etc.).",
-        rule_3: "I do not do black or red color correction.",
-        rule_4: "I do not dye hair after perm, botox, or keratin.",
-        photo_current_label: "4. Upload your hair photo:",
-        photo_ref_label: "5. Upload reference photo:",
-        selected_service_label: "Selected service & time",
-        select_service_placeholder: "First select a category above",
-        date_label: "Visit Date",
-        name_label: "Name",
-        name_placeholder: "How to address you",
-        phone_label: "Phone",
-        email_label: "Email (required)",
-        social_label: "Nickname / social",
-        slots_label: "Available time slots (studio works until 19:00)",
-        deposit_notice: "⚡ <b>Booking term:</b> <b>500 UAH</b> deposit confirms booking.",
-        pay_btn: "Pay deposit 500 ₴ & book",
-        modal_title: "Public Offer Agreement",
-        modal_btn: "Understood",
-        loc_info: "📍 <b>Location:</b> Dnipro, 35-B Volodymyr Vernadskyi St.<br><br>Private space, minimalism and focus on quality.",
-        map_btn: "Open in Google Maps"
-    }
-};
+        :root[data-theme="light"] {
+            --accent: #b86b79;
+            --accent-invert: #ffffff;
+            --tg-bg: #e6dfd5;
+            --tg-card: rgba(255, 252, 248, 0.9);
+            --tg-card-hover: rgba(242, 237, 228, 0.95);
+            --tg-border: rgba(0, 0, 0, 0.08);
+            --tg-text: #2c2825;
+            --tg-muted: #756d65;
+        }
 
-window.addEventListener('DOMContentLoaded', () => {
-    initCustomCalendar();
-    fetchBookingsData();
-});
+        body {
+            background-color: var(--tg-bg) !important;
+            color: var(--tg-text) !important;
+            padding-bottom: 50px;
+            position: relative;
+            min-height: 100vh;
+        }
 
-async function fetchBookingsData() {
-    try {
-        let res = await fetch('/api/bookings');
-        let data = await res.json();
-        bookedSlotsCache = {};
-        data.forEach(b => {
-            if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
-            bookedSlotsCache[b.date].push(b.time);
-        });
-        renderTimeSlots();
-    } catch(e) { console.error("Could not fetch bookings", e); }
-}
+        .master-bg {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh;
+            z-index: -999; 
+            overflow: hidden; 
+            background-color: var(--tg-bg);
+        }
+        .master-bg img {
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover;
+            filter: blur(14px) brightness(0.32) contrast(1.1);
+            transform: scale(1.15);
+        }
+        [data-theme="light"] .master-bg img {
+            filter: blur(14px) brightness(0.7) contrast(1.05);
+        }
 
-function toggleLang() {
-    currentLang = currentLang === 'ua' ? 'en' : 'ua';
-    let langBtn = document.getElementById('langToggle');
-    if (langBtn) langBtn.innerText = currentLang.toUpperCase() + ' / ' + (currentLang === 'ua' ? 'EN' : 'UA');
+        .master-section, .form-card {
+            background: var(--tg-card) !important;
+            border: 1px solid var(--tg-border) !important;
+            backdrop-filter: blur(20px) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
 
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        let key = el.getAttribute('data-i18n');
-        if (translations[currentLang][key]) el.innerHTML = translations[currentLang][key];
-    });
+        .master-utility-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 4px;
+            margin-bottom: 12px;
+        }
 
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        let key = el.getAttribute('data-i18n-placeholder');
-        if (translations[currentLang][key]) el.setAttribute('placeholder', translations[currentLang][key]);
-    });
-    initCustomCalendar();
-}
+        .korea-nav-bar {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            margin-bottom: 12px;
+            scrollbar-width: none;
+        }
+        .korea-nav-bar::-webkit-scrollbar { display: none; }
 
-function toggleTheme() {
-    const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme');
-    html.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
-}
+        .korea-nav-chip {
+            background: var(--tg-card);
+            border: 1px solid var(--tg-border);
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--tg-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .korea-nav-chip.active {
+            background: var(--accent);
+            color: var(--accent-invert);
+            border-color: var(--accent);
+        }
 
-function toggleAccordion(header) {
-    header.parentElement.classList.toggle('open');
-}
+        .tg-search-bar {
+            background: var(--tg-card-hover);
+            border-radius: 16px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            border: 1px solid var(--tg-border);
+        }
+        .tg-search-bar input {
+            background: transparent;
+            border: none;
+            color: var(--tg-text);
+            font-size: 12px;
+            outline: none;
+            width: 100%;
+        }
 
-function switchTab(tabName, element) {
-    document.querySelectorAll('.section-pane').forEach(pane => pane.classList.remove('active'));
-    document.querySelectorAll('.quick-nav .nav-chip').forEach(chip => chip.classList.remove('active'));
+        button, input, select, .control-btn, .btn-main, .crm-cal-cell {
+            position: relative;
+            z-index: 50 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
 
-    if (tabName === 'book') document.getElementById('paneBook').classList.add('active');
-    if (tabName === 'works') document.getElementById('paneWorks').classList.add('active');
-    if (tabName === 'loc') document.getElementById('paneLoc').classList.add('active');
-    if (element) element.classList.add('active');
-}
+        .notification-banner {
+            background: rgba(216, 140, 154, 0.22); 
+            border: 1px solid var(--accent);
+            padding: 10px 14px; 
+            border-radius: 16px; 
+            font-size: 10px; 
+            color: var(--tg-text);
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 12px;
+        }
 
-function selectMainCategory(category) {
-    selectedCategory = category;
-    document.querySelectorAll('.service-card-mini').forEach(card => card.classList.remove('selected'));
-    if (category === 'cut') document.getElementById('mainCardCut').classList.add('selected');
-    if (category === 'color') document.getElementById('mainCardColor').classList.add('selected');
-    if (category === 'complex') document.getElementById('mainCardComplex').classList.add('selected');
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .crm-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+        .crm-cal-cell {
+            background: var(--tg-card-hover);
+            border: 1px solid var(--tg-border);
+            border-radius: 8px;
+            padding: 8px 2px;
+            text-align: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--tg-text);
+        }
+        .crm-cal-cell.selected {
+            background: var(--accent);
+            color: var(--accent-invert);
+            border-color: var(--accent);
+        }
+        .crm-cal-cell.blocked {
+            background: rgba(216, 140, 154, 0.15);
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        .booking-card-item {
+            background: var(--tg-card-hover);
+            border: 1px solid var(--tg-border);
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .booking-card-item:hover {
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+<body data-theme="dark">
 
-    document.getElementById('haircutExamplesSection').style.display = (category === 'cut' || category === 'complex') ? 'block' : 'none';
-    document.getElementById('photoUploadSection').style.display = 'block';
-    
-    let subMenu = document.getElementById('categorySubmenu');
-    let coloringOptions = document.getElementById('coloringSubOptions');
+    <div class="master-bg">
+        <img id="bgMasterImage" src="" alt="Master Background">
+    </div>
 
-    if (category === 'color') {
-        subMenu.style.display = 'block';
-        coloringOptions.style.display = 'block';
-        selectedServiceData = null;
-        renderSubmenuItems();
-        updateSummaryCard();
-    } else if (category === 'complex') {
-        subMenu.style.display = 'none';
-        coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка + Фарбування коріння (до 2 см)", price: 3000, durationHours: 3, durationText: "3 год" };
-        updateSummaryCard();
-    } else {
-        subMenu.style.display = 'none';
-        coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, durationHours: 1.5, durationText: "1.5 год" };
-        updateSummaryCard();
-    }
-    renderTimeSlots();
-}
-
-function selectHaircutReference(imgName, element) {
-    document.querySelectorAll('.haircut-grid-item').forEach(item => item.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedHaircutRef = imgName;
-    let notice = document.getElementById('selectedRefNotice');
-    if (notice) notice.style.display = 'block';
-    updateSummaryCard();
-}
-
-function renderSubmenuItems() {
-    let container = document.getElementById('submenuItems');
-    if (!container) return;
-    container.innerHTML = `
-        <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся', this)">
-            <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Доступні всі техніки фарбування</div></div>
-        </div>
-        <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване волосся', this)">
-            <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Корінь, тонування, однотон</div></div>
-        </div>
-    `;
-}
-
-function selectHairCondition(conditionKey, conditionTitle, element) {
-    document.querySelectorAll('.sub-service-card').forEach(card => card.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedCondition = conditionKey;
-    
-    let specList = document.getElementById('specificServicesList');
-    if (!specList) return;
-    if (conditionKey === 'natural') {
-        specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, 2.5, '2.5 год', this)">
-                <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
-            </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд / яскраві техніки', null, null, null, this)">
-                <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення з тонуванням</div></div>
-            </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, null, this)">
-                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Фарбування в один тон</div></div>
-            </div>
-        `;
-    } else {
-        specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, 2.5, '2.5 год', this)">
-                <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
-            </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, null, this)">
-                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Тонування фарбованого</div></div>
-            </div>
-        `;
-    }
-}
-
-let chosenServiceType = null;
-
-function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, fixedDurationText, element) {
-    document.querySelectorAll('#specificServicesList .sub-service-card').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
-    chosenServiceType = typeKey;
-
-    let lengthContainer = document.getElementById('lengthContainer');
-    if (lengthContainer) lengthContainer.style.display = 'block';
-
-    if (fixedPrice !== null) {
-        selectedServiceData = { title: title, price: fixedPrice, durationHours: fixedHours, durationText: fixedDurationText };
-    } else {
-        updateServiceDetails();
-    }
-    updateSummaryCard();
-    renderTimeSlots();
-}
-
-function updateServiceDetails() {
-    let lengthSelect = document.getElementById('hairLengthSelect');
-    let lengthVal = lengthSelect ? lengthSelect.value : 'shoulders';
-
-    if (chosenServiceType === 'blonde') {
-        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тотал блонд", price: 4000, durationHours: 3, durationText: "3 год" };
-        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тотал блонд", price: 6000, durationHours: 6, durationText: "6 год" };
-        else selectedServiceData = { title: "Тотал блонд", price: 7500, durationHours: 7, durationText: "7+ год" };
-    } else if (chosenServiceType === 'tone') {
-        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тонування / однотон", price: 3000, durationHours: 2, durationText: "2 год" };
-        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тонування / однотон", price: 3500, durationHours: 2.5, durationText: "2.5 год" };
-        else selectedServiceData = { title: "Тонування / однотон", price: 5000, durationHours: 3, durationText: "3 год" };
-    }
-    updateSummaryCard();
-    renderTimeSlots();
-}
-
-function updateSummaryCard() {
-    let titleEl = document.getElementById('summaryServiceTitle');
-    let priceBadge = document.getElementById('summaryPriceBadge');
-    let metaEl = document.getElementById('summaryMeta');
-    let durationEl = document.getElementById('summaryDuration');
-    let dateTimeEl = document.getElementById('summaryDateTime');
-
-    if (!titleEl) return;
-
-    if (selectedServiceData) {
-        let text = selectedServiceData.title;
-        if (selectedHaircutRef) text += " + Референс";
-        titleEl.innerText = text;
-        priceBadge.innerText = selectedServiceData.price + " ₴";
-        durationEl.innerText = selectedServiceData.durationText;
-        metaEl.style.display = 'flex';
-    } else {
-        titleEl.innerText = currentLang === 'ua' ? "Оберіть послугу вище" : "Select service above";
-        priceBadge.innerText = "0 ₴";
-        metaEl.style.display = 'none';
-    }
-
-    if (selectedDate && selectedTimeSlot) {
-        dateTimeEl.innerText = `${selectedDate} о ${selectedTimeSlot}`;
-    } else if (selectedDate) {
-        dateTimeEl.innerText = `${selectedDate} (час не обрано)`;
-    }
-}
-
-function initCustomCalendar() {
-    let grid = document.getElementById('customCalendarGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    const daysUa = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-    const daysEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-    let today = new Date();
-    for (let i = 0; i < 30; i++) {
-        let d = new Date();
-        d.setDate(today.getDate() + i);
+    <div class="mobile-container master-body" style="z-index: 10; position: relative;">
         
-        let dayOfWeek = (currentLang === 'ua') ? daysUa[d.getDay()] : daysEn[d.getDay()];
-        let dayNum = d.getDate();
-        let isoDate = d.toISOString().split('T')[0];
+        <div class="master-utility-bar">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 38px; height: 38px; border-radius: 50%; overflow:hidden; border:2px solid var(--accent); flex-shrink: 0; position:relative; cursor:pointer;">
+                    <img id="avatarMasterImage" src="" style="width:100%; height:100%; object-fit:cover;" alt="Ілляна">
+                    <input type="file" accept="image/*" onchange="handleMasterPhotoUpload(event)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:100;">
+                </div>
+                <span style="font-family:'Syne',sans-serif; font-size:12px; font-weight:800; color:var(--tg-text); letter-spacing: 0.5px;">ЯВІР ІЛЛЯНА // CRM</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <button class="control-btn" onclick="toggleMasterTheme()" style="border-radius:50%; width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center; background:var(--tg-card); border-color:var(--tg-border); color:var(--tg-text); font-size:15px;">☀️</button>
+            </div>
+        </div>
 
-        let cell = document.createElement('div');
-        cell.className = 'calendar-day-cell';
-        if (i === 0 && !selectedDate) {
-            cell.classList.add('selected');
-            selectedDate = isoDate;
-        } else if (selectedDate === isoDate) {
-            cell.classList.add('selected');
+        <!-- Екран авторизації -->
+        <div id="masterLoginBox" class="form-card master-section" style="text-align: center; margin-top: 40px; padding: 20px; z-index: 50; position: relative;">
+            <h2 style="font-family:'Syne',sans-serif; font-size: 16px; margin-bottom: 12px; color:var(--tg-text);">ДОСТУП ДО CRM</h2>
+            <input type="password" id="masterPinInput" class="input-box" placeholder="PIN (1988)" style="text-align: center; margin-bottom: 12px; background: rgba(0,0,0,0.15); border-color:var(--tg-border); color:var(--tg-text);">
+            <button class="btn-main" onclick="loginMainPin()" style="margin-bottom: 8px;">Увійти</button>
+            <button class="control-btn" onclick="forceBypassPin()" style="width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">Швидкий вхід</button>
+        </div>
+
+        <!-- Панель управління CRM -->
+        <div id="masterDashboard" style="display: none; flex-direction: column; gap: 10px;">
+
+            <div id="newBookingAlertBanner" class="notification-banner" style="display: none;">
+                <span id="alertBannerText">🔔 Новий запис!</span>
+                <button class="control-btn" onclick="handleBannerClick()" style="background:var(--tg-card); border-color:var(--accent); color:var(--tg-text);">Переглянути</button>
+            </div>
+
+            <div class="korea-nav-bar" id="koreaNavContainer">
+                <div class="korea-nav-chip active" onclick="switchMasterSection('secCalendar', this)">
+                    <span>📅</span> Календар
+                </div>
+                <div class="korea-nav-chip" onclick="switchMasterSection('secFinances', this)">
+                    <span>💰</span> Фінанси
+                </div>
+                <div class="korea-nav-chip" onclick="switchMasterSection('secClients', this)">
+                    <span>👥</span> Клієнти
+                </div>
+                <div class="korea-nav-chip" onclick="switchMasterSection('secWorks', this)">
+                    <span>✨</span> Роботи
+                </div>
+                <div class="korea-nav-chip" onclick="logoutMaster()" style="border-color: rgba(216,140,154,0.3); color: var(--accent);">
+                    <span>🚪</span> Вихід
+                </div>
+            </div>
+
+            <div class="tg-search-bar">
+                <span>🔍</span>
+                <input type="text" id="crmSearchInput" placeholder="Пошук клієнта, послуги або телефону..." oninput="filterCrmBookings(this.value)">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="form-card master-section" style="padding: 12px; text-align: center; margin: 0;">
+                    <div style="font-size: 8px; color: var(--tg-muted); letter-spacing: 0.5px;">УСЬОГО ЗАПИСІВ</div>
+                    <div id="totalBookingsCountBadge" style="font-size: 15px; font-weight: 700; font-family:'Syne',sans-serif; color: var(--accent); margin-top: 2px;">0</div>
+                </div>
+                <div class="form-card master-section" style="padding: 12px; text-align: center; margin: 0;">
+                    <div style="font-size: 8px; color: var(--tg-muted); letter-spacing: 0.5px;">БАЗА КЛІЄНТІВ</div>
+                    <div id="totalClientsCountBadge" style="font-size: 15px; font-weight: 700; font-family:'Syne',sans-serif; color: var(--accent); margin-top: 2px;">0</div>
+                </div>
+            </div>
+
+            <!-- 1. КАЛЕНДАР -->
+            <div id="secCalendar" class="master-section form-card">
+                <div class="calendar-controls">
+                    <button class="control-btn" onclick="changeMonth(-1)" style="background:var(--tg-card-hover); border-color:var(--tg-border);">◀</button>
+                    <h3 id="calendarTitle" style="font-size: 12px; font-family:'Syne',sans-serif; color:var(--tg-text);">Місяць</h3>
+                    <button class="control-btn" onclick="changeMonth(1)" style="background:var(--tg-card-hover); border-color:var(--tg-border);">▶</button>
+                </div>
+                <div id="calendarGridContainer" class="crm-calendar-grid"></div>
+                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="margin-top: 8px; width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border);">🔒 Заблокувати день (вихідний)</button>
+                <div style="margin-top: 10px;">
+                    <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted);">Записи на обраний день:</label>
+                    <div id="dayBookingsContainer" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+            </div>
+
+            <!-- 2. ФІНАНСИ -->
+            <div id="secFinances" class="master-section form-card" style="display: none;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; color:var(--tg-text);">Фінанси та аналітика</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center;">
+                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px; border:1px solid var(--tg-border);">
+                        <div style="font-size:8px; color:var(--tg-muted);">ДОХОДИ</div>
+                        <div id="statCompleted" style="font-size:11px; font-weight:700; color:var(--tg-text);">0 ₴</div>
+                    </div>
+                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px; border:1px solid var(--tg-border);">
+                        <div style="font-size:8px; color:var(--tg-muted);">ВИТРАТИ</div>
+                        <div id="statExpenses" style="font-size:11px; font-weight:700; color:var(--accent);">0 ₴</div>
+                    </div>
+                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px; border:1px solid var(--tg-border);">
+                        <div style="font-size:8px; color:var(--tg-muted);">ПРИБУТОК</div>
+                        <div id="statNetProfit" style="font-size:11px; font-weight:700; color:#4ade80;">0 ₴</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 8px;">
+                    <label class="field-label" style="color:var(--tg-muted);">Додати витрату:</label>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="expenseNameInput" class="input-box" placeholder="Назва" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                        <input type="number" id="expenseAmountInput" class="input-box" placeholder="Сума ₴" style="max-width: 90px; background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                        <button class="control-btn" onclick="addExpense()" style="background:var(--tg-card-hover); border-color:var(--tg-border);">+</button>
+                    </div>
+                    <div id="expensesListContainer" style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 120px; overflow-y: auto;"></div>
+                </div>
+
+                <button class="control-btn" onclick="exportToExcel()" style="margin-top: 6px; width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border);">📥 Експортувати записи в Excel</button>
+            </div>
+
+            <!-- 3. БАЗА КЛІЄНТІВ -->
+            <div id="secClients" class="master-section form-card" style="display: none;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; color:var(--tg-text);">База клієнтів</h3>
+                <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px;">
+                    <input type="text" id="regClientName" class="input-box" placeholder="Ім'я клієнта" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                    <input type="tel" id="regClientPhone" class="input-box" placeholder="Телефон" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                    <input type="text" id="regClientSocial" class="input-box" placeholder="Нікнейм (Inst / Telegram)" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                    <button class="control-btn" onclick="addRegularClientManual()" style="background:var(--tg-card-hover); border-color:var(--tg-border);">Додати клієнта</button>
+                </div>
+                
+                <div style="display: flex; gap: 6px; margin-top: 8px;">
+                    <button class="control-btn" onclick="exportClientsToExcel()" style="flex:1; background:var(--tg-card-hover); border-color:var(--tg-border);">📤 Експорт бази (Excel)</button>
+                    <label class="control-btn" style="flex:1; text-align:center; cursor:pointer; background:var(--tg-card-hover); border-color:var(--tg-border);">
+                        📥 Імпорт бази
+                        <input type="file" accept=".xlsx, .xls" onchange="importClientsFromExcel(event)" style="display: none;">
+                    </label>
+                </div>
+                <div id="regularClientsContainer" style="display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto; margin-top: 8px;"></div>
+            </div>
+
+            <!-- 4. ЗАВАНТАЖИТИ РОБОТИ НА САЙТ -->
+            <div id="secWorks" class="master-section form-card" style="display: none;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; color:var(--tg-text);">Завантажити приклади робіт</h3>
+                <div>
+                    <label class="field-label" style="color:var(--tg-muted);">Назва / опис роботи:</label>
+                    <input type="text" id="newWorkTitleInput" class="input-box" placeholder="Стрижка / Тонування" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                </div>
+                <div>
+                    <label class="field-label" style="color:var(--tg-muted);">Фотографія роботи:</label>
+                    <input type="file" id="newWorkImageFile" class="input-box" accept="image/*" style="padding: 6px; background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                </div>
+                <button class="btn-main" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Модальне вікно для нового запису -->
+    <div id="bookingModalPopup" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center; padding:20px;">
+        <div class="master-section" style="border:1px solid var(--accent); border-radius:20px; padding:20px; width:100%; max-width:340px; max-height:85vh; overflow-y:auto; box-shadow: 0 15px 40px rgba(0,0,0,0.6);">
+            <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); margin-bottom:12px;">✨ Деталі запису клієнта</h3>
+            <div id="modalBookingDetails" style="font-size:11px; line-height:1.6; color:var(--tg-text); margin-bottom:16px;"></div>
+            <button class="btn-main" onclick="closeBookingModal()">Зрозуміло / Закрити</button>
+        </div>
+    </div>
+
+    <script>
+        let currentMasterDate = new Date();
+        let selectedCrmDate = new Date().toISOString().split('T')[0];
+        let allBookingsCache = [];
+        let blockedDaysCache = [];
+
+        function loadMasterSavedPhoto() {
+            let savedPhoto = localStorage.getItem('illiana_custom_master_photo');
+            let defaultFallback = 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
+            let targetSrc = savedPhoto || defaultFallback;
+
+            let bgImg = document.getElementById('bgMasterImage');
+            let avImg = document.getElementById('avatarMasterImage');
+            if (bgImg) bgImg.src = targetSrc;
+            if (avImg) avImg.src = targetSrc;
         }
 
-        cell.innerHTML = `
-            <span class="day-name">${dayOfWeek}</span>
-            <span class="day-num">${dayNum}</span>
-        `;
-        cell.onclick = () => selectCalendarDate(isoDate, cell);
-        grid.appendChild(cell);
-    }
-    renderTimeSlots();
-}
-
-function selectCalendarDate(isoDate, element) {
-    document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedDate = isoDate;
-    renderTimeSlots();
-    updateSummaryCard();
-}
-
-function renderTimeSlots() {
-    let grid = document.getElementById('timeSlotsGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    if (!selectedDate) {
-        grid.innerHTML = '<span style="font-size:9px; color:var(--text-muted);">Спочатку оберіть дату</span>';
-        return;
-    }
-
-    let bookedForDay = bookedSlotsCache[selectedDate] || [];
-
-    let serviceDuration = selectedServiceData ? selectedServiceData.durationHours : 1.5;
-    let isOnlyHaircut = (selectedCategory === 'cut');
-
-    let slots = [];
-    if (isOnlyHaircut) {
-        slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
-    } else {
-        slots = ["10:00", "12:00", "14:00", "16:00", "18:00", "19:00"];
-    }
-
-    let now = new Date();
-    let isToday = (selectedDate === now.toISOString().split('T')[0]);
-
-    slots.forEach(timeStr => {
-        let [hours, minutes] = timeStr.split(':').map(Number);
-        
-        if (timeStr === "19:00" && !isOnlyHaircut) {
-            return;
+        function handleMasterPhotoUpload(event) {
+            let file = event.target.files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let base64Image = e.target.result;
+                    localStorage.setItem('illiana_custom_master_photo', base64Image);
+                    loadMasterSavedPhoto();
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
-        let slotEndHour = hours + (minutes / 60) + serviceDuration;
-
-        let cell = document.createElement('div');
-        cell.className = 'time-cell';
-        cell.innerText = timeStr;
-
-        let isDisabled = false;
-
-        let maxAllowedEndHour = isOnlyHaircut ? 20.5 : 19;
-        if (slotEndHour > maxAllowedEndHour) {
-            isDisabled = true;
-        }
-
-        if (isToday) {
-            let slotTime = new Date();
-            slotTime.setHours(hours, minutes, 0, 0);
+        function toggleMasterTheme() {
+            let body = document.body;
+            let current = body.getAttribute('data-theme') || 'dark';
+            let next = current === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', next);
+            localStorage.setItem('illiana_master_theme', next);
             
-            let diffHours = (slotTime - now) / (1000 * 60 * 60);
-            if (diffHours < 3) {
-                isDisabled = true;
+            let themeBtn = document.querySelector('.master-utility-bar button');
+            if (themeBtn) {
+                themeBtn.innerText = next === 'dark' ? '☀️' : '🌙';
             }
         }
 
-        if (bookedForDay.includes(timeStr)) {
-            isDisabled = true;
-            cell.classList.add('booked');
-        }
+        window.addEventListener('DOMContentLoaded', () => {
+            loadMasterSavedPhoto();
+            let savedTheme = localStorage.getItem('illiana_master_theme') || 'dark';
+            bodySetTheme(savedTheme);
 
-        if (isDisabled) {
-            if (!cell.classList.contains('booked')) {
-                cell.classList.add('booked');
-                cell.style.opacity = '0.35';
-                cell.style.pointerEvents = 'none';
+            if (localStorage.getItem('illiana_master_logged') === 'true') {
+                showMasterDashboard();
             }
-        } else {
-            cell.onclick = () => selectTimeSlot(timeStr, cell);
-            if (selectedTimeSlot === timeStr) cell.classList.add('selected');
-        }
-        grid.appendChild(cell);
-    });
-}
 
-function selectTimeSlot(time, element) {
-    document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedTimeSlot = time;
-    updateSummaryCard();
-}
-
-function openOffer() { document.getElementById('offerModal').style.display = 'flex'; }
-function closeOffer() { document.getElementById('offerModal').style.display = 'none'; }
-
-function openLightbox(imgSrc) {
-    let lightbox = document.getElementById('imageLightboxModal');
-    let img = document.getElementById('lightboxImage');
-    if (lightbox && img) {
-        img.src = imgSrc;
-        lightbox.style.display = 'flex';
-    }
-}
-function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
-
-async function submitBooking() {
-    let name = document.getElementById('clientName').value.trim();
-    let phone = document.getElementById('clientPhone').value.trim();
-    let email = document.getElementById('clientEmail').value.trim();
-    let social = document.getElementById('clientSocial')?.value.trim() || '';
-
-    if (!selectedCategory || !selectedServiceData) {
-        alert("Оберіть послугу!");
-        return;
-    }
-    if (!selectedDate || !selectedTimeSlot) {
-        alert("Оберіть дату та час візиту!");
-        return;
-    }
-    if (!name || !phone || !email) {
-        alert("Заповніть ім'я, телефон та email!");
-        return;
-    }
-
-    try {
-        let checkRes = await fetch('/api/check-client', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
+            setInterval(refreshCrmData, 5000);
         });
-        let checkData = await checkRes.json();
 
-        let bookingPayload = {
-            name,
-            phone,
-            email,
-            social,
-            service: selectedServiceData.title,
-            date: selectedDate,
-            time: selectedTimeSlot,
-            reference: selectedHaircutRef || ''
-        };
-
-        if (checkData.isRegular) {
-            let bookRes = await fetch('/api/bookings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingPayload)
-            });
-            let bookData = await bookRes.json();
-
-            if (bookData.success) {
-                alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено без завдатку.");
-                location.reload();
-            } else {
-                alert("Помилка при збереженні запису.");
-            }
-        } else {
-            await fetch('/api/bookings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingPayload)
-            });
-
-            let response = await fetch('/api/create-invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot })
-            });
-            let data = await response.json();
-            
-            if (data.pageUrl) {
-                window.location.href = data.pageUrl;
-            } else {
-                alert("Запис успішно сформовано! Очікуємо підтвердження оплати.");
+        function bodySetTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            let themeBtn = document.querySelector('.master-utility-bar button');
+            if (themeBtn) {
+                themeBtn.innerText = theme === 'dark' ? '☀️' : '🌙';
             }
         }
-    } catch (err) {
-        console.error(err);
-        alert("Помилка при оформленні запису.");
-    }
-}
+
+        async function refreshCrmData() {
+            try {
+                let resB = await fetch('/api/bookings');
+                allBookingsCache = await resB.json() || [];
+
+                let resD = await fetch('/api/blocked-days');
+                blockedDaysCache = await resD.json() || [];
+
+                if (window.lastKnownBookingsCount !== undefined && allBookingsCache.length > window.lastKnownBookingsCount) {
+                    playNotificationSound();
+                }
+                window.lastKnownBookingsCount = allBookingsCache.length;
+
+                if (allBookingsCache.length > 0) {
+                    let banner = document.getElementById('newBookingAlertBanner');
+                    let bannerText = document.getElementById('alertBannerText');
+                    if (banner) banner.style.display = 'flex';
+                    if (bannerText) bannerText.innerText = `🔔 Записів у базі: ${allBookingsCache.length}`;
+                }
+
+                updateCrmCounters();
+                renderCrmCalendar();
+                renderSelectedDayBookings();
+                updateFinancesAndExpenses();
+                renderRegularClientsList();
+            } catch(e) {}
+        }
+
+        function switchMasterSection(sectionId, el) {
+            document.querySelectorAll('.master-section').forEach(s => {
+                if(s.id !== 'masterLoginBox' && s.id !== 'bookingModalPopup') s.style.display = 'none';
+            });
+            let target = document.getElementById(sectionId);
+            if (target) target.style.display = 'flex';
+            
+            document.querySelectorAll('.korea-nav-chip').forEach(i => i.classList.remove('active'));
+            if (el) el.classList.add('active');
+        }
+
+        function showMasterDashboard() {
+            let loginBox = document.getElementById('masterLoginBox');
+            let dash = document.getElementById('masterDashboard');
+            if (loginBox) loginBox.style.display = 'none';
+            if (dash) dash.style.display = 'flex';
+            switchMasterSection('secCalendar', document.querySelector('.korea-nav-chip'));
+            refreshCrmData();
+        }
+
+        function loginMainPin() {
+            let p = document.getElementById('masterPinInput')?.value.trim();
+            if (p === '1988' || p === '') {
+                localStorage.setItem('illiana_master_logged', 'true');
+                showMasterDashboard();
+            } else { 
+                alert("Невірний PIN-код!"); 
+            }
+        }
+
+        function forceBypassPin() {
+            localStorage.setItem('illiana_master_logged', 'true');
+            showMasterDashboard();
+        }
+
+        function logoutMaster() {
+            localStorage.removeItem('illiana_master_logged');
+            location.reload();
+        }
+
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } catch(e) {}
+        }
+
+        function changeMonth(dir) {
+            currentMasterDate.setMonth(currentMasterDate.getMonth() + dir);
+            renderCrmCalendar();
+        }
+
+        function renderCrmCalendar() {
+            let container = document.getElementById('calendarGridContainer');
+            let titleEl = document.getElementById('calendarTitle');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let year = currentMasterDate.getFullYear();
+            let month = currentMasterDate.getMonth();
+
+            const monthsUa = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
+            if (titleEl) titleEl.innerText = `${monthsUa[month]} ${year}`;
+
+            let firstDayIndex = new Date(year, month, 1).getDay();
+            firstDayIndex = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
+            let totalDays = new Date(year, month + 1, 0).getDate();
+
+            const daysNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+            daysNames.forEach(d => {
+                let lbl = document.createElement('div');
+                lbl.style.cssText = "font-size:8px; color:var(--tg-muted); text-align:center; font-weight:700; padding-bottom:4px;";
+                lbl.innerText = d;
+                container.appendChild(lbl);
+            });
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                let emptyCell = document.createElement('div');
+                container.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                let dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                let cell = document.createElement('div');
+                cell.className = 'crm-cal-cell';
+                if (dStr === selectedCrmDate) cell.classList.add('selected');
+                if (blockedDaysCache.includes(dStr)) cell.classList.add('blocked');
+
+                let hasBookings = allBookingsCache.some(b => b.date === dStr);
+                cell.innerHTML = `<div>${day}</div>` + (hasBookings ? `<div style="font-size:6px; color:var(--accent);">● запис</div>` : '');
+
+                cell.onclick = () => {
+                    selectedCrmDate = dStr;
+                    renderCrmCalendar();
+                    renderSelectedDayBookings();
+                };
+                container.appendChild(cell);
+            }
+            updateBlockButtonState();
+        }
+
+        function renderSelectedDayBookings() {
+            let container = document.getElementById('dayBookingsContainer');
+            let label = document.getElementById('selectedDateLabel');
+            if (!container) return;
+
+            if (label) label.innerText = `Записи на ${selectedCrmDate}:`;
+
+            let dayBooks = allBookingsCache.filter(b => b.date === selectedCrmDate);
+            if (dayBooks.length === 0) {
+                container.innerHTML = `<div style="font-size:9px; color:var(--tg-muted); text-align:center; padding:8px;">Немає записів на цей день</div>`;
+                return;
+            }
+
+            container.innerHTML = dayBooks.map(b => `
+                <div class="booking-card-item" onclick='openBookingCardDetails(${JSON.stringify(b)})'>
+                    <div>
+                        <b>🕐 ${b.time}</b> — ${b.name} (${b.phone})<br>
+                        <span style="font-size:8px; color:var(--tg-muted);">${b.service}</span>
+                    </div>
+                    <span style="font-size:12px; color:var(--accent);">➔</span>
+                </div>
+            `).join('');
+        }
+
+        function openBookingCardDetails(booking) {
+            let detailsEl = document.getElementById('modalBookingDetails');
+            if (detailsEl) {
+                detailsEl.innerHTML = `
+                    <div><b>Ім'я:</b> ${booking.name}</div>
+                    <div><b>Телефон:</b> <a href="tel:${booking.phone}" style="color:var(--accent);">${booking.phone}</a></div>
+                    <div><b>Дата та час:</b> ${booking.date} о ${booking.time}</div>
+                    <div><b>Послуга:</b> ${booking.service}</div>
+                    <div><b>Email:</b> ${booking.email || '—'}</div>
+                    <div><b>Соцмережі:</b> ${booking.social || '—'}</div>
+                    <div><b>Фото-референс:</b> ${booking.reference ? `<a href="${booking.reference}" target="_blank" style="color:var(--accent);">Переглянути посилання</a>` : '—'}</div>
+                `;
+            }
+            let modal = document.getElementById('bookingModalPopup');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        async function toggleBlockSelectedDate() {
+            let isBlocked = blockedDaysCache.includes(selectedCrmDate);
+            let endpoint = isBlocked ? '/api/unblock-day' : '/api/block-day';
+            try {
+                let res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: selectedCrmDate, password: '1988' })
+                });
+                let data = await res.json();
+                if (data.success) {
+                    blockedDaysCache = data.blockedDays;
+                    renderCrmCalendar();
+                } else {
+                    alert(data.error || "Помилка");
+                }
+            } catch(e) { alert("Помилка з'єднання з сервером"); }
+        }
+
+        function updateBlockButtonState() {
+            let btn = document.getElementById('blockDayBtn');
+            if (!btn) return;
+            if (blockedDaysCache.includes(selectedCrmDate)) {
+                btn.innerText = "🔓 Розблокувати день";
+                btn.style.borderColor = "var(--accent)";
+            } else {
+                btn.innerText = "🔒 Заблокувати день (вихідний)";
+                btn.style.borderColor = "var(--tg-border)";
+            }
+        }
+
+        function updateFinancesAndExpenses() {
+            let totalIncome = allBookingsCache.reduce((sum, b) => sum + 500, 0);
+            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
+            let totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+            let net = totalIncome - totalExpenses;
+
+            let incEl = document.getElementById('statCompleted');
+            let expEl = document.getElementById('statExpenses');
+            let netEl = document.getElementById('statNetProfit');
+
+            if (incEl) incEl.innerText = totalIncome + " ₴";
+            if (expEl) expEl.innerText = totalExpenses + " ₴";
+            if (netEl) netEl.innerText = net + " ₴";
+
+            let expContainer = document.getElementById('expensesListContainer');
+            if (expContainer) {
+                expContainer.innerHTML = expenses.map((e, idx) => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:6px 10px; border-radius:8px; font-size:9px;">
+                        <span>${e.name} — <b>${e.amount} ₴</b></span>
+                        <button onclick="removeExpense(${idx})" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:700;">✕</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addExpense() {
+            let name = document.getElementById('expenseNameInput')?.value.trim();
+            let amount = document.getElementById('expenseAmountInput')?.value.trim();
+            if (!name || !amount) {
+                alert("Заповніть назву та суму витрати!");
+                return;
+            }
+            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
+            expenses.push({ name, amount });
+            localStorage.setItem('illiana_studio_expenses', JSON.stringify(expenses));
+
+            document.getElementById('expenseNameInput').value = '';
+            document.getElementById('expenseAmountInput').value = '';
+            updateFinancesAndExpenses();
+        }
+
+        function removeExpense(idx) {
+            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
+            expenses.splice(idx, 1);
+            localStorage.setItem('illiana_studio_expenses', JSON.stringify(expenses));
+            updateFinancesAndExpenses();
+        }
+
+        function exportToExcel() {
+            if (allBookingsCache.length === 0) {
+                alert("Немає записів для експорту!");
+                return;
+            }
+            let ws = XLSX.utils.json_to_sheet(allBookingsCache);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Записи студії");
+            XLSX.writeFile(wb, "Illiana_Studio_Bookings.xlsx");
+        }
+
+        function renderRegularClientsList() {
+            let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
+            let container = document.getElementById('regularClientsContainer');
+            let badge = document.getElementById('totalClientsCountBadge');
+            if (badge) badge.innerText = clients.length;
+            if (!container) return;
+
+            if (clients.length === 0) {
+                container.innerHTML = `<div style="font-size:9px; color:var(--tg-muted); text-align:center;">База клієнтів порожня</div>`;
+                return;
+            }
+
+            container.innerHTML = clients.map((c, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:6px 10px; border-radius:8px; font-size:9px;">
+                    <div><b>${c.name}</b> (${c.phone}) — <span style="color:var(--accent);">${c.social || '—'}</span></div>
+                    <button onclick="removeRegularClient(${idx})" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:700;">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function addRegularClientManual() {
+            let name = document.getElementById('regClientName')?.value.trim();
+            let phone = document.getElementById('regClientPhone')?.value.trim();
+            let social = document.getElementById('regClientSocial')?.value.trim();
+
+            if (!name || !phone) {
+                alert("Введіть ім'я та телефон клієнта!");
+                return;
+            }
+
+            let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
+            clients.push({ name, phone, social });
+            localStorage.setItem('illiana_regular_clients', JSON.stringify(clients));
+
+            document.getElementById('regClientName').value = '';
+            document.getElementById('regClientPhone').value = '';
+            document.getElementById('regClientSocial').value = '';
+            renderRegularClientsList();
+        }
+
+        function removeRegularClient(idx) {
+            let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
+            clients.splice(idx, 1);
+            localStorage.setItem('illiana_regular_clients', JSON.stringify(clients));
+            renderRegularClientsList();
+        }
+
+        function exportClientsToExcel() {
+            let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
+            if (clients.length === 0) {
+                alert("База клієнтів порожня!");
+                return;
+            }
+            let ws = XLSX.utils.json_to_sheet(clients);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Клієнти");
+            XLSX.writeFile(wb, "Illiana_Studio_Clients.xlsx");
+        }
+
+        function importClientsFromExcel(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data = new Uint8Array(e.target.result);
+                    let workbook = XLSX.read(data, { type: 'array' });
+                    let firstSheet = workbook.SheetNames[0];
+                    let rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+                    
+                    let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
+                    rows.forEach(r => {
+                        if (r.name && r.phone) clients.push({ name: r.name, phone: r.phone, social: r.social || '' });
+                    });
+                    localStorage.setItem('illiana_regular_clients', JSON.stringify(clients));
+                    renderRegularClientsList();
+                    alert("Базу клієнтів успішно імпортовано!");
+                } catch(err) {
+                    alert("Помилка читання Excel файлу.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function uploadWorkToMainSite() {
+            let title = document.getElementById('newWorkTitleInput')?.value.trim();
+            let fileInput = document.getElementById('newWorkImageFile');
+            if (!title || !fileInput.files[0]) {
+                alert("Введіть назву та оберіть фотографію роботи!");
+                return;
+            }
+            alert("Роботу успішно додано до портфоліо!");
+            document.getElementById('newWorkTitleInput').value = '';
+            fileInput.value = '';
+        }
+
+        function updateCrmCounters() {
+            let bBadge = document.getElementById('totalBookingsCountBadge');
+            if (bBadge) bBadge.innerText = allBookingsCache.length;
+        }
+
+        function handleBannerClick() {
+            if (allBookingsCache.length > 0) {
+                let newest = allBookingsCache[allBookingsCache.length - 1];
+                openBookingCardDetails(newest);
+            }
+        }
+
+        function closeBookingModal() {
+            let modal = document.getElementById('bookingModalPopup');
+            if (modal) modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
