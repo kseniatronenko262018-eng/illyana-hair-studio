@@ -471,17 +471,18 @@ async function submitBooking() {
         });
         let checkData = await checkRes.json();
 
-        if (checkData.isRegular) {
-            let bookingPayload = {
-                name,
-                phone,
-                email,
-                social,
-                service: selectedServiceData.title,
-                date: selectedDate,
-                time: selectedTimeSlot
-            };
+        let bookingPayload = {
+            name,
+            phone,
+            email,
+            social,
+            service: selectedServiceData.title,
+            date: selectedDate,
+            time: selectedTimeSlot,
+            reference: selectedHaircutRef || ''
+        };
 
+        if (checkData.isRegular) {
             let bookRes = await fetch('/api/bookings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -496,17 +497,6 @@ async function submitBooking() {
                 alert("Помилка при збереженні запису.");
             }
         } else {
-            // Для нових клієнтів також перед оплатою збережемо бронь в таблицю bookings із позначкою неоплачено, 
-            // щоб майстриня одразу бачила спробу запису в кабінеті
-            let bookingPayload = {
-                name,
-                phone,
-                email,
-                social,
-                service: selectedServiceData.title,
-                date: selectedDate,
-                time: selectedTimeSlot
-            };
             await fetch('/api/bookings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
