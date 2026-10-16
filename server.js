@@ -82,15 +82,20 @@ app.post('/api/bookings', async (req, res) => {
         });
         const data = await response.json();
 
-        // 2. Перевіряємо, чи є такий клієнт у таблиці clients за телефоном
-        const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?phone=eq.${encodeURIComponent(booking.phone)}&select=*`, {
+        // 2. Перевіряємо, чи є такий клієнт у таблиці clients за телефоном (гнучкий пошук)
+        const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
             method: 'GET',
             headers: supabaseHeaders
         });
-        const clientData = await checkClient.json();
+        const clientsList = await checkClient.json();
+        const cleanInputPhone = (booking.phone || '').replace(/\D/g, '').slice(-9);
+        const clientExists = clientsList.some(c => {
+            const dbPhone = (c.phone || '').replace(/\D/g, '').slice(-9);
+            return dbPhone && dbPhone === cleanInputPhone;
+        });
 
         // Якщо клієнта ще немає в базі, додаємо його автоматично
-        if (!clientData || clientData.length === 0) {
+        if (!clientExists) {
             await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
                 method: 'POST',
                 headers: supabaseHeaders,
@@ -110,18 +115,25 @@ app.post('/api/bookings', async (req, res) => {
     }
 });
 
-// API: Перевірка, чи є клієнт постійним (за номером телефону)
+// API: Перевірка, чи є клієнт постійним (гнучкий пошук за останніми цифрами номера)
 app.post('/api/check-client', async (req, res) => {
     const { phone } = req.body;
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?phone=eq.${encodeURIComponent(phone)}&select=*`, {
+        const cleanInputPhone = (phone || '').replace(/\D/g, '').slice(-9);
+
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
             method: 'GET',
             headers: supabaseHeaders
         });
         const clients = await response.json();
         
-        if (clients && clients.length > 0) {
-            res.json({ isRegular: true, client: clients[0] });
+        const found = clients.find(c => {
+            const dbPhone = (c.phone || '').replace(/\D/g, '').slice(-9);
+            return dbPhone && dbPhone === cleanInputPhone;
+        });
+        
+        if (found) {
+            res.json({ isRegular: true, client: found });
         } else {
             res.json({ isRegular: false });
         }
