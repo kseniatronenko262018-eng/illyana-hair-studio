@@ -29,7 +29,7 @@ app.get('/master', (req, res) => {
     res.sendFile(path.join(__dirname, 'master.html'));
 });
 
-// API: Отримати список вихідних днів (зберігаємо у пам'яті сервера або можна винести в Supabase)
+// API: Отримати список вихідних днів
 let blockedDays = [];
 app.get('/api/blocked-days', (req, res) => {
     res.json(blockedDays);
@@ -70,20 +70,64 @@ app.get('/api/bookings', async (req, res) => {
     }
 });
 
-// API: Додати новий запис від клієнта напряму в хмару Supabase
+// API: Додати новий запис та автоматично зберегти/оновити клієнта в базі
 app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
     try {
+        // 1. Зберігаємо запис у таблицю bookings
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
             method: 'POST',
             headers: supabaseHeaders,
             body: JSON.stringify(booking)
         });
         const data = await response.json();
+
+        // 2. Перевіряємо, чи є такий клієнт у таблиці clients за телефоном
+        const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?phone=eq.${encodeURIComponent(booking.phone)}&select=*`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        const clientData = await checkClient.json();
+
+        // Якщо клієнта ще немає в базі, додаємо його автоматично
+        if (!clientData || clientData.length === 0) {
+            await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+                method: 'POST',
+                headers: supabaseHeaders,
+                body: JSON.stringify({
+                    name: booking.name,
+                    phone: booking.phone,
+                    email: booking.email || '',
+                    social: booking.social || ''
+                })
+            });
+        }
+
         res.json({ success: true, data });
     } catch (error) {
         console.error("Помилка збереження запису в Supabase:", error);
         res.status(500).json({ error: 'Не вдалося зберегти запис у хмару' });
+    }
+});
+
+// API: Перевірка, чи є клієнт постійним (за номером телефону)
+app.post('/api/check-client', async (req, res) => {
+    const { phone } = req.body;
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?phone=eq.${encodeURIComponent(phone)}&select=*`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        const clients = await response.json();
+        
+        if (clients && clients.length > 0) {
+            res.json({ isRegular: true, client: clients[0] });
+        } else {
+            res.json({ isRegular: false });
+        }
+    } catch (error) {
+        console.error("Помилка перевірки клієнта:", error);
+        res.status(500).json({ isRegular: false });
     }
 });
 
@@ -120,5 +164,5 @@ app.post('/api/create-invoice', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Сервер запущено на порту ${PORT} з підключенням до Supabase хмари!`);
+    console.log(`Сервер запущено на порту ${PORT} з підключенням до Supabase!`);
 });
