@@ -584,12 +584,11 @@
                 item.className = 'booking-card-item';
                 item.innerHTML = `
                     <div>
-                        <b>🕐 ${b.time}</b> — ${b.name} (${b.phone})<br>
-                        <span style="font-size:8px; color:var(--tg-muted);">${b.service}</span>
+                        <b>🕐 ${b.time}</b> — ${b.name || 'Клієнт'} (${b.phone || '—'})<br>
+                        <span style="font-size:8px; color:var(--tg-muted);">${b.service || 'Послуга'}</span>
                     </div>
                     <span style="font-size:12px; color:var(--accent);">➔</span>
                 `;
-                // Використовуємо прямий прив'язаний об'єкт замість рядкової генерації
                 item.onclick = () => openBookingCardDetails(b);
                 container.appendChild(item);
             });
@@ -598,19 +597,24 @@
         function openBookingCardDetails(booking) {
             let detailsEl = document.getElementById('modalBookingDetails');
             if (detailsEl) {
+                let refVal = booking.reference || booking.haircut_ref || '';
                 let refHtml = '—';
-                if (booking.reference) {
-                    refHtml = `<a href="${booking.reference}" target="_blank" style="color:var(--accent); text-decoration:underline;">Переглянути референс</a>`;
+                if (refVal) {
+                    if (refVal.startsWith('http') || refVal.startsWith('data:')) {
+                        refHtml = `<br><img src="${refVal}" style="max-width:100%; max-height:160px; border-radius:8px; margin-top:6px; border:1px solid var(--tg-border);" alt="Референс">`;
+                    } else {
+                        refHtml = `Обраний референс: <b>${refVal}</b>`;
+                    }
                 }
 
                 detailsEl.innerHTML = `
-                    <div><b>Ім'я:</b> ${booking.name}</div>
-                    <div><b>Телефон:</b> <a href="tel:${booking.phone}" style="color:var(--accent);">${booking.phone}</a></div>
-                    <div><b>Дата та час:</b> ${booking.date} о ${booking.time}</div>
-                    <div><b>Послуга:</b> ${booking.service}</div>
+                    <div><b>Ім'я:</b> ${booking.name || '—'}</div>
+                    <div><b>Телефон:</b> <a href="tel:${booking.phone}" style="color:var(--accent);">${booking.phone || '—'}</a></div>
+                    <div><b>Дата та час:</b> ${booking.date || '—'} о ${booking.time || '—'}</div>
+                    <div><b>Послуга:</b> ${booking.service || '—'}</div>
                     <div><b>Email:</b> ${booking.email || '—'}</div>
                     <div><b>Соцмережі:</b> ${booking.social || '—'}</div>
-                    <div><b>Фото-референс:</b> ${refHtml}</div>
+                    <div style="margin-top:8px;"><b>Фото-референс:</b> ${refHtml}</div>
                 `;
             }
             let modal = document.getElementById('bookingModalPopup');
