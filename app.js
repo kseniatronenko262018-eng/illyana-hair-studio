@@ -459,7 +459,7 @@ async function submitBooking() {
     }
 
     try {
-        let checkRes = await href = await fetch('/api/check-client', {
+        let checkRes = await fetch('/api/check-client', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone })
