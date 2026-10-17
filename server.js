@@ -58,12 +58,21 @@ app.post('/api/unblock-day', (req, res) => {
 // API: Отримати всі записи з хмари Supabase (таблиця bookings)
 app.get('/api/bookings', async (req, res) => {
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, {
             method: 'GET',
             headers: supabaseHeaders
         });
         const data = await response.json();
-        res.json(Array.isArray(data) ? data : []);
+        
+        // Гарантуємо, що дані завжди приходять у правильному форматі з ціною та тривалістю
+        const formattedData = Array.isArray(data) ? data.map(b => ({
+            ...b,
+            price: b.price !== null && b.price !== undefined ? b.price : 1000,
+            durationHours: b.durationHours !== null && b.durationHours !== undefined ? b.durationHours : 1.5,
+            reference: (b.reference && b.reference !== 'EMPTY' && b.reference !== 'NULL') ? b.reference : (b.haircut_ref || '')
+        })) : [];
+
+        res.json(formattedData);
     } catch (error) {
         console.error("Помилка отримання записів з Supabase:", error);
         res.status(500).json([]);
