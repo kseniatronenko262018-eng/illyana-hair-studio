@@ -7,6 +7,9 @@ let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
 
+// Ваш інтегрований Telegram-бот
+const TELEGRAM_BOT_URL = 'https://t.me/CleanupZakarpattiaBot';
+
 const translations = {
     ua: {
         tab_book: "Запис",
@@ -112,7 +115,10 @@ async function fetchBookingsData() {
         bookedSlotsCache = {};
         data.forEach(b => {
             if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
-            bookedSlotsCache[b.date].push(b.time);
+            bookedSlotsCache[b.date].push({
+                time: b.time,
+                duration: Number(b.durationHours || 1.5)
+            });
         });
         renderTimeSlots();
     } catch(e) { console.error("Could not fetch bookings", e); }
@@ -361,28 +367,16 @@ function renderTimeSlots() {
     }
 
     let bookedForDay = bookedSlotsCache[selectedDate] || [];
-
     let serviceDuration = selectedServiceData ? selectedServiceData.durationHours : 1.5;
-    let isOnlyHaircut = (selectedCategory === 'cut');
 
-    let slots = [];
-    if (isOnlyHaircut) {
-        slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
-    } else {
-        slots = ["10:00", "12:00", "14:00", "16:00", "18:00", "19:00"];
-    }
-
+    let slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
     let now = new Date();
     let isToday = (selectedDate === now.toISOString().split('T')[0]);
 
     slots.forEach(timeStr => {
         let [hours, minutes] = timeStr.split(':').map(Number);
-        
-        if (timeStr === "19:00" && !isOnlyHaircut) {
-            return;
-        }
-
-        let slotEndHour = hours + (minutes / 60) + serviceDuration;
+        let slotStartDecimal = hours + (minutes / 60);
+        let slotEndDecimal = slotStartDecimal + serviceDuration;
 
         let cell = document.createElement('div');
         cell.className = 'time-cell';
@@ -390,32 +384,33 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
-        let maxAllowedEndHour = isOnlyHaircut ? 20.5 : 19;
-        if (slotEndHour > maxAllowedEndHour) {
+        if (slotEndDecimal > 19.0) {
             isDisabled = true;
         }
 
         if (isToday) {
             let slotTime = new Date();
             slotTime.setHours(hours, minutes, 0, 0);
-            
             let diffHours = (slotTime - now) / (1000 * 60 * 60);
             if (diffHours < 3) {
                 isDisabled = true;
             }
         }
 
-        if (bookedForDay.includes(timeStr)) {
-            isDisabled = true;
-            cell.classList.add('booked');
-        }
+        bookedForDay.forEach(b => {
+            let [bHours, bMinutes] = b.time.split(':').map(Number);
+            let bStart = bHours + (bMinutes / 60);
+            let bEnd = bStart + b.duration;
+
+            if (slotStartDecimal < bEnd && slotEndDecimal > bStart) {
+                isDisabled = true;
+            }
+        });
 
         if (isDisabled) {
-            if (!cell.classList.contains('booked')) {
-                cell.classList.add('booked');
-                cell.style.opacity = '0.35';
-                cell.style.pointerEvents = 'none';
-            }
+            cell.classList.add('booked');
+            cell.style.opacity = '0.35';
+            cell.style.pointerEvents = 'none';
         } else {
             cell.onclick = () => selectTimeSlot(timeStr, cell);
             if (selectedTimeSlot === timeStr) cell.classList.add('selected');
@@ -477,12 +472,13 @@ async function submitBooking() {
             email,
             social,
             service: selectedServiceData.title,
+            price: selectedServiceData.price,
+            durationHours: selectedServiceData.durationHours,
             date: selectedDate,
             time: selectedTimeSlot,
             reference: selectedHaircutRef || ''
         };
 
-        // Завжди зберігаємо запис у базі
         let bookRes = await fetch('/api/bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -492,18 +488,17 @@ async function submitBooking() {
 
         if (checkData.isRegular) {
             if (bookData.success !== false) {
-                alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено без завдатку.");
-                location.reload();
+                alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено.");
+                window.location.href = TELEGRAM_BOT_URL;
             } else {
                 alert("Помилка при збереженні запису в базі.");
             }
         } else {
-            // Для нових клієнтів пробуємо створити інвойс
             try {
                 let invoiceRes = await fetch('/api/create-invoice', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone, email, date: selectedDate, time: selectedTimeSlot })
+                    body: JSON.stringify({ name, phone, email, date: selectedDate, time: selectedTimeSlot, price: selectedServiceData.price })
                 });
                 let invoiceData = await invoiceRes.json();
                 
@@ -515,8 +510,8 @@ async function submitBooking() {
                 console.warn("Інвойс не створено, але бронь збережено:", invErr);
             }
 
-            alert("✨ Запис успішно сформовано! Очікуємо підтвердження.");
-            location.reload();
+            alert("✨ Запис успішно сформовано! Переходимо в чат-бот.");
+            window.location.href = TELEGRAM_BOT_URL;
         }
     } catch (err) {
         console.error("Помилка оформлення:", err);
