@@ -8,7 +8,7 @@ let selectedTimeSlot = null;
 let bookedSlotsCache = {};
 
 // Ваш інтегрований Telegram-бот
-const TELEGRAM_BOT_URL = 'https://t.me/CleanupZakarpattiaBot';
+const TELEGRAM_BOT_URL = 'https://t.me/illianahair_bot';
 
 const translations = {
     ua: {
@@ -384,7 +384,6 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
-        // Не даємо виходити за межі робочого дня студії (19:00)
         if (slotEndDecimal > 19.0) {
             isDisabled = true;
         }
@@ -398,13 +397,11 @@ function renderTimeSlots() {
             }
         }
 
-        // Жорстка перевірка перетину з уже існуючими записами
         bookedForDay.forEach(b => {
             let [bHours, bMinutes] = b.time.split(':').map(Number);
             let bStart = bHours + (bMinutes / 60);
             let bEnd = bStart + Number(b.duration || 1.5);
 
-            // Якщо новий запис накладається на вже існуючий (або простягається через нього)
             if (slotStartDecimal < bEnd && slotEndDecimal > bStart) {
                 isDisabled = true;
             }
@@ -462,7 +459,7 @@ async function submitBooking() {
     }
 
     try {
-        let checkRes = await fetch('/api/check-client', {
+        let checkRes = await href = await fetch('/api/check-client', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone })
