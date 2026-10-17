@@ -739,10 +739,42 @@
         }
 
         function handleBannerClick() {
-            if (allBookingsCache.length > 0) {
-                let newest = allBookingsCache[allBookingsCache.length - 1];
-                openBookingCardDetails(newest);
+            if (allBookingsCache.length === 0) {
+                alert("Записів у базі поки немає!");
+                return;
             }
+
+            let detailsEl = document.getElementById('modalBookingDetails');
+            if (detailsEl) {
+                let listHtml = `
+                    <div style="font-size:10px; color:var(--tg-muted); margin-bottom:8px;">Всі актуальні записи у базі:</div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto;">
+                `;
+
+                let sortedBookings = [...allBookingsCache].sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+
+                sortedBookings.forEach((b) => {
+                    let priceText = b.price ? ` • <b>${b.price} ₴</b>` : '';
+                    let safeIndex = allBookingsCache.indexOf(b);
+                    listHtml += `
+                        <div onclick="openBookingCardDetails(allBookingsCache[${safeIndex}])" style="background:var(--tg-card-hover); border:1px solid var(--tg-border); border-radius:10px; padding:8px; cursor:pointer; transition: border-color 0.2s;">
+                            <div style="display:flex; justify-content:space-between; font-weight:700;">
+                                <span>📅 ${b.date} о ${b.time}</span>
+                                <span style="color:var(--accent);">${b.name || 'Клієнт'}</span>
+                            </div>
+                            <div style="font-size:9px; color:var(--tg-muted); margin-top:2px;">
+                                ${b.service || 'Послуга'}${priceText} (${b.durationHours || 1.5} год)
+                            </div>
+                        </div>
+                    `;
+                });
+
+                listHtml += `</div>`;
+                detailsEl.innerHTML = listHtml;
+            }
+
+            let modal = document.getElementById('bookingModalPopup');
+            if (modal) modal.style.display = 'flex';
         }
 
         function closeBookingModal() {
