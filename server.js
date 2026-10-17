@@ -88,7 +88,11 @@ app.post('/api/bookings', async (req, res) => {
             return res.status(500).json({ success: false, error: errText });
         }
 
-        const data = await response.json();
+        let data = [];
+        const textResp = await response.text();
+        if (textResp) {
+            try { data = JSON.parse(textResp); } catch(e) {}
+        }
 
         // Перевірка та збереження клієнта в базу
         try {
