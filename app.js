@@ -367,7 +367,7 @@ function renderTimeSlots() {
     }
 
     let bookedForDay = bookedSlotsCache[selectedDate] || [];
-    let serviceDuration = selectedServiceData ? selectedServiceData.durationHours : 1.5;
+    let serviceDuration = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
 
     let slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
     let now = new Date();
@@ -384,6 +384,7 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
+        // Не даємо виходити за межі робочого дня студії (19:00)
         if (slotEndDecimal > 19.0) {
             isDisabled = true;
         }
@@ -397,11 +398,13 @@ function renderTimeSlots() {
             }
         }
 
+        // Жорстка перевірка перетину з уже існуючими записами
         bookedForDay.forEach(b => {
             let [bHours, bMinutes] = b.time.split(':').map(Number);
             let bStart = bHours + (bMinutes / 60);
-            let bEnd = bStart + b.duration;
+            let bEnd = bStart + Number(b.duration || 1.5);
 
+            // Якщо новий запис накладається на вже існуючий (або простягається через нього)
             if (slotStartDecimal < bEnd && slotEndDecimal > bStart) {
                 isDisabled = true;
             }
