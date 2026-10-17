@@ -39,19 +39,11 @@
         }
 
         .master-bg {
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh;
-            z-index: -999; 
-            overflow: hidden; 
-            background-color: var(--tg-bg);
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -999; overflow: hidden; background-color: var(--tg-bg);
         }
         .master-bg img {
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover;
+            width: 100%; height: 100%; object-fit: cover;
             filter: blur(14px) brightness(0.32) contrast(1.1);
             transform: scale(1.15);
         }
@@ -68,131 +60,60 @@
         }
 
         .master-utility-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 4px;
-            margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 4px; margin-bottom: 12px;
         }
 
         .korea-nav-bar {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            margin-bottom: 12px;
-            scrollbar-width: none;
+            display: flex; gap: 6px; overflow-x: auto;
+            padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none;
         }
         .korea-nav-bar::-webkit-scrollbar { display: none; }
 
         .korea-nav-chip {
-            background: var(--tg-card);
-            border: 1px solid var(--tg-border);
-            padding: 10px 14px;
-            border-radius: 14px;
-            font-size: 9px;
-            font-weight: 700;
-            color: var(--tg-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            cursor: pointer;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            background: var(--tg-card); border: 1px solid var(--tg-border);
+            padding: 10px 14px; border-radius: 14px; font-size: 9px; font-weight: 700;
+            color: var(--tg-muted); text-transform: uppercase; letter-spacing: 0.8px;
+            cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px;
         }
         .korea-nav-chip.active {
-            background: var(--accent);
-            color: var(--accent-invert);
-            border-color: var(--accent);
+            background: var(--accent); color: var(--accent-invert); border-color: var(--accent);
         }
 
         .tg-search-bar {
-            background: var(--tg-card-hover);
-            border-radius: 16px;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
+            background: var(--tg-card-hover); border-radius: 16px; padding: 10px 14px;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
             border: 1px solid var(--tg-border);
         }
         .tg-search-bar input {
-            background: transparent;
-            border: none;
-            color: var(--tg-text);
-            font-size: 12px;
-            outline: none;
-            width: 100%;
+            background: transparent; border: none; color: var(--tg-text); font-size: 12px; outline: none; width: 100%;
         }
 
         button, input, select, .control-btn, .btn-main, .crm-cal-cell {
-            position: relative;
-            z-index: 50 !important;
-            pointer-events: auto !important;
-            cursor: pointer !important;
+            position: relative; z-index: 50 !important; pointer-events: auto !important; cursor: pointer !important;
         }
 
         .notification-banner {
-            background: rgba(216, 140, 154, 0.22); 
-            border: 1px solid var(--accent);
-            padding: 10px 14px; 
-            border-radius: 16px; 
-            font-size: 10px; 
-            color: var(--tg-text);
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 12px;
+            background: rgba(216, 140, 154, 0.22); border: 1px solid var(--accent);
+            padding: 10px 14px; border-radius: 16px; font-size: 10px; color: var(--tg-text);
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
         }
 
-        .calendar-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .crm-calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-bottom: 10px;
-        }
+        .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .crm-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 10px; }
         .crm-cal-cell {
-            background: var(--tg-card-hover);
-            border: 1px solid var(--tg-border);
-            border-radius: 8px;
-            padding: 8px 2px;
-            text-align: center;
-            font-size: 9px;
-            font-weight: 700;
-            color: var(--tg-text);
+            background: var(--tg-card-hover); border: 1px solid var(--tg-border);
+            border-radius: 8px; padding: 8px 2px; text-align: center; font-size: 9px; font-weight: 700; color: var(--tg-text);
         }
-        .crm-cal-cell.selected {
-            background: var(--accent);
-            color: var(--accent-invert);
-            border-color: var(--accent);
-        }
-        .crm-cal-cell.blocked {
-            background: rgba(216, 140, 154, 0.15);
-            opacity: 0.6;
-            text-decoration: line-through;
-        }
+        .crm-cal-cell.selected { background: var(--accent); color: var(--accent-invert); border-color: var(--accent); }
+        .crm-cal-cell.blocked { background: rgba(216, 140, 154, 0.15); opacity: 0.6; text-decoration: line-through; }
+        
         .booking-card-item {
-            background: var(--tg-card-hover);
-            border: 1px solid var(--tg-border);
-            border-radius: 12px;
-            padding: 10px;
-            font-size: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: border-color 0.2s;
+            background: var(--tg-card-hover); border: 1px solid var(--tg-border);
+            border-radius: 12px; padding: 10px; font-size: 10px; display: flex; justify-content: space-between;
+            align-items: center; cursor: pointer; transition: border-color 0.2s;
         }
-        .booking-card-item:hover {
-            border-color: var(--accent);
-        }
+        .booking-card-item:hover { border-color: var(--accent); }
     </style>
 </head>
 <body data-theme="dark">
@@ -216,7 +137,6 @@
             </div>
         </div>
 
-        <!-- Екран авторизації -->
         <div id="masterLoginBox" class="form-card master-section" style="text-align: center; margin-top: 40px; padding: 20px; z-index: 50; position: relative;">
             <h2 style="font-family:'Syne',sans-serif; font-size: 16px; margin-bottom: 12px; color:var(--tg-text);">ДОСТУП ДО CRM</h2>
             <input type="password" id="masterPinInput" class="input-box" placeholder="PIN (1988)" style="text-align: center; margin-bottom: 12px; background: rgba(0,0,0,0.15); border-color:var(--tg-border); color:var(--tg-text);">
@@ -224,7 +144,6 @@
             <button class="control-btn" onclick="forceBypassPin()" style="width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">Швидкий вхід</button>
         </div>
 
-        <!-- Панель управління CRM -->
         <div id="masterDashboard" style="display: none; flex-direction: column; gap: 10px;">
 
             <div id="newBookingAlertBanner" class="notification-banner" style="display: none;">
@@ -582,10 +501,11 @@
             dayBooks.forEach(b => {
                 let item = document.createElement('div');
                 item.className = 'booking-card-item';
+                let priceText = b.price ? ` • ${b.price} ₴` : '';
                 item.innerHTML = `
                     <div>
                         <b>🕐 ${b.time}</b> — ${b.name || 'Клієнт'} (${b.phone || '—'})<br>
-                        <span style="font-size:8px; color:var(--tg-muted);">${b.service || 'Послуга'}</span>
+                        <span style="font-size:8px; color:var(--tg-muted);">${b.service || 'Послуга'}${priceText}</span>
                     </div>
                     <span style="font-size:12px; color:var(--accent);">➔</span>
                 `;
@@ -599,7 +519,7 @@
             if (detailsEl) {
                 let refVal = booking.reference || booking.haircut_ref || '';
                 let refHtml = '—';
-                if (refVal) {
+                if (refVal && refVal !== 'EMPTY' && refVal !== 'NULL') {
                     if (refVal.startsWith('http') || refVal.startsWith('data:')) {
                         refHtml = `<br><img src="${refVal}" style="max-width:100%; max-height:160px; border-radius:8px; margin-top:6px; border:1px solid var(--tg-border);" alt="Референс">`;
                     } else {
@@ -607,11 +527,16 @@
                     }
                 }
 
+                let priceDisplay = booking.price ? `${booking.price} ₴` : '—';
+                let durationDisplay = booking.durationHours ? `${booking.durationHours} год` : '—';
+
                 detailsEl.innerHTML = `
                     <div><b>Ім'я:</b> ${booking.name || '—'}</div>
                     <div><b>Телефон:</b> <a href="tel:${booking.phone}" style="color:var(--accent);">${booking.phone || '—'}</a></div>
                     <div><b>Дата та час:</b> ${booking.date || '—'} о ${booking.time || '—'}</div>
                     <div><b>Послуга:</b> ${booking.service || '—'}</div>
+                    <div><b>Вартість:</b> <span style="color:var(--accent); font-weight:700;">${priceDisplay}</span></div>
+                    <div><b>Тривалість:</b> ${durationDisplay}</div>
                     <div><b>Email:</b> ${booking.email || '—'}</div>
                     <div><b>Соцмережі:</b> ${booking.social || '—'}</div>
                     <div style="margin-top:8px;"><b>Фото-референс:</b> ${refHtml}</div>
@@ -653,7 +578,7 @@
         }
 
         function updateFinancesAndExpenses() {
-            let totalIncome = allBookingsCache.reduce((sum, b) => sum + 500, 0);
+            let totalIncome = allBookingsCache.reduce((sum, b) => sum + Number(b.price || 1000), 0);
             let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
             let totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
