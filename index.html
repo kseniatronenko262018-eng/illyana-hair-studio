@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -68,7 +68,7 @@
                     </div>
 
                     <div class="service-card-row" id="mainCardComplex" onclick="selectMainCategory('complex')">
-                        <img src="hair-new.jpg" alt="Стрижка + Фарбування">
+                        <img src="hair-v2.jpg" alt="Стрижка + Фарбування">
                         <div class="service-card-info">
                             <div class="title" data-i18n="complex_title">Стрижка + Фарбування коріння</div>
                             <div class="sub" data-i18n="complex_sub">3000 ₴ • 3 год (до 2 см)</div>
@@ -299,7 +299,7 @@
             
             if (category === 'cut') {
                 const el = document.getElementById('mainCardCut');
-                if (el) el.classList.add('selected');
+                if (el) el.classList.3add('selected');
                 const refSec = document.getElementById('haircutExamplesSection');
                 if (refSec) refSec.style.display = 'block';
                 const subMenu = document.getElementById('categorySubmenu');
