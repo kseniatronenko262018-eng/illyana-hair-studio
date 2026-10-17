@@ -46,27 +46,34 @@
         <div id="paneBook" class="section-pane active">
             <div class="form-card">
                 <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
-                <div class="services-grid">
-                    <div class="service-card-mini" id="mainCardCut" onclick="selectMainCategory('cut')">
+                
+                <!-- Оновлені горизонтальні картки послуг -->
+                <div class="services-list">
+                    <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
                         <img src="PXL_20260528_101624993_exported_4255.jpg" alt="Стрижка">
-                        <div>
+                        <div class="service-card-info">
                             <div class="title" data-i18n="cut_title">Стрижка</div>
                             <div class="sub" data-i18n="cut_sub">1000 ₴ • 1.5 год</div>
                         </div>
+                        <div class="service-radio-indicator"></div>
                     </div>
-                    <div class="service-card-mini" id="mainCardColor" onclick="selectMainCategory('color')">
+
+                    <div class="service-card-row" id="mainCardColor" onclick="selectMainCategory('color')">
                         <img src="PXL_20260531_162323458.jpg" alt="Фарбування">
-                        <div>
+                        <div class="service-card-info">
                             <div class="title" data-i18n="color_title">Фарбування</div>
                             <div class="sub" data-i18n="color_sub">Підбір за станом</div>
                         </div>
+                        <div class="service-radio-indicator"></div>
                     </div>
-                    <div class="service-card-mini" id="mainCardComplex" onclick="selectMainCategory('complex')" style="grid-column: span 2;">
+
+                    <div class="service-card-row" id="mainCardComplex" onclick="selectMainCategory('complex')">
                         <img src="PXL_20250216_124053179.jpg" alt="Стрижка + Фарбування">
-                        <div>
+                        <div class="service-card-info">
                             <div class="title" data-i18n="complex_title">Стрижка + Фарбування коріння</div>
                             <div class="sub" data-i18n="complex_sub">3000 ₴ • 3 год (до 2 см)</div>
                         </div>
+                        <div class="service-radio-indicator"></div>
                     </div>
                 </div>
 
@@ -285,13 +292,11 @@
         <img id="lightboxImage" src="" alt="Збільшене фото">
     </div>
 
-    <!-- Безпечне ввімкнення блоків вибору категорії та довжини -->
+    <!-- Логіка вибору категорії та оновлених селекторів -->
     <script>
         function selectMainCategory(category) {
-            // Знімаємо виділення з усіх карток
-            document.querySelectorAll('.service-card-mini').forEach(card => card.classList.remove('selected'));
+            document.querySelectorAll('.service-card-row').forEach(card => card.classList.remove('selected'));
             
-            // Виділяємо обрану картку
             if (category === 'cut') {
                 const el = document.getElementById('mainCardCut');
                 if (el) el.classList.add('selected');
@@ -327,7 +332,6 @@
                 if (photoSec) photoSec.style.display = 'block';
             }
             
-            // Якщо у файлі app.js є своя функція, вона також запрацює поверх
             if (typeof window.originalSelectMainCategory === 'function') {
                 window.originalSelectMainCategory(category);
             }
