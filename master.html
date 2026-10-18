@@ -193,8 +193,11 @@
                     <button class="control-btn" onclick="changeMonth(1)" style="background:var(--tg-card-hover); border-color:var(--tg-border);">▶</button>
                 </div>
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
-                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="margin-top: 8px; width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border);">🔒 Заблокувати день (вихідний)</button>
-                <div style="margin-top: 10px;">
+                
+                <!-- Виправлена кнопка блокування дня -->
+                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="margin-top: 12px; width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border); padding: 12px; border-radius: 12px; text-align: center; font-weight: 700;">🔒 Заблокувати день (вихідний)</button>
+                
+                <div style="margin-top: 12px;">
                     <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted);">Записи на обраний день:</label>
                     <div id="dayBookingsContainer" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"></div>
                 </div>
