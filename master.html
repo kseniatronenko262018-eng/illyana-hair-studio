@@ -6,7 +6,7 @@
     <title>Кабінет майстра | Явір Ілляна</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=100">
     <style>
         :root[data-theme="dark"] {
             --accent: #d88c9a;
@@ -101,7 +101,6 @@
 
         .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         
-        /* Жорстке виправлення сітки календаря, щоб вона не стрибала вбік */
         #secCalendar {
             display: flex;
             flex-direction: column;
@@ -207,7 +206,6 @@
                 </div>
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
                 
-                <!-- Кнопка блокування з чітким блочним розташуванням -->
                 <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="display: block; width: 100%; margin-top: 10px; margin-bottom: 4px; background:var(--tg-card-hover); border-color:var(--tg-border); padding: 12px; border-radius: 12px; text-align: center; font-weight: 700;">🔒 Заблокувати день (вихідний)</button>
                 
                 <div style="margin-top: 10px; width: 100%;">
@@ -793,7 +791,7 @@
             if (modal) modal.style.display = 'flex';
         }
 
-        closeBookingModal() {
+        function closeBookingModal() {
             let modal = document.getElementById('bookingModalPopup');
             if (modal) modal.style.display = 'none';
         }
