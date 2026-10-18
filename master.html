@@ -100,7 +100,20 @@
         }
 
         .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .crm-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 10px; }
+        
+        /* Жорстке виправлення сітки календаря, щоб вона не стрибала вбік */
+        #secCalendar {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .crm-calendar-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 4px; 
+            margin-bottom: 12px; 
+            width: 100%;
+        }
         .crm-cal-cell {
             background: var(--tg-card-hover); border: 1px solid var(--tg-border);
             border-radius: 8px; padding: 8px 2px; text-align: center; font-size: 9px; font-weight: 700; color: var(--tg-text);
@@ -194,10 +207,10 @@
                 </div>
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
                 
-                <!-- Виправлена кнопка блокування дня -->
-                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="margin-top: 12px; width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border); padding: 12px; border-radius: 12px; text-align: center; font-weight: 700;">🔒 Заблокувати день (вихідний)</button>
+                <!-- Кнопка блокування з чітким блочним розташуванням -->
+                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="display: block; width: 100%; margin-top: 10px; margin-bottom: 4px; background:var(--tg-card-hover); border-color:var(--tg-border); padding: 12px; border-radius: 12px; text-align: center; font-weight: 700;">🔒 Заблокувати день (вихідний)</button>
                 
-                <div style="margin-top: 12px;">
+                <div style="margin-top: 10px; width: 100%;">
                     <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted);">Записи на обраний день:</label>
                     <div id="dayBookingsContainer" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"></div>
                 </div>
@@ -780,7 +793,7 @@
             if (modal) modal.style.display = 'flex';
         }
 
-        function closeBookingModal() {
+        closeBookingModal() {
             let modal = document.getElementById('bookingModalPopup');
             if (modal) modal.style.display = 'none';
         }
