@@ -6,7 +6,7 @@
     <title>Кабінет майстра | Явір Ілляна</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=100">
+    <link rel="stylesheet" href="style.css?v=102">
     <style>
         :root[data-theme="dark"] {
             --accent: #d88c9a;
@@ -89,14 +89,16 @@
             background: transparent; border: none; color: var(--tg-text); font-size: 12px; outline: none; width: 100%;
         }
 
-        button, input, select, .control-btn, .btn-main, .crm-cal-cell {
-            position: relative; z-index: 50 !important; pointer-events: auto !important; cursor: pointer !important;
+        /* Гарантуємо клікабельність усіх кнопок та інтерактивних елементів */
+        button, input, select, .control-btn, .btn-main, .crm-cal-cell, .notification-banner button {
+            position: relative; z-index: 100 !important; pointer-events: auto !important; cursor: pointer !important;
         }
 
         .notification-banner {
             background: rgba(216, 140, 154, 0.22); border: 1px solid var(--accent);
             padding: 10px 14px; border-radius: 16px; font-size: 10px; color: var(--tg-text);
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+            z-index: 90; position: relative;
         }
 
         .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -160,7 +162,7 @@
 
             <div id="newBookingAlertBanner" class="notification-banner" style="display: none;">
                 <span id="alertBannerText">🔔 Новий запис!</span>
-                <button class="control-btn" onclick="handleBannerClick()" style="background:var(--tg-card); border-color:var(--accent); color:var(--tg-text);">Переглянути</button>
+                <button class="control-btn" onclick="handleBannerClick()" style="background:var(--tg-card); border-color:var(--accent); color:var(--tg-text); padding: 6px 12px; border-radius: 8px; font-weight: 700;">Переглянути</button>
             </div>
 
             <div class="korea-nav-bar" id="koreaNavContainer">
@@ -206,7 +208,7 @@
                 </div>
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
                 
-                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="display: block; width: 100%; margin-top: 10px; margin-bottom: 4px; background:var(--tg-card-hover); border-color:var(--tg-border); padding: 12px; border-radius: 12px; text-align: center; font-weight: 700;">🔒 Заблокувати день (вихідний)</button>
+                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="display: block; width: 100%; margin-top: 10px; margin-bottom: 4px; background:var(--tg-card-hover); border-color:var(--tg-border); padding: 12px; border-radius: 12px; text-align: center; font-weight: 700; color: var(--accent);">🔒 Заблокувати день (вихідний)</button>
                 
                 <div style="margin-top: 10px; width: 100%;">
                     <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted);">Записи на обраний день:</label>
@@ -749,7 +751,7 @@
 
         function updateCrmCounters() {
             let bBadge = document.getElementById('totalBookingsCountBadge');
-            if (bBadge) bBadge.innerText = allBookingsCache.length;
+            if (bBadge) bBadge.innerText = allBookingsCountBadgeVal = allBookingsCache.length;
         }
 
         function handleBannerClick() {
