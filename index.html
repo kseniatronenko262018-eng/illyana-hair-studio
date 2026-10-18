@@ -7,21 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=12">
-    <style>
-        /* Жорсткий захист від розтягування картинки третьої послуги */
-        #mainCardComplex img {
-            width: 56px !important;
-            height: 56px !important;
-            min-width: 56px !important;
-            min-height: 56px !important;
-            max-width: 56px !important;
-            max-height: 56px !important;
-            object-fit: cover !important;
-            border-radius: 8px !important;
-            flex-shrink: 0 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
 
@@ -61,7 +47,7 @@
             <div class="form-card">
                 <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
                 
-                <!-- Оновлені горизонтальні картки послуг -->
+                <!-- Горизонтальні картки послуг -->
                 <div class="services-list">
                     <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
                         <img src="PXL_20260528_101624993_exported_4255.jpg" alt="Стрижка">
@@ -306,7 +292,7 @@
         <img id="lightboxImage" src="" alt="Збільшене фото">
     </div>
 
-    <!-- Логіка вибору категорії та оновлених селекторів -->
+    <!-- Логіка вибору категорії -->
     <script>
         function selectMainCategory(category) {
             document.querySelectorAll('.service-card-row').forEach(card => card.classList.remove('selected'));
