@@ -450,28 +450,47 @@ function openLightbox(imgSrc) {
 }
 function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
 
-async function uploadImageToImgBB(file) {
+// НОВА ФУНКЦІЯ: Розумне стиснення фото прямо в браузері клієнта
+async function uploadClientPhoto(file) {
     if (!file) return '';
 
-    // НЕ блокуємо великі файли. ImgBB приймає фото до 32 МБ.
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    try {
-        let response = await fetch('https://api.imgbb.com/1/upload?key=6d207e02949e29f8f41e1277a06f3630', {
-            method: 'POST',
-            body: formData
-        });
-        let result = await response.json();
-        if (result && result.success) {
-            return result.data.url; // Повертає пряме інтернет-посилання на ваше фото
+    return new Promise((resolve) => {
+        // Перевіряємо, чи це дійсно картинка
+        if (!file.type.startsWith('image/')) {
+            resolve(file.name);
+            return;
         }
-    } catch (e) {
-        console.warn("Помилка хостингу:", e);
-    }
 
-    // Тільки якщо сервер ImgBB дійсно впав, зберігаємо хоча б назву
-    return file.name;
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            let img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let canvas = document.createElement('canvas');
+                let MAX_WIDTH = 800; // Оптимальна ширина для кабінету майстра
+                let scaleSize = MAX_WIDTH / img.width;
+                
+                if (img.width < MAX_WIDTH) {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                } else {
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                }
+
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Конвертуємо у легкий формат JPEG. 
+                // Це обійде помилку Payload Too Large на сервері
+                let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                resolve(compressedBase64); 
+            };
+            img.onerror = () => resolve(file.name);
+        };
+        reader.onerror = () => resolve(file.name);
+    });
 }
 
 async function submitBooking() {
@@ -493,11 +512,10 @@ async function submitBooking() {
         return;
     }
 
-    // Змінюємо текст кнопки, щоб клієнт бачив, що фото завантажується
     let submitBtn = document.querySelector('button[onclick="submitBooking()"]');
     let originalBtnText = submitBtn ? submitBtn.innerText : '';
     if (submitBtn) {
-        submitBtn.innerText = "⏳ Фото завантажується, зачекайте...";
+        submitBtn.innerText = "⏳ Фото обробляється, зачекайте...";
         submitBtn.style.pointerEvents = 'none';
         submitBtn.style.opacity = '0.7';
     }
@@ -508,9 +526,9 @@ async function submitBooking() {
 
         let uploadedPhotoUrl = '';
         if (refPhotoInput && refPhotoInput.files && refPhotoInput.files[0]) {
-            uploadedPhotoUrl = await uploadImageToImgBB(refPhotoInput.files[0]);
+            uploadedPhotoUrl = await uploadClientPhoto(refPhotoInput.files[0]);
         } else if (hairPhotoInput && hairPhotoInput.files && hairPhotoInput.files[0]) {
-            uploadedPhotoUrl = await uploadImageToImgBB(hairPhotoInput.files[0]);
+            uploadedPhotoUrl = await uploadClientPhoto(hairPhotoInput.files[0]);
         }
 
         let finalReferenceInfo = selectedHaircutRef || uploadedPhotoUrl || 'EMPTY';
@@ -580,7 +598,6 @@ async function submitBooking() {
         console.error("Помилка оформлення:", err);
         alert("Помилка: " + err.message);
     } finally {
-        // Повертаємо кнопку в нормальний стан
         if (submitBtn) {
             submitBtn.innerText = originalBtnText;
             submitBtn.style.pointerEvents = 'auto';
