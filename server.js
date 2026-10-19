@@ -32,7 +32,7 @@ function parseTimeToDecimal(timeStr) {
     return h + (m / 60);
 }
 
-// Функція відправки сповіщення майстру в Telegram
+// Повідомлення майстру в Telegram
 async function sendMasterTelegramNotification(booking) {
     if (!BOT_TOKEN || !MASTER_TELEGRAM_ID || MASTER_TELEGRAM_ID.includes('ВСТАВТЕ')) return;
 
@@ -147,10 +147,8 @@ app.post('/api/bookings', async (req, res) => {
             } catch(e) {}
         }
 
-        // Автоматичне сповіщення майстру
         sendMasterTelegramNotification(booking);
 
-        // Збереження клієнта
         try {
             const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
                 method: 'GET',
