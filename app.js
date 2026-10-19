@@ -106,6 +106,12 @@ const translations = {
 window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
     fetchBookingsData();
+    
+    // Відновлюємо аватарку на головній сторінці
+    let savedAvatar = localStorage.getItem('illiana_custom_master_photo') || 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
+    document.querySelectorAll('.profile-avatar img, #profileAvatarImg').forEach(img => {
+        img.src = savedAvatar;
+    });
 });
 
 async function fetchBookingsData() {
@@ -448,9 +454,14 @@ function closeLightbox() { document.getElementById('imageLightboxModal').style.d
 async function uploadImageToImgBB(file) {
     if (!file) return '';
     
-    // Захист від занадто великих файлів (щоб уникнути Payload Too Large)
-    if (file.size > 5 * 1024 * 1024) {
-        return file.name;
+    // Захист від занадто великих файлів (перетворення в Base64 безпечного розміру або назву)
+    if (file.size > 4 * 1024 * 1024) {
+        return new Promise((resolve) => {
+            let reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve(file.name);
+            reader.readAsDataURL(file);
+        });
     }
 
     const formData = new FormData();
@@ -469,7 +480,13 @@ async function uploadImageToImgBB(file) {
         console.warn("Помилка завантаження на хостинг:", e);
     }
 
-    return file.name;
+    // Запасний варіант через FileReader
+    return new Promise((resolve) => {
+        let reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(file.name);
+        reader.readAsDataURL(file);
+    });
 }
 
 async function submitBooking() {
