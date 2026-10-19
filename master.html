@@ -89,7 +89,6 @@
             background: transparent; border: none; color: var(--tg-text); font-size: 12px; outline: none; width: 100%;
         }
 
-        /* Гарантуємо клікабельність усіх кнопок та інтерактивних елементів */
         button, input, select, .control-btn, .btn-main, .crm-cal-cell, .notification-banner button {
             position: relative; z-index: 100 !important; pointer-events: auto !important; cursor: pointer !important;
         }
@@ -285,12 +284,12 @@
 
     </div>
 
-    <!-- Модальне вікно для детальної інформації про запис -->
-    <div id="bookingModalPopup" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center; padding:20px;">
-        <div class="master-section" style="border:1px solid var(--accent); border-radius:20px; padding:20px; width:100%; max-width:340px; max-height:85vh; overflow-y:auto; box-shadow: 0 15px 40px rgba(0,0,0,0.6);">
-            <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); margin-bottom:12px;">✨ Деталі запису клієнта</h3>
-            <div id="modalBookingDetails" style="font-size:11px; line-height:1.6; color:var(--tg-text); margin-bottom:16px;"></div>
-            <button class="btn-main" onclick="closeBookingModal()">Зрозуміло / Закрити</button>
+    <!-- Унікальне модальне вікно для детальної інформації про запис із гарантованим показом -->
+    <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px;">
+        <div style="background: var(--tg-card, #1a1816); border: 1.5px solid var(--accent, #d88c9a); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 12px; color: var(--tg-text, #f5f2ed);">
+            <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center; margin-bottom:4px;">✨ Деталі запису</h3>
+            <div id="modalBookingDetails" style="font-size:11px; line-height:1.6; display: flex; flex-direction: column; gap: 6px;"></div>
+            <button class="btn-main" onclick="closeBookingModal()" style="margin-top: 8px;">Зрозуміло / Закрити</button>
         </div>
     </div>
 
@@ -387,7 +386,7 @@
 
         function switchMasterSection(sectionId, el) {
             document.querySelectorAll('.master-section').forEach(s => {
-                if(s.id !== 'masterLoginBox' && s.id !== 'bookingModalPopup') s.style.display = 'none';
+                if(s.id !== 'masterLoginBox' && s.id !== 'masterDetailPopupModal') s.style.display = 'none';
             });
             let target = document.getElementById(sectionId);
             if (target) target.style.display = 'flex';
@@ -537,7 +536,7 @@
                 let refHtml = '—';
                 if (refVal && refVal !== 'EMPTY' && refVal !== 'NULL') {
                     if (refVal.startsWith('http') || refVal.startsWith('data:')) {
-                        refHtml = `<br><img src="${refVal}" style="max-width:100%; max-height:160px; border-radius:8px; margin-top:6px; border:1px solid var(--tg-border);" alt="Референс">`;
+                        refHtml = `<br><img src="${refVal}" style="max-width:100%; max-height:180px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--tg-border);" alt="Референс">`;
                     } else {
                         refHtml = `Обраний референс: <b>${refVal}</b>`;
                     }
@@ -548,17 +547,17 @@
 
                 detailsEl.innerHTML = `
                     <div><b>Ім'я:</b> ${booking.name || '—'}</div>
-                    <div><b>Телефон:</b> <a href="tel:${booking.phone}" style="color:var(--accent);">${booking.phone || '—'}</a></div>
+                    <div><b>Телефон:</b> <a href="tel:${booking.phone}" style="color:var(--accent); text-decoration:none;">${booking.phone || '—'}</a></div>
                     <div><b>Дата та час:</b> ${booking.date || '—'} о ${booking.time || '—'}</div>
                     <div><b>Послуга:</b> ${booking.service || '—'}</div>
                     <div><b>Вартість:</b> <span style="color:var(--accent); font-weight:700;">${priceDisplay}</span></div>
                     <div><b>Тривалість:</b> ${durationDisplay}</div>
                     <div><b>Email:</b> ${booking.email || '—'}</div>
                     <div><b>Соцмережі:</b> ${booking.social || '—'}</div>
-                    <div style="margin-top:8px;"><b>Фото-референс:</b> ${refHtml}</div>
+                    <div style="margin-top:6px;"><b>Фото-референс / волосся:</b><br>${refHtml}</div>
                 `;
             }
-            let modal = document.getElementById('bookingModalPopup');
+            let modal = document.getElementById('masterDetailPopupModal');
             if (modal) modal.style.display = 'flex';
         }
 
@@ -751,7 +750,7 @@
 
         function updateCrmCounters() {
             let bBadge = document.getElementById('totalBookingsCountBadge');
-            if (bBadge) bBadge.innerText = allBookingsCountBadgeVal = allBookingsCache.length;
+            if (bBadge) bBadge.innerText = allBookingsCache.length;
         }
 
         function handleBannerClick() {
@@ -764,7 +763,7 @@
             if (detailsEl) {
                 let listHtml = `
                     <div style="font-size:10px; color:var(--tg-muted); margin-bottom:8px;">Всі актуальні записи у базі:</div>
-                    <div style="display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto;">
+                    <div style="display: flex; flex-direction: column; gap: 6px; max-height: 250px; overflow-y: auto;">
                 `;
 
                 let sortedBookings = [...allBookingsCache].sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
@@ -773,7 +772,7 @@
                     let priceText = b.price ? ` • <b>${b.price} ₴</b>` : '';
                     let safeIndex = allBookingsCache.indexOf(b);
                     listHtml += `
-                        <div onclick="openBookingCardDetails(allBookingsCache[${safeIndex}])" style="background:var(--tg-card-hover); border:1px solid var(--tg-border); border-radius:10px; padding:8px; cursor:pointer; transition: border-color 0.2s;">
+                        <div onclick="openBookingCardDetails(allBookingsCache[${safeIndex}])" style="background:var(--tg-card-hover); border:1px solid var(--tg-border); border-radius:10px; padding:8px; cursor:pointer;">
                             <div style="display:flex; justify-content:space-between; font-weight:700;">
                                 <span>📅 ${b.date} о ${b.time}</span>
                                 <span style="color:var(--accent);">${b.name || 'Клієнт'}</span>
@@ -789,12 +788,12 @@
                 detailsEl.innerHTML = listHtml;
             }
 
-            let modal = document.getElementById('bookingModalPopup');
+            let modal = document.getElementById('masterDetailPopupModal');
             if (modal) modal.style.display = 'flex';
         }
 
         function closeBookingModal() {
-            let modal = document.getElementById('bookingModalPopup');
+            let modal = document.getElementById('masterDetailPopupModal');
             if (modal) modal.style.display = 'none';
         }
     </script>
