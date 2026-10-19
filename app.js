@@ -450,7 +450,7 @@ function openLightbox(imgSrc) {
 }
 function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
 
-// РОЗУМНА ФУНКЦІЯ: Стиснення фото перед відправкою на ImgBB, щоб обійти будь-які ліміти розміру
+// НАДІЙНА ФУНКЦІЯ: Розумне стиснення фото у легкий JPEG (Base64) напряму для бази даних
 async function uploadImageToImgBB(file) {
     if (!file) return '';
 
@@ -460,9 +460,9 @@ async function uploadImageToImgBB(file) {
         reader.onload = (event) => {
             let img = new Image();
             img.src = event.target.result;
-            img.onload = async () => {
+            img.onload = () => {
                 let canvas = document.createElement('canvas');
-                let MAX_WIDTH = 1000;
+                let MAX_WIDTH = 800; // Оптимальний розмір для миттєвого збереження в базі
                 let scaleSize = MAX_WIDTH / img.width;
                 
                 if (img.width < MAX_WIDTH) {
@@ -476,30 +476,9 @@ async function uploadImageToImgBB(file) {
                 let ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Отримуємо легкий файл JPEG
-                let dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                
-                // Конвертуємо у шматок для відправки на хостинг
-                let resBlob = await fetch(dataUrl);
-                let blob = await resBlob.blob();
-
-                const formData = new FormData();
-                formData.append('image', blob, 'photo.jpg');
-
-                try {
-                    let response = await fetch('https://api.imgbb.com/1/upload?key=6d207e02949e29f8f41e1277a06f3630', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    let result = await response.json();
-                    if (result && result.success) {
-                        resolve(result.data.url); // Пряме посилання на завантажене фото
-                        return;
-                    }
-                } catch (e) {
-                    console.warn("Помилка хостингу:", e);
-                }
-                resolve(file.name);
+                // Стискаємо до оптимального розміру у форматі Base64 без помилок сервера
+                let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                resolve(compressedDataUrl);
             };
             img.onerror = () => resolve(file.name);
         };
@@ -529,7 +508,7 @@ async function submitBooking() {
     let submitBtn = document.querySelector('button[onclick="submitBooking()"]');
     let originalBtnText = submitBtn ? submitBtn.innerText : '';
     if (submitBtn) {
-        submitBtn.innerText = "⏳ Обробка та завантаження фото...";
+        submitBtn.innerText = "⏳ Обробка та збереження фото...";
         submitBtn.style.pointerEvents = 'none';
         submitBtn.style.opacity = '0.7';
     }
