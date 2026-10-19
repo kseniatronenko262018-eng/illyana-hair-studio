@@ -3,14 +3,16 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const path = require('path');
 const app = express();
 
-app.use(express.json());
+// Знімаємо обмеження на розмір вхідних даних (для фотографій)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Явно вказуємо роздачу статичних файлів з кореневої папки (для CSS, картинок, JS тощо)
+// Роздача статичних файлів з кореневої папки
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// Дані вашого проєкту Supabase з ключем service_role
+// Дані проєкту Supabase
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
 
@@ -80,7 +82,7 @@ app.get('/api/bookings', async (req, res) => {
     }
 });
 
-// API: Додати новий запис та автоматично зберегти/оновити клієнта в базі
+// API: Додати новий запис та зберегти клієнта
 app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
     try {
@@ -133,6 +135,33 @@ app.post('/api/bookings', async (req, res) => {
     }
 });
 
+// API: Скасувати / видалити запис з бази Supabase
+app.post('/api/cancel-booking', async (req, res) => {
+    try {
+        const { date, time, phone, id } = req.body;
+        let queryUrl = `${SUPABASE_URL}/rest/v1/bookings?`;
+        if (id) {
+            queryUrl += `id=eq.${id}`;
+        } else {
+            queryUrl += `date=eq.${encodeURIComponent(date)}&time=eq.${encodeURIComponent(time)}&phone=eq.${encodeURIComponent(phone)}`;
+        }
+
+        const response = await fetch(queryUrl, {
+            method: 'DELETE',
+            headers: supabaseHeaders
+        });
+
+        if (response.ok) {
+            return res.json({ success: true, message: "Запис скасовано" });
+        } else {
+            const errText = await response.text();
+            return res.status(500).json({ success: false, error: errText });
+        }
+    } catch (e) {
+        return res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // API: Перевірка клієнта
 app.post('/api/check-client', async (req, res) => {
     const { phone } = req.body;
@@ -160,7 +189,7 @@ app.post('/api/check-client', async (req, res) => {
     }
 });
 
-// Ендпоінт для створення платежу через еквайринг Monobank
+// Створення платежу Monobank
 app.post('/api/create-invoice', async (req, res) => {
     try {
         const { name, date, time } = req.body;
