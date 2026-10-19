@@ -163,7 +163,7 @@ function switchTab(tabName, element) {
 
 function selectMainCategory(category) {
     selectedCategory = category;
-    document.querySelectorAll('.service-card-mini').forEach(card => card.classList.remove('selected'));
+    document.querySelectorAll('.service-card-row').forEach(card => card.classList.remove('selected'));
     if (category === 'cut') document.getElementById('mainCardCut').classList.add('selected');
     if (category === 'color') document.getElementById('mainCardColor').classList.add('selected');
     if (category === 'complex') document.getElementById('mainCardComplex').classList.add('selected');
@@ -210,7 +210,7 @@ function renderSubmenuItems() {
         <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся', this)">
             <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Доступні всі техніки фарбування</div></div>
         </div>
-        <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване волосся', this)">
+        <div class="sub-service-card" onclick="selectHaircondition('colored', 'Фарбоване волосся', this)">
             <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Корінь, тонування, однотон</div></div>
         </div>
     `;
@@ -384,7 +384,10 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
-        if (slotEndDecimal > 19.0) {
+        // ВИПРАВЛЕННЯ: Дозволяємо слот 19:00 для послуг тривалістю до 1.5 години (наприклад, для стрижки)
+        if (timeStr === "19:00" && serviceDuration <= 1.5) {
+            isDisabled = false;
+        } else if (slotEndDecimal > 19.0) {
             isDisabled = true;
         }
 
