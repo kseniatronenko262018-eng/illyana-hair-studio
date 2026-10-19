@@ -454,7 +454,11 @@ function closeLightbox() { document.getElementById('imageLightboxModal').style.d
 async function uploadImageToImgBB(file) {
     if (!file) return '';
     
-    // Спробуємо спочатку завантажити на безкоштовний хостинг ImgBB
+    // Захист від великих файлів (> 2 МБ), щоб уникнути помилки Payload Too Large
+    if (file.size > 2 * 1024 * 1024) {
+        return file.name;
+    }
+
     const formData = new FormData();
     formData.append('image', file);
     
@@ -468,16 +472,10 @@ async function uploadImageToImgBB(file) {
             return result.data.url; // Пряме посилання на хостинг
         }
     } catch (e) {
-        console.warn("Хостинг недоступний, використовуємо внутрішнє збереження фото:", e);
+        console.warn("Помилка хостингу зображень:", e);
     }
 
-    // Запасний варіант: конвертація у формат Base64 прямо у браузері, щоб картинка гарантовано з'явилася в кабінеті майстра
-    return new Promise((resolve) => {
-        let reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => resolve(file.name);
-        reader.readAsDataURL(file);
-    });
+    return file.name;
 }
 
 async function submitBooking() {
