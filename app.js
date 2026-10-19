@@ -487,8 +487,8 @@ async function submitBooking() {
             email,
             social,
             service: selectedServiceData.title,
-            price: selectedServiceData.price,
-            durationHours: selectedServiceData.durationHours,
+            price: Number(selectedServiceData.price),
+            durationHours: Number(selectedServiceData.durationHours),
             date: selectedDate,
             time: selectedTimeSlot,
             reference: finalReferenceInfo
@@ -499,15 +499,22 @@ async function submitBooking() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bookingPayload)
         });
-        let bookData = await bookRes.json();
+
+        let responseText = await bookRes.text();
+        let bookData;
+        try {
+            bookData = JSON.parse(responseText);
+        } catch (e) {
+            throw new Error("Відповідь сервера не у форматі JSON: " + responseText);
+        }
+
+        if (!bookRes.ok || bookData.success === false) {
+            throw new Error(bookData.error || "Помилка збереження на сервері: " + responseText);
+        }
 
         if (checkData.isRegular) {
-            if (bookData.success !== false) {
-                alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено.");
-                window.location.href = TELEGRAM_BOT_URL;
-            } else {
-                alert("Помилка при збереженні запису в базі.");
-            }
+            alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено.");
+            window.location.href = TELEGRAM_BOT_URL;
         } else {
             try {
                 let invoiceRes = await fetch('/api/create-invoice', {
@@ -530,6 +537,6 @@ async function submitBooking() {
         }
     } catch (err) {
         console.error("Помилка оформлення:", err);
-        alert("Сталася помилка при зв'язку з сервером.");
+        alert("Помилка: " + err.message);
     }
 }
