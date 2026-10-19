@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -47,7 +47,7 @@
             <div class="form-card">
                 <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
                 
-                <!-- Горизонтальні картки послуг -->
+                <!-- Оновлені горизонтальні картки послуг -->
                 <div class="services-list">
                     <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
                         <img src="PXL_20260528_101624993_exported_4255.jpg" alt="Стрижка">
@@ -68,7 +68,7 @@
                     </div>
 
                     <div class="service-card-row" id="mainCardComplex" onclick="selectMainCategory('complex')">
-                        <img src="avatar.jpg" alt="Стрижка + Фарбування">
+                        <img src="hair-v2.jpg" alt="Стрижка + Фарбування">
                         <div class="service-card-info">
                             <div class="title" data-i18n="complex_title">Стрижка + Фарбування коріння</div>
                             <div class="sub" data-i18n="complex_sub">3000 ₴ • 3 год (до 2 см)</div>
@@ -292,7 +292,7 @@
         <img id="lightboxImage" src="" alt="Збільшене фото">
     </div>
 
-    <!-- Логіка вибору категорії -->
+    <!-- Логіка вибору категорії та оновлених селекторів -->
     <script>
         function selectMainCategory(category) {
             document.querySelectorAll('.service-card-row').forEach(card => card.classList.remove('selected'));
