@@ -7,7 +7,6 @@ let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
 
-// Ваш інтегрований Telegram-бот
 const TELEGRAM_BOT_URL = 'https://t.me/illianahair_bot';
 
 const translations = {
@@ -106,9 +105,10 @@ const translations = {
 window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
     fetchBookingsData();
+    loadWorksPortfolio();
     
     let savedAvatar = localStorage.getItem('illiana_custom_master_photo') || 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
-    document.querySelectorAll('.profile-avatar img, #profileAvatarImg').forEach(img => {
+    document.querySelectorAll('.profile-avatar img, #profileAvatarImg, .avatar-wrap img').forEach(img => {
         img.src = savedAvatar;
     });
 });
@@ -127,6 +127,25 @@ async function fetchBookingsData() {
         });
         renderTimeSlots();
     } catch(e) { console.error("Could not fetch bookings", e); }
+}
+
+async function loadWorksPortfolio() {
+    let uploadedContainer = document.getElementById('uploadedWorksContainer');
+    if (!uploadedContainer) return;
+
+    try {
+        let res = await fetch('/api/works');
+        if (res.ok) {
+            let customWorks = await res.json();
+            if (Array.isArray(customWorks) && customWorks.length > 0) {
+                uploadedContainer.innerHTML = customWorks.map(w => 
+                    `<div class="works-carousel-item" onclick="openLightbox('${w.image}')"><img src="${w.image}" alt="${w.title || 'Робота'}"></div>`
+                ).join('');
+            }
+        }
+    } catch (e) {
+        console.error("Error loading uploaded works:", e);
+    }
 }
 
 function toggleLang() {
@@ -161,7 +180,10 @@ function switchTab(tabName, element) {
     document.querySelectorAll('.quick-nav .nav-chip').forEach(chip => chip.classList.remove('active'));
 
     if (tabName === 'book') document.getElementById('paneBook').classList.add('active');
-    if (tabName === 'works') document.getElementById('paneWorks').classList.add('active');
+    if (tabName === 'works') {
+        document.getElementById('paneWorks').classList.add('active');
+        loadWorksPortfolio();
+    }
     if (tabName === 'loc') document.getElementById('paneLoc').classList.add('active');
     if (element) element.classList.add('active');
 }
@@ -378,7 +400,12 @@ function renderTimeSlots() {
     let bookedForDay = bookedSlotsCache[selectedDate] || [];
     let serviceDuration = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
 
-    let slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
+    let slots = [];
+    for (let h = 10; h <= 18; h++) {
+        slots.push(`${String(h).padStart(2, '0')}:00`);
+        if (h < 18) slots.push(`${String(h).padStart(2, '0')}:30`);
+    }
+
     let now = new Date();
     let isToday = (selectedDate === now.toISOString().split('T')[0]);
 
@@ -393,9 +420,7 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
-        if (timeStr === "19:00" && serviceDuration <= 1.5) {
-            isDisabled = false;
-        } else if (slotEndDecimal > 19.0) {
+        if (slotEndDecimal > 19.5) {
             isDisabled = true;
         }
 
@@ -403,7 +428,7 @@ function renderTimeSlots() {
             let slotTime = new Date();
             slotTime.setHours(hours, minutes, 0, 0);
             let diffHours = (slotTime - now) / (1000 * 60 * 60);
-            if (diffHours < 3) {
+            if (diffHours < 2) {
                 isDisabled = true;
             }
         }
@@ -420,7 +445,7 @@ function renderTimeSlots() {
 
         if (isDisabled) {
             cell.classList.add('booked');
-            cell.style.opacity = '0.35';
+            cell.style.opacity = '0.3';
             cell.style.pointerEvents = 'none';
         } else {
             cell.onclick = () => selectTimeSlot(timeStr, cell);
@@ -450,7 +475,6 @@ function openLightbox(imgSrc) {
 }
 function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
 
-// НАДІЙНА ФУНКЦІЯ: Розумне стиснення фото у легкий JPEG (Base64) напряму для бази даних
 async function uploadImageToImgBB(file) {
     if (!file) return '';
 
@@ -462,7 +486,7 @@ async function uploadImageToImgBB(file) {
             img.src = event.target.result;
             img.onload = () => {
                 let canvas = document.createElement('canvas');
-                let MAX_WIDTH = 800; // Оптимальний розмір для миттєвого збереження в базі
+                let MAX_WIDTH = 800;
                 let scaleSize = MAX_WIDTH / img.width;
                 
                 if (img.width < MAX_WIDTH) {
@@ -476,7 +500,6 @@ async function uploadImageToImgBB(file) {
                 let ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Стискаємо до оптимального розміру у форматі Base64 без помилок сервера
                 let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
                 resolve(compressedDataUrl);
             };
@@ -557,11 +580,11 @@ async function submitBooking() {
         try {
             bookData = JSON.parse(responseText);
         } catch (e) {
-            throw new Error("Відповідь сервера не у форматі JSON: " + responseText);
+            throw new Error("Відповідь сервера: " + responseText);
         }
 
         if (!bookRes.ok || bookData.success === false) {
-            throw new Error(bookData.error || "Помилка збереження на сервері: " + responseText);
+            throw new Error(bookData.error || "Помилка збереження на сервері");
         }
 
         if (checkData.isRegular) {
@@ -580,9 +603,7 @@ async function submitBooking() {
                     window.location.href = invoiceData.pageUrl;
                     return;
                 }
-            } catch (invErr) {
-                console.warn("Інвойс не створено, але бронь збережено:", invErr);
-            }
+            } catch (invErr) {}
 
             alert("✨ Запис успішно сформовано! Переходимо в чат-бот.");
             window.location.href = TELEGRAM_BOT_URL;
