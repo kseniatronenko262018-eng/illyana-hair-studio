@@ -447,6 +447,12 @@ function closeLightbox() { document.getElementById('imageLightboxModal').style.d
 
 async function uploadImageToImgBB(file) {
     if (!file) return '';
+    
+    // Захист від занадто великих файлів (щоб уникнути Payload Too Large)
+    if (file.size > 5 * 1024 * 1024) {
+        return file.name;
+    }
+
     const formData = new FormData();
     formData.append('image', file);
     
@@ -457,18 +463,13 @@ async function uploadImageToImgBB(file) {
         });
         let result = await response.json();
         if (result && result.success) {
-            return result.data.url;
+            return result.data.url; // Пряме посилання на хостинг
         }
     } catch (e) {
-        console.warn("Помилка завантаження фото на хостинг:", e);
+        console.warn("Помилка завантаження на хостинг:", e);
     }
 
-    return new Promise((resolve) => {
-        let reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => resolve(file.name);
-        reader.readAsDataURL(file);
-    });
+    return file.name;
 }
 
 async function submitBooking() {
