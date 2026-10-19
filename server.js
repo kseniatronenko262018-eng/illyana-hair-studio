@@ -3,16 +3,17 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const path = require('path');
 const app = express();
 
-// Знімаємо обмеження на розмір вхідних даних (для фотографій)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-// Роздача статичних файлів з кореневої папки
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// Дані проєкту Supabase
+// ⚠️ НАЛАШТУВАННЯ TELEGRAM (замініть на власні значення, коли вони будуть)
+const BOT_TOKEN = '7891234567:AAExxx...'; // Токен бота з @BotFather
+const MASTER_TELEGRAM_ID = 'ВСТАВТЕ_CHAT_ID_МАЙСТРА_ТУТ'; // ID майстра з @userinfobot
+
+// Дані Supabase
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
 
@@ -31,43 +32,54 @@ function parseTimeToDecimal(timeStr) {
     return h + (m / 60);
 }
 
-// Головна сторінка клієнтів
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// Функція відправки сповіщення майстру в Telegram
+async function sendMasterTelegramNotification(booking) {
+    if (!BOT_TOKEN || !MASTER_TELEGRAM_ID || MASTER_TELEGRAM_ID.includes('ВСТАВТЕ')) return;
 
-// Кабінет майстра
-app.get('/master', (req, res) => {
-    res.sendFile(path.join(__dirname, 'master.html'));
-});
+    const messageText = `⚡ <b>НОВИЙ ЗАПИС У СТУДІЮ!</b>\n\n` +
+        `👤 <b>Клієнт:</b> ${booking.name}\n` +
+        `📞 <b>Телефон:</b> ${booking.phone}\n` +
+        `📅 <b>Дата:</b> ${booking.date} о ${booking.time}\n` +
+        `✂️ <b>Послуга:</b> ${booking.service}\n` +
+        `💰 <b>Сума:</b> ${booking.price} ₴\n` +
+        `📧 <b>Email:</b> ${booking.email || '—'}\n` +
+        `💬 <b>Соцмережа:</b> ${booking.social || '—'}`;
 
-// API: Вихідні дні
+    try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: MASTER_TELEGRAM_ID,
+                text: messageText,
+                parse_mode: 'HTML'
+            })
+        });
+    } catch (e) {
+        console.error("Помилка відправки в Telegram:", e);
+    }
+}
+
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'master.html')));
+
 let blockedDays = [];
-app.get('/api/blocked-days', (req, res) => {
-    res.json(blockedDays);
-});
+app.get('/api/blocked-days', (req, res) => res.json(blockedDays));
 
 app.post('/api/block-day', (req, res) => {
     const { date, password } = req.body;
-    if (password !== '1988') {
-        return res.status(403).json({ error: 'Невірний PIN-код майстра!' });
-    }
-    if (date && !blockedDays.includes(date)) {
-        blockedDays.push(date);
-    }
+    if (password !== '1988') return res.status(403).json({ error: 'Невірний PIN-код майстра!' });
+    if (date && !blockedDays.includes(date)) blockedDays.push(date);
     res.json({ success: true, blockedDays });
 });
 
 app.post('/api/unblock-day', (req, res) => {
     const { date, password } = req.body;
-    if (password !== '1988') {
-        return res.status(403).json({ error: 'Невірний PIN-код майстра!' });
-    }
+    if (password !== '1988') return res.status(403).json({ error: 'Невірний PIN-код майстра!' });
     blockedDays = blockedDays.filter(d => d !== date);
     res.json({ success: true, blockedDays });
 });
 
-// API: Отримати всі записи
 app.get('/api/bookings', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, {
@@ -85,16 +97,13 @@ app.get('/api/bookings', async (req, res) => {
 
         res.json(formattedData);
     } catch (error) {
-        console.error("Помилка отримання записів з Supabase:", error);
         res.status(500).json([]);
     }
 });
 
-// API: Створити запис (з перевіркою накладки часу)
 app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
     try {
-        // Перевіряємо, чи немає накладки за часом на цей день
         const checkExisting = await fetch(`${SUPABASE_URL}/rest/v1/bookings?date=eq.${encodeURIComponent(booking.date)}`, {
             method: 'GET',
             headers: supabaseHeaders
@@ -129,13 +138,19 @@ app.post('/api/bookings', async (req, res) => {
             return res.status(500).json({ success: false, error: errText });
         }
 
-        let data = [];
+        let createdBookingData = null;
         const textResp = await response.text();
         if (textResp) {
-            try { data = JSON.parse(textResp); } catch(e) {}
+            try { 
+                const parsed = JSON.parse(textResp);
+                createdBookingData = Array.isArray(parsed) ? parsed[0] : parsed;
+            } catch(e) {}
         }
 
-        // Авто-збереження клієнта
+        // Автоматичне сповіщення майстру
+        sendMasterTelegramNotification(booking);
+
+        // Збереження клієнта
         try {
             const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
                 method: 'GET',
@@ -162,13 +177,12 @@ app.post('/api/bookings', async (req, res) => {
             }
         } catch (clientErr) {}
 
-        return res.json({ success: true, data });
+        return res.json({ success: true, booking: createdBookingData });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// API: Скасувати / видалити запис
 app.post('/api/cancel-booking', async (req, res) => {
     try {
         const { date, time, phone, id } = req.body;
@@ -195,7 +209,6 @@ app.post('/api/cancel-booking', async (req, res) => {
     }
 });
 
-// API: Приклади робіт (Портфоліо)
 app.get('/api/works', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, {
@@ -204,9 +217,7 @@ app.get('/api/works', async (req, res) => {
         });
         if (response.ok) {
             const dbWorks = await response.json();
-            if (Array.isArray(dbWorks) && dbWorks.length > 0) {
-                return res.json(dbWorks);
-            }
+            if (Array.isArray(dbWorks) && dbWorks.length > 0) return res.json(dbWorks);
         }
     } catch (e) {}
     res.json(customWorksMemory);
@@ -214,9 +225,7 @@ app.get('/api/works', async (req, res) => {
 
 app.post('/api/works', async (req, res) => {
     const { title, image } = req.body;
-    if (!image) {
-        return res.status(400).json({ success: false, error: "Зображення обов'язкове" });
-    }
+    if (!image) return res.status(400).json({ success: false, error: "Зображення обов'язкове" });
 
     const newWork = {
         id: Date.now(),
@@ -250,7 +259,6 @@ app.post('/api/delete-work', async (req, res) => {
     res.json({ success: true });
 });
 
-// API: Перевірка постійного клієнта
 app.post('/api/check-client', async (req, res) => {
     const { phone } = req.body;
     try {
@@ -277,7 +285,6 @@ app.post('/api/check-client', async (req, res) => {
     }
 });
 
-// API: Інвойс Monobank
 app.post('/api/create-invoice', async (req, res) => {
     try {
         const { name, date, time } = req.body;
@@ -308,6 +315,4 @@ app.post('/api/create-invoice', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Сервер запущено на порту ${PORT}!`);
-});
+app.listen(PORT, () => console.log(`Сервер запущено на порту ${PORT}!`));
