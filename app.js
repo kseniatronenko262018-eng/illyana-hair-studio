@@ -441,6 +441,20 @@ function openLightbox(imgSrc) {
 }
 function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
 
+// Допоміжна функція для перетворення файлу у Base64
+function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            resolve('');
+            return;
+        }
+        let reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
+
 async function submitBooking() {
     let name = document.getElementById('clientName').value.trim();
     let phone = document.getElementById('clientPhone').value.trim();
@@ -461,6 +475,16 @@ async function submitBooking() {
     }
 
     try {
+        let hairPhotoFile = document.getElementById('clientHairPhoto')?.files[0];
+        let refPhotoFile = document.getElementById('clientRefPhoto')?.files[0];
+
+        let finalReferenceBase64 = selectedHaircutRef || '';
+        if (refPhotoFile) {
+            finalReferenceBase64 = await convertFileToBase64(refPhotoFile);
+        } else if (hairPhotoFile && !finalReferenceBase64) {
+            finalReferenceBase64 = await convertFileToBase64(hairPhotoFile);
+        }
+
         let checkRes = await fetch('/api/check-client', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -478,7 +502,7 @@ async function submitBooking() {
             durationHours: selectedServiceData.durationHours,
             date: selectedDate,
             time: selectedTimeSlot,
-            reference: selectedHaircutRef || ''
+            reference: finalReferenceBase64
         };
 
         let bookRes = await fetch('/api/bookings', {
