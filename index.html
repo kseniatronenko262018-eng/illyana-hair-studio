@@ -48,13 +48,13 @@
             <div class="form-card">
                 <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
                 
-                <!-- Горизонтальні картки послуг (стрижка на 19:00) -->
+                <!-- Горизонтальні картки послуг -->
                 <div class="services-list">
                     <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
                         <img src="PXL_20260528_101624993_exported_4255.jpg" alt="Стрижка">
                         <div class="service-card-info">
                             <div class="title" data-i18n="cut_title">Стрижка</div>
-                            <div class="sub" data-i18n="cut_sub">1000 ₴ • 1.5 год • 19:00</div>
+                            <div class="sub" data-i18n="cut_sub">1000 ₴ • 1.5 год</div>
                         </div>
                         <div class="service-radio-indicator"></div>
                     </div>
@@ -293,43 +293,40 @@
         <img id="lightboxImage" src="" alt="Збільшене фото">
     </div>
 
-    <!-- Логіка вибору категорії -->
+    <!-- Логіка вибору категорії з виключенням множинного вибору -->
     <script>
         function selectMainCategory(category) {
+            // Знімаємо виділення з усіх карток
             document.querySelectorAll('.service-card-row').forEach(card => card.classList.remove('selected'));
             
+            // Приховуємо додаткові секції за замовчуванням
+            const refSec = document.getElementById('haircutExamplesSection');
+            const subMenu = document.getElementById('categorySubmenu');
+            const colOpt = document.getElementById('coloringSubOptions');
+            const photoSec = document.getElementById('photoUploadSection');
+            
+            if (refSec) refSec.style.display = 'none';
+            if (subMenu) subMenu.style.display = 'none';
+            if (colOpt) colOpt.style.display = 'none';
+            if (photoSec) photoSec.style.display = 'none';
+
+            // Активуємо лише потрібну послугу
             if (category === 'cut') {
                 const el = document.getElementById('mainCardCut');
                 if (el) el.classList.add('selected');
-                const refSec = document.getElementById('haircutExamplesSection');
                 if (refSec) refSec.style.display = 'block';
-                const subMenu = document.getElementById('categorySubmenu');
-                if (subMenu) subMenu.style.display = 'none';
-                const colOpt = document.getElementById('coloringSubOptions');
-                if (colOpt) colOpt.style.display = 'none';
-                const photoSec = document.getElementById('photoUploadSection');
                 if (photoSec) photoSec.style.display = 'block';
             } else if (category === 'color') {
                 const el = document.getElementById('mainCardColor');
                 if (el) el.classList.add('selected');
-                const refSec = document.getElementById('haircutExamplesSection');
-                if (refSec) refSec.style.display = 'none';
-                const subMenu = document.getElementById('categorySubmenu');
                 if (subMenu) subMenu.style.display = 'block';
-                const colOpt = document.getElementById('coloringSubOptions');
                 if (colOpt) colOpt.style.display = 'block';
-                const photoSec = document.getElementById('photoUploadSection');
                 if (photoSec) photoSec.style.display = 'block';
             } else if (category === 'complex') {
                 const el = document.getElementById('mainCardComplex');
                 if (el) el.classList.add('selected');
-                const refSec = document.getElementById('haircutExamplesSection');
-                if (refSec) refSec.style.display = 'none';
-                const subMenu = document.getElementById('categorySubmenu');
                 if (subMenu) subMenu.style.display = 'block';
-                const colOpt = document.getElementById('coloringSubOptions');
                 if (colOpt) colOpt.style.display = 'block';
-                const photoSec = document.getElementById('photoUploadSection');
                 if (photoSec) photoSec.style.display = 'block';
             }
             
