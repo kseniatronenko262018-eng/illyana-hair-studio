@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 // ⚠️ НАЛАШТУВАННЯ TELEGRAM БОТА
-const BOT_TOKEN = '7891234567:AAExxx...'; // Токен з @BotFather
+const BOT_TOKEN = '7891234567:AAExxx...'; // Вкажіть токен з @BotFather
 
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
@@ -30,7 +30,7 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
                     `⏰ <b>Час:</b> ${b.time}\n` +
                     `✂️ <b>Послуга:</b> ${b.service}\n` +
                     `💰 <b>Вартість:</b> ${b.price || 1000} ₴\n\n` +
-                    `⚠️ <b>ВАЖЛИВО ПРАВИЛО СКАСУВАННЯ:</b>\n` +
+                    `⚠️ <b>ВАЖЛИВЕ ПРАВИЛО СКАСУВАННЯ:</b>\n` +
                     `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
                     `Для скасування або зміни часу, будь ласка, напишіть безпосередньо в <b>Директ майстра</b>.`;
 
