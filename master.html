@@ -536,13 +536,12 @@
                 let refHtml = '—';
                 
                 if (refVal && refVal !== 'EMPTY' && refVal !== 'NULL') {
-                    if (refVal.startsWith('http') || refVal.startsWith('data:')) {
-                        refHtml = `<br><img src="${refVal}" style="max-width:100%; max-height:180px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--tg-border);" alt="Референс">`;
+                    // Якщо це посилання (наприклад, ImgBB або http/https) або збережена картинка в Base64
+                    if (refVal.startsWith('http://') || refVal.startsWith('https://') || refVal.startsWith('data:')) {
+                        refHtml = `<br><a href="${refVal}" target="_blank"><img src="${refVal}" style="max-width:100%; max-height:220px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--accent);" alt="Фото клієнта"></a><br><span style="font-size:8px; color:var(--tg-muted);">Натисніть на фото, щоб відкрити у повний розмір</span>`;
                     } else if (refVal.includes('.png') || refVal.includes('.jpg') || refVal.includes('.jpeg')) {
-                        // Якщо це назва файлу з каталогу референсів (наприклад, з папками чи без)
-                        // Спробуємо підтягнути її як картинку з папки референсів (наприклад, images/ або кореня)
                         let imagePath = refVal.startsWith('/') ? refVal : '/' + refVal;
-                        refHtml = `<br>Обраний референс: <b>${refVal}</b><br><img src="${imagePath}" onerror="this.style.display='none'" style="max-width:100%; max-height:180px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--tg-border);" alt="Фото">`;
+                        refHtml = `<br><img src="${imagePath}" onerror="this.style.display='none'" style="max-width:100%; max-height:180px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--tg-border);" alt="Референс">`;
                     } else {
                         refHtml = `Обраний референс / фото: <b>${refVal}</b>`;
                     }
