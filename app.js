@@ -107,7 +107,6 @@ window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
     fetchBookingsData();
     
-    // Відновлюємо аватарку на головній сторінці
     let savedAvatar = localStorage.getItem('illiana_custom_master_photo') || 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
     document.querySelectorAll('.profile-avatar img, #profileAvatarImg').forEach(img => {
         img.src = savedAvatar;
@@ -453,11 +452,6 @@ function closeLightbox() { document.getElementById('imageLightboxModal').style.d
 
 async function uploadImageToImgBB(file) {
     if (!file) return '';
-    
-    // Захист від великих файлів (> 2 МБ), щоб уникнути помилки Payload Too Large
-    if (file.size > 2 * 1024 * 1024) {
-        return file.name;
-    }
 
     const formData = new FormData();
     formData.append('image', file);
@@ -472,9 +466,10 @@ async function uploadImageToImgBB(file) {
             return result.data.url; // Пряме посилання на хостинг
         }
     } catch (e) {
-        console.warn("Помилка хостингу зображень:", e);
+        console.warn("Помилка хостингу:", e);
     }
 
+    // Запасний варіант: обов'язково повертаємо назву файлу, щоб вона не губилася в базі
     return file.name;
 }
 
