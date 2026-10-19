@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Виправлено на чисту назву без пробілів, щоб стилі не злітали на Render -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -208,29 +207,7 @@
         <div id="paneWorks" class="section-pane">
             <div class="form-card" style="gap: 12px;">
                 <label class="field-label" style="text-align: center;">✨ Приклади робіт студії</label>
-                <div class="works-grid-full">
-                    <div class="works-carousel-item" onclick="openLightbox('1_20261005_205818_0000.png')"><img src="1_20261005_205818_0000.png" alt="Приклад 1"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('2_20261005_205818_0001.png')"><img src="2_20261005_205818_0001.png" alt="Приклад 2"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('3_20261005_205818_0002.png')"><img src="3_20261005_205818_0002.png" alt="Приклад 3"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('4_20261005_205818_0003.png')"><img src="4_20261005_205818_0003.png" alt="Приклад 4"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('5_20261005_205818_0004.png')"><img src="5_20261005_205818_0004.png" alt="Приклад 5"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('6_20261005_205818_0005.png')"><img src="6_20261005_205818_0005.png" alt="Приклад 6"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('7_20261005_205818_0006.png')"><img src="7_20261005_205818_0006.png" alt="Приклад 7"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('8_20261005_205818_0007.png')"><img src="8_20261005_205818_0007.png" alt="Приклад 8"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('9_20261005_205818_0008.png')"><img src="9_20261005_205818_0008.png" alt="Приклад 9"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('10_20261005_205818_0009.png')"><img src="10_20261005_205818_0009.png" alt="Приклад 10"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('11_20261005_205818_0010.png')"><img src="11_20261005_205818_0010.png" alt="Приклад 11"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('12_20261005_205818_0011.png')"><img src="12_20261005_205818_0011.png" alt="Приклад 12"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('13_20261005_205818_0012.png')"><img src="13_20261005_205818_0012.png" alt="Приклад 13"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('14_20261005_205818_0013.png')"><img src="14_20261005_205818_0013.png" alt="Приклад 14"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('15_20261005_205818_0014.png')"><img src="15_20261005_205818_0014.png" alt="Приклад 15"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('16_20261005_205818_0015.png')"><img src="16_20261005_205818_0015.png" alt="Приклад 16"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('17_20261005_205818_0016.png')"><img src="17_20261005_205818_0016.png" alt="Приклад 17"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('18_20261005_205818_0017.png')"><img src="18_20261005_205818_0017.png" alt="Приклад 18"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('19_20261005_205818_0018.png')"><img src="19_20261005_205818_0018.png" alt="Приклад 19"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('20_20261005_205818_0019.png')"><img src="20_20261005_205818_0019.png" alt="Приклад 20"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('21_20261005_205818_0020.png')"><img src="21_20261005_205818_0020.png" alt="Приклад 21"></div>
-                </div>
+                <div class="works-grid-full" id="worksGridContainer"></div>
             </div>
         </div>
 
@@ -289,52 +266,9 @@
     </div>
 
     <!-- Lightbox -->
-    <div id="imageLightboxModal" onclick="openLightbox()">
+    <div id="imageLightboxModal" onclick="closeLightbox()">
         <img id="lightboxImage" src="" alt="Збільшене фото">
     </div>
-
-    <!-- Логіка вибору категорії з виключенням множинного вибору -->
-    <script>
-        function selectMainCategory(category) {
-            // Знімаємо виділення з усіх карток
-            document.querySelectorAll('.service-card-row').forEach(card => card.classList.remove('selected'));
-            
-            // Приховуємо додаткові секції за замовчуванням
-            const refSec = document.getElementById('haircutExamplesSection');
-            const subMenu = document.getElementById('categorySubmenu');
-            const colOpt = document.getElementById('coloringSubOptions');
-            const photoSec = document.getElementById('photoUploadSection');
-            
-            if (refSec) refSec.style.display = 'none';
-            if (subMenu) subMenu.style.display = 'none';
-            if (colOpt) colOpt.style.display = 'none';
-            if (photoSec) photoSec.style.display = 'none';
-
-            // Активуємо лише потрібну послугу
-            if (category === 'cut') {
-                const el = document.getElementById('mainCardCut');
-                if (el) el.classList.add('selected');
-                if (refSec) refSec.style.display = 'block';
-                if (photoSec) photoSec.style.display = 'block';
-            } else if (category === 'color') {
-                const el = document.getElementById('mainCardColor');
-                if (el) el.classList.add('selected');
-                if (subMenu) subMenu.style.display = 'block';
-                if (colOpt) colOpt.style.display = 'block';
-                if (photoSec) photoSec.style.display = 'block';
-            } else if (category === 'complex') {
-                const el = document.getElementById('mainCardComplex');
-                if (el) el.classList.add('selected');
-                if (subMenu) subMenu.style.display = 'block';
-                if (colOpt) colOpt.style.display = 'block';
-                if (photoSec) photoSec.style.display = 'block';
-            }
-            
-            if (typeof window.originalSelectMainCategory === 'function') {
-                window.originalSelectMainCategory(category);
-            }
-        }
-    </script>
 
     <script src="app.js"></script>
 </body>
