@@ -453,6 +453,7 @@ function closeLightbox() { document.getElementById('imageLightboxModal').style.d
 async function uploadImageToImgBB(file) {
     if (!file) return '';
 
+    // НЕ блокуємо великі файли. ImgBB приймає фото до 32 МБ.
     const formData = new FormData();
     formData.append('image', file);
     
@@ -463,13 +464,13 @@ async function uploadImageToImgBB(file) {
         });
         let result = await response.json();
         if (result && result.success) {
-            return result.data.url; // Пряме посилання на хостинг
+            return result.data.url; // Повертає пряме інтернет-посилання на ваше фото
         }
     } catch (e) {
         console.warn("Помилка хостингу:", e);
     }
 
-    // Запасний варіант: обов'язково повертаємо назву файлу, щоб вона не губилася в базі
+    // Тільки якщо сервер ImgBB дійсно впав, зберігаємо хоча б назву
     return file.name;
 }
 
@@ -490,6 +491,15 @@ async function submitBooking() {
     if (!name || !phone || !email) {
         alert("Заповніть ім'я, телефон та email!");
         return;
+    }
+
+    // Змінюємо текст кнопки, щоб клієнт бачив, що фото завантажується
+    let submitBtn = document.querySelector('button[onclick="submitBooking()"]');
+    let originalBtnText = submitBtn ? submitBtn.innerText : '';
+    if (submitBtn) {
+        submitBtn.innerText = "⏳ Фото завантажується, зачекайте...";
+        submitBtn.style.pointerEvents = 'none';
+        submitBtn.style.opacity = '0.7';
     }
 
     try {
@@ -569,5 +579,12 @@ async function submitBooking() {
     } catch (err) {
         console.error("Помилка оформлення:", err);
         alert("Помилка: " + err.message);
+    } finally {
+        // Повертаємо кнопку в нормальний стан
+        if (submitBtn) {
+            submitBtn.innerText = originalBtnText;
+            submitBtn.style.pointerEvents = 'auto';
+            submitBtn.style.opacity = '1';
+        }
     }
 }
