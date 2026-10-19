@@ -462,7 +462,13 @@ async function uploadImageToImgBB(file) {
     } catch (e) {
         console.warn("Помилка завантаження фото на хостинг:", e);
     }
-    return file.name;
+
+    return new Promise((resolve) => {
+        let reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(file.name);
+        reader.readAsDataURL(file);
+    });
 }
 
 async function submitBooking() {
