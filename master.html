@@ -47,9 +47,6 @@
             filter: blur(14px) brightness(0.32) contrast(1.1);
             transform: scale(1.15);
         }
-        [data-theme="light"] .master-bg img {
-            filter: blur(14px) brightness(0.7) contrast(1.05);
-        }
 
         .master-section, .form-card {
             background: var(--tg-card) !important;
@@ -68,7 +65,6 @@
             display: flex; gap: 6px; overflow-x: auto;
             padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none;
         }
-        .korea-nav-bar::-webkit-scrollbar { display: none; }
 
         .korea-nav-chip {
             background: var(--tg-card); border: 1px solid var(--tg-border);
@@ -80,33 +76,6 @@
             background: var(--accent); color: var(--accent-invert); border-color: var(--accent);
         }
 
-        .tg-search-bar {
-            background: var(--tg-card-hover); border-radius: 16px; padding: 10px 14px;
-            display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
-            border: 1px solid var(--tg-border);
-        }
-        .tg-search-bar input {
-            background: transparent; border: none; color: var(--tg-text); font-size: 12px; outline: none; width: 100%;
-        }
-
-        button, input, select, .control-btn, .btn-main, .crm-cal-cell, .notification-banner button {
-            position: relative; z-index: 100 !important; pointer-events: auto !important; cursor: pointer !important;
-        }
-
-        .notification-banner {
-            background: rgba(216, 140, 154, 0.22); border: 1px solid var(--accent);
-            padding: 10px 14px; border-radius: 16px; font-size: 10px; color: var(--tg-text);
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
-            z-index: 90; position: relative;
-        }
-
-        .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        
-        #secCalendar {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
         .crm-calendar-grid { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
@@ -127,6 +96,24 @@
             align-items: center; cursor: pointer; transition: border-color 0.2s;
         }
         .booking-card-item:hover { border-color: var(--accent); }
+
+        .work-master-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--tg-border);
+            background: var(--tg-card-hover);
+            height: 140px;
+        }
+        .work-master-item img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .work-master-item .delete-btn {
+            position: absolute; top: 6px; right: 6px;
+            background: #e63946; color: white; border: none;
+            border-radius: 6px; padding: 4px 8px; font-size: 10px; font-weight: 700;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -159,7 +146,7 @@
 
         <div id="masterDashboard" style="display: none; flex-direction: column; gap: 10px;">
 
-            <div id="newBookingAlertBanner" class="notification-banner" style="display: none;">
+            <div id="newBookingAlertBanner" class="notification-banner" style="display: none; background: rgba(216, 140, 154, 0.22); border: 1px solid var(--accent); padding: 10px 14px; border-radius: 16px; font-size: 10px; color: var(--tg-text); justify-content: space-between; align-items: center;">
                 <span id="alertBannerText">🔔 Новий запис!</span>
                 <button class="control-btn" onclick="handleBannerClick()" style="background:var(--tg-card); border-color:var(--accent); color:var(--tg-text); padding: 6px 12px; border-radius: 8px; font-weight: 700;">Переглянути</button>
             </div>
@@ -182,11 +169,6 @@
                 </div>
             </div>
 
-            <div class="tg-search-bar">
-                <span>🔍</span>
-                <input type="text" id="crmSearchInput" placeholder="Пошук клієнта, послуги або телефону..." oninput="filterCrmBookings(this.value)">
-            </div>
-
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div class="form-card master-section" style="padding: 12px; text-align: center; margin: 0;">
                     <div style="font-size: 8px; color: var(--tg-muted); letter-spacing: 0.5px;">УСЬОГО ЗАПИСІВ</div>
@@ -200,14 +182,14 @@
 
             <!-- 1. КАЛЕНДАР -->
             <div id="secCalendar" class="master-section form-card">
-                <div class="calendar-controls">
-                    <button class="control-btn" onclick="changeMonth(-1)" style="background:var(--tg-card-hover); border-color:var(--tg-border);">◀</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <button class="control-btn" onclick="changeMonth(-1)">◀</button>
                     <h3 id="calendarTitle" style="font-size: 12px; font-family:'Syne',sans-serif; color:var(--tg-text);">Місяць</h3>
-                    <button class="control-btn" onclick="changeMonth(1)" style="background:var(--tg-card-hover); border-color:var(--tg-border);">▶</button>
+                    <button class="control-btn" onclick="changeMonth(1)">▶</button>
                 </div>
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
                 
-                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="display: block; width: 100%; margin-top: 10px; margin-bottom: 4px; background:var(--tg-card-hover); border-color:var(--tg-border); padding: 12px; border-radius: 12px; text-align: center; font-weight: 700; color: var(--accent);">🔒 Заблокувати день (вихідний)</button>
+                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="display: block; width: 100%; margin-top: 10px; margin-bottom: 4px; padding: 12px; border-radius: 12px; text-align: center; font-weight: 700; color: var(--accent);">🔒 Заблокувати день (вихідний)</button>
                 
                 <div style="margin-top: 10px; width: 100%;">
                     <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted);">Записи на обраний день:</label>
@@ -236,29 +218,29 @@
                 <div style="margin-top: 8px;">
                     <label class="field-label" style="color:var(--tg-muted);">Додати витрату:</label>
                     <div style="display: flex; gap: 6px;">
-                        <input type="text" id="expenseNameInput" class="input-box" placeholder="Назва" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
-                        <input type="number" id="expenseAmountInput" class="input-box" placeholder="Сума ₴" style="max-width: 90px; background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
-                        <button class="control-btn" onclick="addExpense()" style="background:var(--tg-card-hover); border-color:var(--tg-border);">+</button>
+                        <input type="text" id="expenseNameInput" class="input-box" placeholder="Назва">
+                        <input type="number" id="expenseAmountInput" class="input-box" placeholder="Сума ₴" style="max-width: 90px;">
+                        <button class="control-btn" onclick="addExpense()">+</button>
                     </div>
                     <div id="expensesListContainer" style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 120px; overflow-y: auto;"></div>
                 </div>
 
-                <button class="control-btn" onclick="exportToExcel()" style="margin-top: 6px; width: 100%; background:var(--tg-card-hover); border-color:var(--tg-border);">📥 Експортувати записи в Excel</button>
+                <button class="control-btn" onclick="exportToExcel()" style="margin-top: 6px; width: 100%;">📥 Експортувати записи в Excel</button>
             </div>
 
             <!-- 3. БАЗА КЛІЄНТІВ -->
             <div id="secClients" class="master-section form-card" style="display: none;">
                 <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; color:var(--tg-text);">База клієнтів</h3>
                 <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px;">
-                    <input type="text" id="regClientName" class="input-box" placeholder="Ім'я клієнта" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
-                    <input type="tel" id="regClientPhone" class="input-box" placeholder="Телефон" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
-                    <input type="text" id="regClientSocial" class="input-box" placeholder="Нікнейм (Inst / Telegram)" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
-                    <button class="control-btn" onclick="addRegularClientManual()" style="background:var(--tg-card-hover); border-color:var(--tg-border);">Додати клієнта</button>
+                    <input type="text" id="regClientName" class="input-box" placeholder="Ім'я клієнта">
+                    <input type="tel" id="regClientPhone" class="input-box" placeholder="Телефон">
+                    <input type="text" id="regClientSocial" class="input-box" placeholder="Нікнейм (Inst / Telegram)">
+                    <button class="control-btn" onclick="addRegularClientManual()">Додати клієнта</button>
                 </div>
                 
                 <div style="display: flex; gap: 6px; margin-top: 8px;">
-                    <button class="control-btn" onclick="exportClientsToExcel()" style="flex:1; background:var(--tg-card-hover); border-color:var(--tg-border);">📤 Експорт бази (Excel)</button>
-                    <label class="control-btn" style="flex:1; text-align:center; cursor:pointer; background:var(--tg-card-hover); border-color:var(--tg-border);">
+                    <button class="control-btn" onclick="exportClientsToExcel()" style="flex:1;">📤 Експорт бази (Excel)</button>
+                    <label class="control-btn" style="flex:1; text-align:center; cursor:pointer;">
                         📥 Імпорт бази
                         <input type="file" accept=".xlsx, .xls" onchange="importClientsFromExcel(event)" style="display: none;">
                     </label>
@@ -271,20 +253,24 @@
                 <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; color:var(--tg-text);">Завантажити приклади робіт</h3>
                 <div>
                     <label class="field-label" style="color:var(--tg-muted);">Назва / опис роботи:</label>
-                    <input type="text" id="newWorkTitleInput" class="input-box" placeholder="Стрижка / Тонування" style="background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                    <input type="text" id="newWorkTitleInput" class="input-box" placeholder="Стрижка / Тонування">
                 </div>
                 <div>
                     <label class="field-label" style="color:var(--tg-muted);">Фотографія роботи:</label>
-                    <input type="file" id="newWorkImageFile" class="input-box" accept="image/*" style="padding: 6px; background:var(--tg-card-hover); border-color:var(--tg-border); color:var(--tg-text);">
+                    <input type="file" id="newWorkImageFile" class="input-box" accept="image/*" style="padding: 6px;">
                 </div>
                 <button class="btn-main" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
+
+                <hr style="border:0; border-top: 1px solid var(--tg-border); margin: 12px 0;">
+                <label class="field-label" style="color:var(--tg-muted);">Завантажені роботи в галереї:</label>
+                <div id="masterWorksContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;"></div>
             </div>
 
         </div>
 
     </div>
 
-    <!-- Модальне вікно для детальної інформації про запис із можливістю скасування -->
+    <!-- Модальне вікно для детальної інформації про запис -->
     <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px;">
         <div style="background: var(--tg-card, #1a1816); border: 1.5px solid var(--accent, #d88c9a); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 12px; color: var(--tg-text, #f5f2ed);">
             <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center; margin-bottom:4px;">✨ Деталі запису</h3>
@@ -364,23 +350,12 @@
                 let resD = await fetch('/api/blocked-days');
                 blockedDaysCache = await resD.json() || [];
 
-                if (window.lastKnownBookingsCount !== undefined && allBookingsCache.length > window.lastKnownBookingsCount) {
-                    playNotificationSound();
-                }
-                window.lastKnownBookingsCount = allBookingsCache.length;
-
-                if (allBookingsCache.length > 0) {
-                    let banner = document.getElementById('newBookingAlertBanner');
-                    let bannerText = document.getElementById('alertBannerText');
-                    if (banner) banner.style.display = 'flex';
-                    if (bannerText) bannerText.innerText = `🔔 Записів у базі: ${allBookingsCache.length}`;
-                }
-
                 updateCrmCounters();
                 renderCrmCalendar();
                 renderSelectedDayBookings();
                 updateFinancesAndExpenses();
                 renderRegularClientsList();
+                loadMasterWorksList();
             } catch(e) {}
         }
 
@@ -393,6 +368,10 @@
             
             document.querySelectorAll('.korea-nav-chip').forEach(i => i.classList.remove('active'));
             if (el) el.classList.add('active');
+
+            if (sectionId === 'secWorks') {
+                loadMasterWorksList();
+            }
         }
 
         function showMasterDashboard() {
@@ -422,27 +401,6 @@
         function logoutMaster() {
             localStorage.removeItem('illiana_master_logged');
             location.reload();
-        }
-
-        function playNotificationSound() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                
-                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.5);
-            } catch(e) {}
         }
 
         function changeMonth(dir) {
@@ -536,11 +494,9 @@
                 let refHtml = '—';
                 
                 if (refVal && refVal !== 'EMPTY' && refVal !== 'NULL') {
-                    // Підтримуємо посилання з інтернету та стиснені картинки Base64
                     if (refVal.startsWith('http://') || refVal.startsWith('https://') || refVal.startsWith('data:')) {
-                        refHtml = `<br><a href="${refVal}" target="_blank"><img src="${refVal}" style="max-width:100%; max-height:220px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--accent);" alt="Фото клієнта"></a><br><span style="font-size:8px; color:var(--tg-muted);">Натисніть на фото, щоб відкрити у повний розмір</span>`;
-                    } 
-                    else {
+                        refHtml = `<br><a href="${refVal}" target="_blank"><img src="${refVal}" style="max-width:100%; max-height:220px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--accent);" alt="Фото клієнта"></a>`;
+                    } else {
                         refHtml = `<br>Завантажений файл / референс: <b>${refVal}</b>`;
                     }
                 }
@@ -568,7 +524,6 @@
             if (modal) modal.style.display = 'flex';
         }
 
-        // Функція скасування запису майстром
         async function cancelClientBooking(date, time, phone, id) {
             let isConfirmed = confirm("Ви впевнені, що хочете остаточно скасувати та видалити цей запис?");
             if (!isConfirmed) return;
@@ -731,60 +686,103 @@
             renderRegularClientsList();
         }
 
-        function uploadWorkToMainSite() {
-            let title = document.getElementById('newWorkTitleInput')?.value.trim();
+        // ЗАВАНТАЖЕННЯ РОБІТ В ПОРТФОЛІО
+        async function uploadWorkToMainSite() {
+            let titleInput = document.getElementById('newWorkTitleInput');
             let fileInput = document.getElementById('newWorkImageFile');
-            if (!title || !fileInput.files[0]) {
-                alert("Введіть назву та оберіть фотографію роботи!");
+            let title = titleInput?.value.trim() || 'Робота майстра';
+
+            if (!fileInput.files[0]) {
+                alert("Оберіть фотографію роботи!");
                 return;
             }
-            alert("Роботу успішно додано до портфоліо!");
-            document.getElementById('newWorkTitleInput').value = '';
-            fileInput.value = '';
+
+            let file = fileInput.files[0];
+            let reader = new FileReader();
+
+            reader.onload = async function(e) {
+                let img = new Image();
+                img.src = e.target.result;
+                img.onload = async function() {
+                    let canvas = document.createElement('canvas');
+                    let MAX_WIDTH = 900;
+                    let scaleSize = MAX_WIDTH / img.width;
+
+                    if (img.width < MAX_WIDTH) {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                    } else {
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                    }
+
+                    let ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    let base64Image = canvas.toDataURL('image/jpeg', 0.8);
+
+                    try {
+                        let res = await fetch('/api/works', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title, image: base64Image })
+                        });
+                        let data = await res.json();
+
+                        if (data.success) {
+                            alert("✨ Роботу успішно додано в галерею на сайті!");
+                            titleInput.value = '';
+                            fileInput.value = '';
+                            loadMasterWorksList();
+                        } else {
+                            alert("Помилка завантаження роботи.");
+                        }
+                    } catch(err) {
+                        alert("Помилка з'єднання з сервером.");
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function loadMasterWorksList() {
+            let container = document.getElementById('masterWorksContainer');
+            if (!container) return;
+
+            try {
+                let res = await fetch('/api/works');
+                let works = await res.json();
+
+                if (!Array.isArray(works) || works.length === 0) {
+                    container.innerHTML = `<div style="font-size:9px; color:var(--tg-muted); grid-column: 1/3; text-align:center;">Галерея завантажених робіт порожня</div>`;
+                    return;
+                }
+
+                container.innerHTML = works.map(w => `
+                    <div class="work-master-item">
+                        <img src="${w.image}" alt="${w.title}">
+                        <button class="delete-btn" onclick="deleteMasterWork(${w.id})">🗑</button>
+                    </div>
+                `).join('');
+            } catch(e) {}
+        }
+
+        async function deleteMasterWork(id) {
+            if (!confirm("Видалити цю роботу з сайту?")) return;
+            try {
+                let res = await fetch('/api/delete-work', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                if (res.ok) {
+                    loadMasterWorksList();
+                }
+            } catch(e) {}
         }
 
         function updateCrmCounters() {
             let bBadge = document.getElementById('totalBookingsCountBadge');
             if (bBadge) bBadge.innerText = allBookingsCache.length;
-        }
-
-        function handleBannerClick() {
-            if (allBookingsCache.length === 0) {
-                alert("Записів у базі поки немає!");
-                return;
-            }
-
-            let detailsEl = document.getElementById('modalBookingDetails');
-            if (detailsEl) {
-                let listHtml = `
-                    <div style="font-size:10px; color:var(--tg-muted); margin-bottom:8px;">Всі актуальні записи у базі:</div>
-                    <div style="display: flex; flex-direction: column; gap: 6px; max-height: 250px; overflow-y: auto;">
-                `;
-
-                let sortedBookings = [...allBookingsCache].sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
-
-                sortedBookings.forEach((b) => {
-                    let priceText = b.price ? ` • <b>${b.price} ₴</b>` : '';
-                    let safeIndex = allBookingsCache.indexOf(b);
-                    listHtml += `
-                        <div onclick="openBookingCardDetails(allBookingsCache[${safeIndex}])" style="background:var(--tg-card-hover); border:1px solid var(--tg-border); border-radius:10px; padding:8px; cursor:pointer;">
-                            <div style="display:flex; justify-content:space-between; font-weight:700;">
-                                <span>📅 ${b.date} о ${b.time}</span>
-                                <span style="color:var(--accent);">${b.name || 'Клієнт'}</span>
-                            </div>
-                            <div style="font-size:9px; color:var(--tg-muted); margin-top:2px;">
-                                ${b.service || 'Послуга'}${priceText} (${b.durationHours || 1.5} год)
-                            </div>
-                        </div>
-                    `;
-                });
-
-                listHtml += `</div>`;
-                detailsEl.innerHTML = listHtml;
-            }
-
-            let modal = document.getElementById('masterDetailPopupModal');
-            if (modal) modal.style.display = 'flex';
         }
 
         function closeBookingModal() {
