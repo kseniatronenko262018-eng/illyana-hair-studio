@@ -23,17 +23,25 @@ const supabaseHeaders = {
     "Prefer": "return=representation"
 };
 
-// Головна сторінка для клієнтів
+let customWorksMemory = [];
+
+function parseTimeToDecimal(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h + (m / 60);
+}
+
+// Головна сторінка клієнтів
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Окрема захищена сторінка кабінету майстра
+// Кабінет майстра
 app.get('/master', (req, res) => {
     res.sendFile(path.join(__dirname, 'master.html'));
 });
 
-// API: Отримати список вихідних днів
+// API: Вихідні дні
 let blockedDays = [];
 app.get('/api/blocked-days', (req, res) => {
     res.json(blockedDays);
@@ -59,7 +67,7 @@ app.post('/api/unblock-day', (req, res) => {
     res.json({ success: true, blockedDays });
 });
 
-// API: Отримати всі записи з хмари Supabase (таблиця bookings)
+// API: Отримати всі записи
 app.get('/api/bookings', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, {
@@ -71,7 +79,7 @@ app.get('/api/bookings', async (req, res) => {
         const formattedData = Array.isArray(data) ? data.map(b => ({
             ...b,
             price: b.price !== null && b.price !== undefined ? b.price : 1000,
-            durationHours: b.durationHours !== null && b.durationHours !== undefined ? b.durationHours : 1.5,
+            durationHours: b.durationHours !== null && b.durationHours !== undefined ? Number(b.durationHours) : 1.5,
             reference: (b.reference && b.reference !== 'EMPTY' && b.reference !== 'NULL') ? b.reference : (b.haircut_ref || '')
         })) : [];
 
@@ -82,10 +90,34 @@ app.get('/api/bookings', async (req, res) => {
     }
 });
 
-// API: Додати новий запис та зберегти клієнта
+// API: Створити запис (з перевіркою накладки часу)
 app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
     try {
+        // Перевіряємо, чи немає накладки за часом на цей день
+        const checkExisting = await fetch(`${SUPABASE_URL}/rest/v1/bookings?date=eq.${encodeURIComponent(booking.date)}`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        const existingForDay = await checkExisting.json();
+
+        if (Array.isArray(existingForDay)) {
+            const reqStart = parseTimeToDecimal(booking.time);
+            const reqDuration = Number(booking.durationHours || 1.5);
+            const reqEnd = reqStart + reqDuration;
+
+            const isOverlap = existingForDay.some(b => {
+                const bStart = parseTimeToDecimal(b.time);
+                const bDuration = Number(b.durationHours || 1.5);
+                const bEnd = bStart + bDuration;
+                return (reqStart < bEnd) && (reqEnd > bStart);
+            });
+
+            if (isOverlap) {
+                return res.status(400).json({ success: false, error: "На жаль, цей часовий слот вже зайнято іншим записом!" });
+            }
+        }
+
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
             method: 'POST',
             headers: supabaseHeaders,
@@ -103,6 +135,7 @@ app.post('/api/bookings', async (req, res) => {
             try { data = JSON.parse(textResp); } catch(e) {}
         }
 
+        // Авто-збереження клієнта
         try {
             const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
                 method: 'GET',
@@ -135,7 +168,7 @@ app.post('/api/bookings', async (req, res) => {
     }
 });
 
-// API: Скасувати / видалити запис з бази Supabase
+// API: Скасувати / видалити запис
 app.post('/api/cancel-booking', async (req, res) => {
     try {
         const { date, time, phone, id } = req.body;
@@ -162,7 +195,62 @@ app.post('/api/cancel-booking', async (req, res) => {
     }
 });
 
-// API: Перевірка клієнта
+// API: Приклади робіт (Портфоліо)
+app.get('/api/works', async (req, res) => {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        if (response.ok) {
+            const dbWorks = await response.json();
+            if (Array.isArray(dbWorks) && dbWorks.length > 0) {
+                return res.json(dbWorks);
+            }
+        }
+    } catch (e) {}
+    res.json(customWorksMemory);
+});
+
+app.post('/api/works', async (req, res) => {
+    const { title, image } = req.body;
+    if (!image) {
+        return res.status(400).json({ success: false, error: "Зображення обов'язкове" });
+    }
+
+    const newWork = {
+        id: Date.now(),
+        title: title || 'Робота майстра',
+        image: image,
+        created_at: new Date().toISOString()
+    };
+
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/works`, {
+            method: 'POST',
+            headers: supabaseHeaders,
+            body: JSON.stringify(newWork)
+        });
+    } catch (e) {}
+
+    customWorksMemory.unshift(newWork);
+    res.json({ success: true, work: newWork });
+});
+
+app.post('/api/delete-work', async (req, res) => {
+    const { id } = req.body;
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/works?id=eq.${id}`, {
+            method: 'DELETE',
+            headers: supabaseHeaders
+        });
+    } catch (e) {}
+
+    customWorksMemory = customWorksMemory.filter(w => String(w.id) !== String(id));
+    res.json({ success: true });
+});
+
+// API: Перевірка постійного клієнта
 app.post('/api/check-client', async (req, res) => {
     const { phone } = req.body;
     try {
@@ -189,7 +277,7 @@ app.post('/api/check-client', async (req, res) => {
     }
 });
 
-// Створення платежу Monobank
+// API: Інвойс Monobank
 app.post('/api/create-invoice', async (req, res) => {
     try {
         const { name, date, time } = req.body;
