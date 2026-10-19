@@ -284,7 +284,7 @@
 
     </div>
 
-    <!-- Унікальне модальне вікно для детальної інформації про запис із гарантованим показом -->
+    <!-- Модальне вікно для детальної інформації про запис із можливістю скасування -->
     <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px;">
         <div style="background: var(--tg-card, #1a1816); border: 1.5px solid var(--accent, #d88c9a); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 12px; color: var(--tg-text, #f5f2ed);">
             <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center; margin-bottom:4px;">✨ Деталі запису</h3>
@@ -536,11 +536,10 @@
                 let refHtml = '—';
                 
                 if (refVal && refVal !== 'EMPTY' && refVal !== 'NULL') {
-                    // Якщо це посилання з ImgBB або інтернет-посилання
-                    if (refVal.startsWith('http://') || refVal.startsWith('https://')) {
+                    // Підтримуємо посилання з інтернету та стиснені картинки Base64
+                    if (refVal.startsWith('http://') || refVal.startsWith('https://') || refVal.startsWith('data:')) {
                         refHtml = `<br><a href="${refVal}" target="_blank"><img src="${refVal}" style="max-width:100%; max-height:220px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--accent);" alt="Фото клієнта"></a><br><span style="font-size:8px; color:var(--tg-muted);">Натисніть на фото, щоб відкрити у повний розмір</span>`;
                     } 
-                    // Якщо це назва файлу (наприклад, IMG_3657.png) або референс
                     else {
                         refHtml = `<br>Завантажений файл / референс: <b>${refVal}</b>`;
                     }
@@ -559,10 +558,39 @@
                     <div><b>Email:</b> ${booking.email || '—'}</div>
                     <div><b>Соцмережі:</b> ${booking.social || '—'}</div>
                     <div style="margin-top:6px;"><b>Фото-референс / волосся:</b><br>${refHtml}</div>
+                    
+                    <hr style="border: 0; border-top: 1px solid var(--tg-border); margin: 12px 0;">
+                    
+                    <button onclick="cancelClientBooking('${booking.date}', '${booking.time}', '${booking.phone}', ${booking.id || 'null'})" style="width: 100%; background: #e63946; color: #fff; border: none; padding: 10px; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 700; cursor: pointer; text-transform: uppercase;">🗑 Відмінити запис</button>
                 `;
             }
             let modal = document.getElementById('masterDetailPopupModal');
             if (modal) modal.style.display = 'flex';
+        }
+
+        // Функція скасування запису майстром
+        async function cancelClientBooking(date, time, phone, id) {
+            let isConfirmed = confirm("Ви впевнені, що хочете остаточно скасувати та видалити цей запис?");
+            if (!isConfirmed) return;
+
+            try {
+                let res = await fetch('/api/cancel-booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date, time, phone, id })
+                });
+                let data = await res.json();
+
+                if (data.success) {
+                    alert("✅ Запис успішно видалено!");
+                    closeBookingModal();
+                    refreshCrmData();
+                } else {
+                    alert("Помилка відміни: " + (data.error || "Невідома помилка"));
+                }
+            } catch (e) {
+                alert("Помилка з'єднання з сервером.");
+            }
         }
 
         async function toggleBlockSelectedDate() {
@@ -701,43 +729,6 @@
             clients.splice(idx, 1);
             localStorage.setItem('illiana_regular_clients', JSON.stringify(clients));
             renderRegularClientsList();
-        }
-
-        function exportClientsToExcel() {
-            let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
-            if (clients.length === 0) {
-                alert("База клієнтів порожня!");
-                return;
-            }
-            let ws = XLSX.utils.json_to_sheet(clients);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Клієнти");
-            XLSX.writeFile(wb, "Illiana_Studio_Clients.xlsx");
-        }
-
-        function importClientsFromExcel(event) {
-            let file = event.target.files[0];
-            if (!file) return;
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let data = new Uint8Array(e.target.result);
-                    let workbook = XLSX.read(data, { type: 'array' });
-                    let firstSheet = workbook.SheetNames[0];
-                    let rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
-                    
-                    let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
-                    rows.forEach(r => {
-                        if (r.name && r.phone) clients.push({ name: r.name, phone: r.phone, social: r.social || '' });
-                    });
-                    localStorage.setItem('illiana_regular_clients', JSON.stringify(clients));
-                    renderRegularClientsList();
-                    alert("Базу клієнтів успішно імпортовано!");
-                } catch(err) {
-                    alert("Помилка читання Excel файлу.");
-                }
-            };
-            reader.readAsArrayBuffer(file);
         }
 
         function uploadWorkToMainSite() {
