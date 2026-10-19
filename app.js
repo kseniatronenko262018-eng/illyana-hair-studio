@@ -106,6 +106,12 @@ const translations = {
 window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
     fetchBookingsData();
+    
+    // Відновлюємо аватарку на головній сторінці
+    let savedAvatar = localStorage.getItem('illiana_custom_master_photo') || 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
+    document.querySelectorAll('.profile-avatar img, #profileAvatarImg').forEach(img => {
+        img.src = savedAvatar;
+    });
 });
 
 async function fetchBookingsData() {
@@ -448,11 +454,7 @@ function closeLightbox() { document.getElementById('imageLightboxModal').style.d
 async function uploadImageToImgBB(file) {
     if (!file) return '';
     
-    // Захист від занадто великих файлів (щоб уникнути Payload Too Large)
-    if (file.size > 5 * 1024 * 1024) {
-        return file.name;
-    }
-
+    // Спробуємо спочатку завантажити на безкоштовний хостинг ImgBB
     const formData = new FormData();
     formData.append('image', file);
     
@@ -466,10 +468,16 @@ async function uploadImageToImgBB(file) {
             return result.data.url; // Пряме посилання на хостинг
         }
     } catch (e) {
-        console.warn("Помилка завантаження на хостинг:", e);
+        console.warn("Хостинг недоступний, використовуємо внутрішнє збереження фото:", e);
     }
 
-    return file.name;
+    // Запасний варіант: конвертація у формат Base64 прямо у браузері, щоб картинка гарантовано з'явилася в кабінеті майстра
+    return new Promise((resolve) => {
+        let reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(file.name);
+        reader.readAsDataURL(file);
+    });
 }
 
 async function submitBooking() {
