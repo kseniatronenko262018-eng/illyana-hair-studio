@@ -47,7 +47,7 @@ const translations = {
         phone_label: "Телефон",
         email_label: "Email (обов'язково)",
         social_label: "Нік / соцмережа",
-        slots_label: "Доступні слоти часу (студія працює до 19:00)",
+        slots_label: "Доступні слоти часу (останній запис о 19:00)",
         deposit_notice: "⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.",
         pay_btn: "Сплатити завдаток 500 ₴ та забронювати",
         modal_title: "Публічний договір оферти",
@@ -92,7 +92,7 @@ const translations = {
         phone_label: "Phone",
         email_label: "Email (required)",
         social_label: "Nickname / social",
-        slots_label: "Available time slots (studio works until 19:00)",
+        slots_label: "Available time slots (last booking at 19:00)",
         deposit_notice: "⚡ <b>Booking term:</b> <b>500 UAH</b> deposit confirms booking.",
         pay_btn: "Pay deposit 500 ₴ & book",
         modal_title: "Public Offer Agreement",
@@ -387,6 +387,9 @@ function selectCalendarDate(isoDate, element) {
     updateSummaryCard();
 }
 
+// Генерація слотів часу (останній прийом о 19:00):
+// - Фарбування завершується до 20:00
+// - Стрижка завершується до 20:30
 function renderTimeSlots() {
     let grid = document.getElementById('timeSlotsGrid');
     if (!grid) return;
@@ -400,14 +403,22 @@ function renderTimeSlots() {
     let bookedForDay = bookedSlotsCache[selectedDate] || [];
     let serviceDuration = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
 
+    // Генерація слотів з 10:00 до 19:00 включно
     let slots = [];
-    for (let h = 10; h <= 18; h++) {
+    for (let h = 10; h <= 19; h++) {
         slots.push(`${String(h).padStart(2, '0')}:00`);
-        if (h < 18) slots.push(`${String(h).padStart(2, '0')}:30`);
+        if (h < 19) slots.push(`${String(h).padStart(2, '0')}:30`);
     }
 
     let now = new Date();
     let isToday = (selectedDate === now.toISOString().split('T')[0]);
+
+    // Перевіряємо чи обрано виключно стрижку
+    let isOnlyHaircut = selectedCategory === 'cut' || 
+        (selectedServiceData && selectedServiceData.title.toLowerCase().includes('стрижка') && !selectedServiceData.title.toLowerCase().includes('фарбування'));
+
+    // Для стрижки крайній час 20:30 (20.5), для фарбування — 20:00 (20.0)
+    let maxEndDecimal = isOnlyHaircut ? 20.5 : 20.0;
 
     slots.forEach(timeStr => {
         let [hours, minutes] = timeStr.split(':').map(Number);
@@ -420,10 +431,12 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
-        if (slotEndDecimal > 19.5) {
+        // Перевірка завершення процедури відповідно до ліміту
+        if (slotEndDecimal > maxEndDecimal) {
             isDisabled = true;
         }
 
+        // Захист від вибору минулого часу на сьогодні
         if (isToday) {
             let slotTime = new Date();
             slotTime.setHours(hours, minutes, 0, 0);
@@ -433,6 +446,7 @@ function renderTimeSlots() {
             }
         }
 
+        // Перевірка перетину з існуючими записами
         bookedForDay.forEach(b => {
             let [bHours, bMinutes] = b.time.split(':').map(Number);
             let bStart = bHours + (bMinutes / 60);
