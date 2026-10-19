@@ -4,6 +4,8 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
+
+// Явно вказуємо роздачу статичних файлів з кореневої папки (для CSS, картинок, JS тощо)
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
@@ -64,7 +66,6 @@ app.get('/api/bookings', async (req, res) => {
         });
         const data = await response.json();
         
-        // Гарантуємо, що дані завжди приходять у правильному форматі з ціною та тривалістю
         const formattedData = Array.isArray(data) ? data.map(b => ({
             ...b,
             price: b.price !== null && b.price !== undefined ? b.price : 1000,
@@ -83,8 +84,6 @@ app.get('/api/bookings', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
     try {
-        console.log("Спроба зберегти запис:", booking);
-
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
             method: 'POST',
             headers: supabaseHeaders,
@@ -93,7 +92,6 @@ app.post('/api/bookings', async (req, res) => {
 
         if (!response.ok) {
             const errText = await response.text();
-            console.error("Помилка від Supabase при збереженні броні:", errText);
             return res.status(500).json({ success: false, error: errText });
         }
 
@@ -103,7 +101,6 @@ app.post('/api/bookings', async (req, res) => {
             try { data = JSON.parse(textResp); } catch(e) {}
         }
 
-        // Перевірка та збереження клієнта в базу
         try {
             const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
                 method: 'GET',
@@ -128,18 +125,15 @@ app.post('/api/bookings', async (req, res) => {
                     })
                 });
             }
-        } catch (clientErr) {
-            console.error("Помилка при оновленні списку клієнтів (не критично):", clientErr);
-        }
+        } catch (clientErr) {}
 
         return res.json({ success: true, data });
     } catch (error) {
-        console.error("Критична помилка збереження запису в Supabase:", error);
         return res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// API: Перевірка клієнта за останками 9 цифр (ігнорує +38, пробіли тощо)
+// API: Перевірка клієнта
 app.post('/api/check-client', async (req, res) => {
     const { phone } = req.body;
     try {
@@ -162,7 +156,6 @@ app.post('/api/check-client', async (req, res) => {
             return res.json({ isRegular: false });
         }
     } catch (error) {
-        console.error("Помилка перевірки клієнта:", error);
         return res.status(500).json({ isRegular: false });
     }
 });
@@ -185,7 +178,7 @@ app.post('/api/create-invoice', async (req, res) => {
                     destination: "Завдаток за послугу (ФОП Явір І.В.)",
                     comment: `Запис клієнта ${name} на ${date} о ${time}`
                 },
-                redirectUrl: req.headers.referer || "https://render.com",
+                redirectUrl: req.headers.referer || "https://vercel.com",
                 webHookUrl: "https://example.com/webhook"
             })
         });
@@ -193,7 +186,6 @@ app.post('/api/create-invoice', async (req, res) => {
         const data = await response.json();
         res.json(data);
     } catch (error) {
-        console.error("Помилка при створенні інвойсу:", error);
         res.status(500).json({ error: "Не вдалося створити платіж" });
     }
 });
