@@ -387,9 +387,6 @@ function selectCalendarDate(isoDate, element) {
     updateSummaryCard();
 }
 
-// Генерація слотів часу (останній прийом о 19:00):
-// - Фарбування завершується до 20:00
-// - Стрижка завершується до 20:30
 function renderTimeSlots() {
     let grid = document.getElementById('timeSlotsGrid');
     if (!grid) return;
@@ -403,7 +400,6 @@ function renderTimeSlots() {
     let bookedForDay = bookedSlotsCache[selectedDate] || [];
     let serviceDuration = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
 
-    // Генерація слотів з 10:00 до 19:00 включно
     let slots = [];
     for (let h = 10; h <= 19; h++) {
         slots.push(`${String(h).padStart(2, '0')}:00`);
@@ -413,11 +409,9 @@ function renderTimeSlots() {
     let now = new Date();
     let isToday = (selectedDate === now.toISOString().split('T')[0]);
 
-    // Перевіряємо чи обрано виключно стрижку
     let isOnlyHaircut = selectedCategory === 'cut' || 
         (selectedServiceData && selectedServiceData.title.toLowerCase().includes('стрижка') && !selectedServiceData.title.toLowerCase().includes('фарбування'));
 
-    // Для стрижки крайній час 20:30 (20.5), для фарбування — 20:00 (20.0)
     let maxEndDecimal = isOnlyHaircut ? 20.5 : 20.0;
 
     slots.forEach(timeStr => {
@@ -431,12 +425,10 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
-        // Перевірка завершення процедури відповідно до ліміту
         if (slotEndDecimal > maxEndDecimal) {
             isDisabled = true;
         }
 
-        // Захист від вибору минулого часу на сьогодні
         if (isToday) {
             let slotTime = new Date();
             slotTime.setHours(hours, minutes, 0, 0);
@@ -446,7 +438,6 @@ function renderTimeSlots() {
             }
         }
 
-        // Перевірка перетину з існуючими записами
         bookedForDay.forEach(b => {
             let [bHours, bMinutes] = b.time.split(':').map(Number);
             let bStart = bHours + (bMinutes / 60);
@@ -601,9 +592,12 @@ async function submitBooking() {
             throw new Error(bookData.error || "Помилка збереження на сервері");
         }
 
+        let bookingId = (bookData.booking && bookData.booking.id) ? bookData.booking.id : '';
+        let botLinkWithStart = bookingId ? `${TELEGRAM_BOT_URL}?start=${bookingId}` : TELEGRAM_BOT_URL;
+
         if (checkData.isRegular) {
             alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено.");
-            window.location.href = TELEGRAM_BOT_URL;
+            window.location.href = botLinkWithStart;
         } else {
             try {
                 let invoiceRes = await fetch('/api/create-invoice', {
@@ -620,7 +614,7 @@ async function submitBooking() {
             } catch (invErr) {}
 
             alert("✨ Запис успішно сформовано! Переходимо в чат-бот.");
-            window.location.href = TELEGRAM_BOT_URL;
+            window.location.href = botLinkWithStart;
         }
     } catch (err) {
         console.error("Помилка оформлення:", err);
