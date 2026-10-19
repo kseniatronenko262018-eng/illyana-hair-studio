@@ -450,25 +450,19 @@ function openLightbox(imgSrc) {
 }
 function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
 
-// НОВА ФУНКЦІЯ: Розумне стиснення фото прямо в браузері клієнта
-async function uploadClientPhoto(file) {
+// РОЗУМНА ФУНКЦІЯ: Стиснення фото перед відправкою на ImgBB, щоб обійти будь-які ліміти розміру
+async function uploadImageToImgBB(file) {
     if (!file) return '';
 
     return new Promise((resolve) => {
-        // Перевіряємо, чи це дійсно картинка
-        if (!file.type.startsWith('image/')) {
-            resolve(file.name);
-            return;
-        }
-
         let reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = (event) => {
             let img = new Image();
             img.src = event.target.result;
-            img.onload = () => {
+            img.onload = async () => {
                 let canvas = document.createElement('canvas');
-                let MAX_WIDTH = 800; // Оптимальна ширина для кабінету майстра
+                let MAX_WIDTH = 1000;
                 let scaleSize = MAX_WIDTH / img.width;
                 
                 if (img.width < MAX_WIDTH) {
@@ -482,10 +476,30 @@ async function uploadClientPhoto(file) {
                 let ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Конвертуємо у легкий формат JPEG. 
-                // Це обійде помилку Payload Too Large на сервері
-                let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                resolve(compressedBase64); 
+                // Отримуємо легкий файл JPEG
+                let dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Конвертуємо у шматок для відправки на хостинг
+                let resBlob = await fetch(dataUrl);
+                let blob = await resBlob.blob();
+
+                const formData = new FormData();
+                formData.append('image', blob, 'photo.jpg');
+
+                try {
+                    let response = await fetch('https://api.imgbb.com/1/upload?key=6d207e02949e29f8f41e1277a06f3630', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    let result = await response.json();
+                    if (result && result.success) {
+                        resolve(result.data.url); // Пряме посилання на завантажене фото
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Помилка хостингу:", e);
+                }
+                resolve(file.name);
             };
             img.onerror = () => resolve(file.name);
         };
@@ -515,7 +529,7 @@ async function submitBooking() {
     let submitBtn = document.querySelector('button[onclick="submitBooking()"]');
     let originalBtnText = submitBtn ? submitBtn.innerText : '';
     if (submitBtn) {
-        submitBtn.innerText = "⏳ Фото обробляється, зачекайте...";
+        submitBtn.innerText = "⏳ Обробка та завантаження фото...";
         submitBtn.style.pointerEvents = 'none';
         submitBtn.style.opacity = '0.7';
     }
@@ -526,9 +540,9 @@ async function submitBooking() {
 
         let uploadedPhotoUrl = '';
         if (refPhotoInput && refPhotoInput.files && refPhotoInput.files[0]) {
-            uploadedPhotoUrl = await uploadClientPhoto(refPhotoInput.files[0]);
+            uploadedPhotoUrl = await uploadImageToImgBB(refPhotoInput.files[0]);
         } else if (hairPhotoInput && hairPhotoInput.files && hairPhotoInput.files[0]) {
-            uploadedPhotoUrl = await uploadClientPhoto(hairPhotoInput.files[0]);
+            uploadedPhotoUrl = await uploadImageToImgBB(hairPhotoInput.files[0]);
         }
 
         let finalReferenceInfo = selectedHaircutRef || uploadedPhotoUrl || 'EMPTY';
