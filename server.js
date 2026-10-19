@@ -9,9 +9,9 @@ app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// ⚠️ НАЛАШТУВАННЯ TELEGRAM (замініть на власні значення, коли вони будуть)
-const BOT_TOKEN = '7891234567:AAExxx...'; // Токен бота з @BotFather
-const MASTER_TELEGRAM_ID = 'ВСТАВТЕ_CHAT_ID_МАЙСТРА_ТУТ'; // ID майстра з @userinfobot
+// ⚠️ НАЛАШТУВАННЯ TELEGRAM
+const BOT_TOKEN = '7891234567:AAExxx...'; // Вкажіть сюди токен вашого бота з @BotFather
+const MASTER_TELEGRAM_ID = '956742572'; // Ваш Telegram ID для тестування
 
 // Дані Supabase
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
@@ -32,9 +32,9 @@ function parseTimeToDecimal(timeStr) {
     return h + (m / 60);
 }
 
-// Повідомлення майстру в Telegram
+// Функція відправки сповіщення в Telegram
 async function sendMasterTelegramNotification(booking) {
-    if (!BOT_TOKEN || !MASTER_TELEGRAM_ID || MASTER_TELEGRAM_ID.includes('ВСТАВТЕ')) return;
+    if (!BOT_TOKEN || !MASTER_TELEGRAM_ID || BOT_TOKEN.includes('AAExxx')) return;
 
     const messageText = `⚡ <b>НОВИЙ ЗАПИС У СТУДІЮ!</b>\n\n` +
         `👤 <b>Клієнт:</b> ${booking.name}\n` +
