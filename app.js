@@ -7,7 +7,6 @@ let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
 
-// ⚠️ ОНОВЛЕНЕ ПОСИЛАННЯ НА НОВОГО БОТА
 const TELEGRAM_BOT_URL = 'https://t.me/illyana_hair_studio_bot';
 
 const translations = {
@@ -107,12 +106,51 @@ window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
     fetchBookingsData();
     loadWorksPortfolio();
+    setupPhotoPreviews();
     
     let savedAvatar = localStorage.getItem('illiana_custom_master_photo') || 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
     document.querySelectorAll('.profile-avatar img, #profileAvatarImg, .avatar-wrap img').forEach(img => {
         img.src = savedAvatar;
     });
+
+    let heroBg = document.getElementById('profileHeroBg');
+    if (heroBg) {
+        heroBg.style.backgroundImage = `url('${savedAvatar}')`;
+    }
 });
+
+function setupPhotoPreviews() {
+    const hairPhotoInput = document.getElementById('clientHairPhoto');
+    const refPhotoInput = document.getElementById('clientRefPhoto');
+
+    if (hairPhotoInput) {
+        hairPhotoInput.addEventListener('change', (e) => handlePreviewRender(e.target, 'hairPhotoPreviewContainer'));
+    }
+    if (refPhotoInput) {
+        refPhotoInput.addEventListener('change', (e) => handlePreviewRender(e.target, 'refPhotoPreviewContainer'));
+    }
+}
+
+function handlePreviewRender(input, containerId) {
+    let container = document.getElementById(containerId);
+    if (!container) return;
+
+    const file = input.files && input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            container.innerHTML = `
+                <div class="photo-preview-box">
+                    <img src="${e.target.result}" alt="Прев'ю">
+                    <span>✓ Фото успішно завантажено</span>
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        container.innerHTML = '';
+    }
+}
 
 async function fetchBookingsData() {
     try {
@@ -320,6 +358,10 @@ function updateSummaryCard() {
     let durationEl = document.getElementById('summaryDuration');
     let dateTimeEl = document.getElementById('summaryDateTime');
 
+    let stickyBar = document.getElementById('stickyBottomBar');
+    let stickyTitle = document.getElementById('stickyBarTitle');
+    let stickyPrice = document.getElementById('stickyBarPrice');
+
     if (!titleEl) return;
 
     if (selectedServiceData) {
@@ -329,10 +371,17 @@ function updateSummaryCard() {
         if (priceBadge) priceBadge.innerText = selectedServiceData.price + " ₴";
         if (durationEl) durationEl.innerText = selectedServiceData.durationText;
         if (metaEl) metaEl.style.display = 'flex';
+
+        if (stickyBar) {
+            stickyBar.style.display = 'flex';
+            if (stickyTitle) stickyTitle.innerText = text;
+            if (stickyPrice) stickyPrice.innerText = selectedServiceData.price + " ₴";
+        }
     } else {
         titleEl.innerText = currentLang === 'ua' ? "Оберіть послугу вище" : "Select service above";
         if (priceBadge) priceBadge.innerText = "0 ₴";
         if (metaEl) metaEl.style.display = 'none';
+        if (stickyBar) stickyBar.style.display = 'none';
     }
 
     if (dateTimeEl) {
@@ -341,6 +390,13 @@ function updateSummaryCard() {
         } else if (selectedDate) {
             dateTimeEl.innerText = `${selectedDate} (час не обрано)`;
         }
+    }
+}
+
+function scrollToCalendar() {
+    let calEl = document.getElementById('customCalendarGrid');
+    if (calEl) {
+        calEl.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
@@ -486,21 +542,19 @@ async function uploadImageToImgBB(file) {
 
     return new Promise((resolve) => {
         let reader = new FileReader();
-        reader.readAsDataURL(file);
         reader.onload = (event) => {
             let img = new Image();
-            img.src = event.target.result;
             img.onload = () => {
                 let canvas = document.createElement('canvas');
                 let MAX_WIDTH = 800;
                 let scaleSize = MAX_WIDTH / img.width;
                 
-                if (img.width < MAX_WIDTH) {
+                if (img.width <= MAX_WIDTH) {
                     canvas.width = img.width;
                     canvas.height = img.height;
                 } else {
                     canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
+                    canvas.height = Math.round(img.height * scaleSize);
                 }
 
                 let ctx = canvas.getContext('2d');
@@ -509,9 +563,11 @@ async function uploadImageToImgBB(file) {
                 let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
                 resolve(compressedDataUrl);
             };
-            img.onerror = () => resolve(file.name);
+            img.onerror = () => resolve(event.target.result || '');
+            img.src = event.target.result;
         };
-        reader.onerror = () => resolve(file.name);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
     });
 }
 
@@ -521,16 +577,43 @@ async function submitBooking() {
     let email = document.getElementById('clientEmail').value.trim();
     let social = document.getElementById('clientSocial')?.value.trim() || '';
 
+    // 1. Обов'язкова категорія та послуга
     if (!selectedCategory || !selectedServiceData) {
-        alert("Оберіть послугу!");
+        alert("⚠️ Будь ласка, оберіть категорію та послугу!");
         return;
     }
+
+    // 2. Обов'язкова дата та час
     if (!selectedDate || !selectedTimeSlot) {
-        alert("Оберіть дату та час візиту!");
+        alert("⚠️ Оберіть дату та час візиту!");
         return;
     }
+
+    // 3. 100% ОБМЕЖЕННЯ: Обов'язковий вибір довжини волосся
+    let lengthSelect = document.getElementById('hairLengthSelect');
+    if (lengthSelect && lengthSelect.offsetParent !== null && !lengthSelect.value) {
+        alert("⚠️ Будь ласка, обов'язково оберіть довжину вашого волосся!");
+        return;
+    }
+
+    // 4. 100% ОБМЕЖЕННЯ: Обов'язкове фото поточного стану волосся (Пункт 4)
+    let hairPhotoInput = document.getElementById('clientHairPhoto');
+    if (!hairPhotoInput || !hairPhotoInput.files || !hairPhotoInput.files[0]) {
+        alert("⚠️ Будь ласка, обов'язково завантажте фото поточного стану вашого волосся (Пункт 4)!");
+        return;
+    }
+
+    // 5. 100% ОБМЕЖЕННЯ: Обов'язкове фото-референс або вибір з каталогу (Пункт 5)
+    let refPhotoInput = document.getElementById('clientRefPhoto');
+    let hasRefFile = refPhotoInput && refPhotoInput.files && refPhotoInput.files[0];
+    if (!hasRefFile && !selectedHaircutRef) {
+        alert("⚠️ Будь ласка, обов'язково завантажте фото-референс або оберіть варіант із каталогу (Пункт 5)!");
+        return;
+    }
+
+    // 6. Обов'язкові контактні дані
     if (!name || !phone || !email) {
-        alert("Заповніть ім'я, телефон та email!");
+        alert("⚠️ Заповніть ім'я, телефон та email!");
         return;
     }
 
@@ -543,17 +626,17 @@ async function submitBooking() {
     }
 
     try {
-        let hairPhotoInput = document.getElementById('clientHairPhoto');
-        let refPhotoInput = document.getElementById('clientRefPhoto');
+        let hairPhotoUrl = await uploadImageToImgBB(hairPhotoInput.files[0]);
+        let refPhotoUrl = '';
 
-        let uploadedPhotoUrl = '';
-        if (refPhotoInput && refPhotoInput.files && refPhotoInput.files[0]) {
-            uploadedPhotoUrl = await uploadImageToImgBB(refPhotoInput.files[0]);
-        } else if (hairPhotoInput && hairPhotoInput.files && hairPhotoInput.files[0]) {
-            uploadedPhotoUrl = await uploadImageToImgBB(hairPhotoInput.files[0]);
+        if (hasRefFile) {
+            refPhotoUrl = await uploadImageToImgBB(refPhotoInput.files[0]);
+        } else if (selectedHaircutRef) {
+            refPhotoUrl = selectedHaircutRef;
         }
 
-        let finalReferenceInfo = selectedHaircutRef || uploadedPhotoUrl || 'EMPTY';
+        // Зберігаємо обидва фото одночасно
+        let finalReferenceInfo = `ПОТОЧНИЙ СТАН: ${hairPhotoUrl} ||| РЕФЕРЕНС: ${refPhotoUrl}`;
 
         let checkRes = await fetch('/api/check-client', {
             method: 'POST',
