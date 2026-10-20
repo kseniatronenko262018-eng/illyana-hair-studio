@@ -7,6 +7,7 @@
     --text-muted: #9e958b;
     --accent: #d88c9a; 
     --accent-invert: #141312;
+    --accent-glow: rgba(216, 140, 154, 0.35);
 }
 
 :root[data-theme="light"] {
@@ -18,6 +19,7 @@
     --text-muted: #756d65;
     --accent: #b86b79; 
     --accent-invert: #ffffff;
+    --accent-glow: rgba(184, 107, 121, 0.25);
 }
 
 * {
@@ -68,6 +70,7 @@ body {
     gap: 16px;
     position: relative;
     z-index: 2;
+    padding-bottom: 70px; /* Запас для плаваючої нижньої плашки */
 }
 
 .utility-bar {
@@ -100,6 +103,7 @@ body {
     z-index: 10;
 }
 
+/* 🌟 АТМОСФЕРНИЙ ФОНОВИЙ БАННЕР З ФОТО МАЙСТРА */
 .profile-card {
     background: var(--card-bg);
     backdrop-filter: blur(20px);
@@ -108,6 +112,24 @@ body {
     padding: 24px 16px;
     text-align: center;
     box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-hero-bg {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.28;
+    filter: blur(18px);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    z-index: 0;
+    pointer-events: none;
 }
 
 .avatar-wrap {
@@ -116,7 +138,10 @@ body {
     border-radius: 50%;
     margin: 0 auto 12px auto;
     overflow: hidden;
-    border: 2px solid var(--accent);
+    border: 2.5px solid var(--accent);
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 0 20px var(--accent-glow);
 }
 
 .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
@@ -129,6 +154,8 @@ body {
     margin-bottom: 4px;
     text-transform: uppercase;
     color: var(--text-main);
+    position: relative;
+    z-index: 2;
 }
 
 .profile-card p {
@@ -137,6 +164,8 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.5px;
+    position: relative;
+    z-index: 2;
 }
 
 .profile-bio {
@@ -144,6 +173,35 @@ body {
     color: var(--text-muted);
     font-style: italic;
     margin-top: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+/* 📊 ТРЕКЕР КРОКІВ БРОНЮВАННЯ */
+.step-tracker {
+    display: flex;
+    justify-content: space-between;
+    background: var(--card-hover);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 8.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.step-tracker .step-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.step-tracker .step-item.active {
+    opacity: 1;
+    color: var(--accent);
 }
 
 .quick-nav {
@@ -165,12 +223,14 @@ body {
     text-transform: uppercase;
     position: relative;
     z-index: 10;
+    transition: all 0.2s ease;
 }
 
 .nav-chip.active {
     background: var(--accent);
     color: var(--accent-invert);
     border-color: var(--accent);
+    box-shadow: 0 4px 15px var(--accent-glow);
 }
 
 .section-pane {
@@ -214,12 +274,40 @@ body {
     font-size: 11px;
     font-weight: 500;
     outline: none;
+    transition: border-color 0.2s ease;
 }
-.input-box:focus { border-color: var(--accent); }
+.input-box:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
 select.input-box { appearance: none; cursor: pointer; }
 option { background: var(--bg-dark); color: var(--text-main); }
 
-/* Стилі для горизонтальних карток вибору послуг (Service Card Row) */
+/* 🖼️ БЛОКИ ПРЕВ'Ю ЗАВАНТАЖЕНИХ ФОТО */
+.photo-preview-box {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    animation: fadeIn 0.3s ease;
+}
+
+.photo-preview-box img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.photo-preview-box span {
+    font-size: 10px;
+    font-weight: 600;
+    color: #4cd964;
+}
+
+/* ✂️ СТИЛІ ДЛЯ КАРТОК ПОСЛУГ З ЕФЕКТОМ СЯЙВА */
 .services-list {
     display: flex;
     flex-direction: column;
@@ -235,12 +323,14 @@ option { background: var(--bg-dark); color: var(--text-main); }
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
 }
 
 .service-card-row.selected {
     border-color: var(--accent);
     background: rgba(184, 107, 121, 0.12);
+    box-shadow: 0 0 16px var(--accent-glow);
+    transform: translateY(-1px);
 }
 
 .service-card-row img {
@@ -289,7 +379,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
     background: var(--accent);
 }
 
-/* Сучасна картка підсумку замовлення (Summary Card) */
+/* 💳 ПІДСУМОК ЗАМОВЛЕННЯ */
 .summary-card {
     background: var(--card-hover);
     border: 1.5px solid var(--accent);
@@ -298,6 +388,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
     display: flex;
     flex-direction: column;
     gap: 6px;
+    box-shadow: 0 0 20px var(--accent-glow);
 }
 .summary-header {
     display: flex;
@@ -323,6 +414,56 @@ option { background: var(--bg-dark); color: var(--text-main); }
     display: flex;
     gap: 12px;
     margin-top: 2px;
+}
+
+/* 📱 ПЛАВАЮЧА НИЖНЯ ПАНЕЛЬ УМОМ ДЛЯ МОБІЛЬНИХ */
+.sticky-bottom-bar {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: 396px;
+    background: rgba(20, 19, 18, 0.92);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 10px 14px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 99;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 15px var(--accent-glow);
+    animation: slideUp 0.3s ease;
+}
+
+.sticky-bottom-bar .bar-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sticky-bottom-bar .bar-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.sticky-bottom-bar .bar-price {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.sticky-bottom-bar button {
+    padding: 8px 14px;
+    background: var(--accent);
+    color: var(--accent-invert);
+    border: none;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
 }
 
 /* Акордеон для правил */
@@ -367,14 +508,16 @@ option { background: var(--bg-dark); color: var(--text-main); }
     border: 1px solid var(--border);
     cursor: pointer;
     background: var(--card-hover);
+    transition: all 0.2s ease;
 }
 .haircut-grid-item.selected {
     border-color: var(--accent);
     border-width: 2px;
+    box-shadow: 0 0 12px var(--accent-glow);
 }
 .haircut-grid-item img { width: 100%; height: 100%; object-fit: cover; }
 
-/* Повна сітка робіт з прокруткою */
+/* Повна сітка робіт */
 .works-grid-full {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -391,11 +534,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
     cursor: pointer;
     background: var(--card-hover);
 }
-.works-carousel-item img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-}
+.works-carousel-item img { width: 100%; height: 100%; object-fit: cover; }
 
 .sub-service-card {
     background: var(--card-hover);
@@ -411,6 +550,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
 .sub-service-card.selected {
     border-color: var(--accent);
     background: rgba(184, 107, 121, 0.16);
+    box-shadow: 0 0 12px var(--accent-glow);
 }
 .sub-service-card .s-title { font-size: 10px; font-weight: 700; color: var(--text-main); }
 .sub-service-card .s-sub { font-size: 8px; color: var(--text-muted); }
@@ -439,8 +579,9 @@ option { background: var(--bg-dark); color: var(--text-main); }
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s ease;
 }
-.time-cell.selected { background: var(--accent); color: var(--accent-invert); border-color: var(--accent); }
+.time-cell.selected { background: var(--accent); color: var(--accent-invert); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
 .time-cell.booked { opacity: 0.35; pointer-events: none; background: rgba(255,0,0,0.1); text-decoration: line-through; }
 
 .notice-badge, .policy-highlight-card {
@@ -453,7 +594,6 @@ option { background: var(--bg-dark); color: var(--text-main); }
     color: var(--text-muted);
 }
 .notice-badge b, .policy-highlight-card b { color: var(--text-main); }
-.notice-list { margin-top: 4px; padding-left: 14px; font-size: 8.5px; }
 
 .btn-main {
     width: 100%;
@@ -467,8 +607,10 @@ option { background: var(--bg-dark); color: var(--text-main); }
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(184, 107, 121, 0.3);
+    box-shadow: 0 6px 20px var(--accent-glow);
+    transition: transform 0.2s ease;
 }
+.btn-main:active { transform: scale(0.98); }
 
 .info-card {
     background: var(--card-bg);
@@ -545,11 +687,12 @@ option { background: var(--bg-dark); color: var(--text-main); }
     font-size: 9px;
     font-weight: 700;
     color: var(--text-muted);
+    transition: all 0.2s ease;
 }
 
 .calendar-day-cell .day-name { text-transform: uppercase; font-size: 8px; margin-bottom: 2px; }
 .calendar-day-cell .day-num { font-size: 13px; color: var(--text-main); font-weight: 800; }
-.calendar-day-cell.selected { background: var(--accent); border-color: var(--accent); }
+.calendar-day-cell.selected { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
 .calendar-day-cell.selected .day-num, .calendar-day-cell.selected .day-name { color: var(--accent-invert); }
 
 .form-row {
@@ -557,6 +700,16 @@ option { background: var(--bg-dark); color: var(--text-main); }
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     width: 100%;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 @media(max-width: 360px) {
