@@ -147,7 +147,7 @@
         <div id="masterDashboard" style="display: none; flex-direction: column; gap: 10px;">
 
             <div id="newBookingAlertBanner" class="notification-banner" style="display: none; background: rgba(216, 140, 154, 0.22); border: 1px solid var(--accent); padding: 10px 14px; border-radius: 16px; font-size: 10px; color: var(--tg-text); justify-content: space-between; align-items: center;">
-                <span id="alertBannerText">🔔 Новий запис!</span>
+                <span id="alertBannerText">🔔 Новий запис у студію!</span>
                 <button class="control-btn" onclick="handleBannerClick()" style="background:var(--tg-card); border-color:var(--accent); color:var(--tg-text); padding: 6px 12px; border-radius: 8px; font-weight: 700;">Переглянути</button>
             </div>
 
@@ -284,6 +284,7 @@
         let selectedCrmDate = new Date().toISOString().split('T')[0];
         let allBookingsCache = [];
         let blockedDaysCache = [];
+        let previousBookingsCount = -1;
 
         function loadMasterSavedPhoto() {
             let savedPhoto = localStorage.getItem('illiana_custom_master_photo');
@@ -342,10 +343,35 @@
             }
         }
 
+        function playNewBookingSound() {
+            try {
+                let audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play().catch(e => console.log("Autoplay blocked by browser policy"));
+            } catch(e) {}
+        }
+
+        function handleBannerClick() {
+            let alertBanner = document.getElementById('newBookingAlertBanner');
+            if (alertBanner) alertBanner.style.display = 'none';
+            switchMasterSection('secCalendar', document.querySelector('.korea-nav-chip'));
+        }
+
         async function refreshCrmData() {
             try {
                 let resB = await fetch('/api/bookings');
-                allBookingsCache = await resB.json() || [];
+                let newBookings = await resB.json() || [];
+
+                if (previousBookingsCount >= 0 && newBookings.length > previousBookingsCount) {
+                    playNewBookingSound();
+                    let alertBanner = document.getElementById('newBookingAlertBanner');
+                    if (alertBanner) {
+                        alertBanner.style.display = 'flex';
+                        let bannerText = document.getElementById('alertBannerText');
+                        if (bannerText) bannerText.innerText = '🔔 Надійшов новий запис!';
+                    }
+                }
+                previousBookingsCount = newBookings.length;
+                allBookingsCache = Array.isArray(newBookings) ? newBookings : [];
 
                 let resD = await fetch('/api/blocked-days');
                 blockedDaysCache = await resD.json() || [];
@@ -491,14 +517,23 @@
             let detailsEl = document.getElementById('modalBookingDetails');
             if (detailsEl) {
                 let refVal = booking.reference || booking.haircut_ref || '';
-                let refHtml = '—';
+                let refHtml = '<span style="color:var(--tg-muted);">Не завантажено</span>';
                 
                 if (refVal && refVal !== 'EMPTY' && refVal !== 'NULL') {
-                    if (refVal.startsWith('http://') || refVal.startsWith('https://') || refVal.startsWith('data:')) {
-                        refHtml = `<br><a href="${refVal}" target="_blank"><img src="${refVal}" style="max-width:100%; max-height:220px; object-fit:cover; border-radius:10px; margin-top:6px; border:1px solid var(--accent);" alt="Фото клієнта"></a>`;
-                    } else {
-                        refHtml = `<br>Завантажений файл / референс: <b>${refVal}</b>`;
+                    let imgSrc = refVal;
+                    if (!refVal.startsWith('http://') && !refVal.startsWith('https://') && !refVal.startsWith('data:')) {
+                        imgSrc = refVal.startsWith('/') ? refVal : '/' + refVal;
                     }
+                    refHtml = `
+                        <div style="margin-top:6px;">
+                            <img src="${imgSrc}" 
+                                 alt="Фото-референс / волосся" 
+                                 style="width:100%; max-height:260px; object-fit:cover; border-radius:12px; border:1px solid var(--accent); cursor:pointer;" 
+                                 onclick="window.open('${imgSrc}', '_blank')"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <span style="display:none; font-size:10px; color:var(--tg-muted); word-break:break-all;">${refVal}</span>
+                        </div>
+                    `;
                 }
 
                 let priceDisplay = booking.price ? `${booking.price} ₴` : '—';
@@ -513,7 +548,7 @@
                     <div><b>Тривалість:</b> ${durationDisplay}</div>
                     <div><b>Email:</b> ${booking.email || '—'}</div>
                     <div><b>Соцмережі:</b> ${booking.social || '—'}</div>
-                    <div style="margin-top:6px;"><b>Фото-референс / волосся:</b><br>${refHtml}</div>
+                    <div style="margin-top:6px;"><b>Фото-референс / волосся:</b> ${refHtml}</div>
                     
                     <hr style="border: 0; border-top: 1px solid var(--tg-border); margin: 12px 0;">
                     
@@ -686,7 +721,6 @@
             renderRegularClientsList();
         }
 
-        // ЗАВАНТАЖЕННЯ РОБІТ В ПОРТФОЛІО
         async function uploadWorkToMainSite() {
             let titleInput = document.getElementById('newWorkTitleInput');
             let fileInput = document.getElementById('newWorkImageFile');
