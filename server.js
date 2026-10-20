@@ -9,9 +9,9 @@ app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// ⚠️ НАЛАШТУВАННЯ TELEGRAM (Токен та ваш ID вставлено)
+// ⚠️ НАЛАШТУВАННЯ TELEGRAM
 const BOT_TOKEN = '8240580588:AAH0aEOC9OjJGrt-U0KfrtQ7ujq8arA4RPw'; 
-const MASTER_TELEGRAM_ID = '956742572';
+const MASTER_TELEGRAM_ID = '956742572'; // Ваш ID для тестування
 
 // Дані Supabase
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
@@ -32,7 +32,9 @@ function parseTimeToDecimal(timeStr) {
     return h + (m / 60);
 }
 
-// Функція відправки сповіщення в Telegram
+// ------------------ TELEGRAM BOT & NOTIFICATIONS ------------------
+
+// 1. Надсилання сповіщення майстру
 async function sendMasterTelegramNotification(booking) {
     if (!BOT_TOKEN || !MASTER_TELEGRAM_ID) return;
 
@@ -45,20 +47,92 @@ async function sendMasterTelegramNotification(booking) {
         `📧 <b>Email:</b> ${booking.email || '—'}\n` +
         `💬 <b>Соцмережа:</b> ${booking.social || '—'}`;
 
+    await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
+}
+
+// 2. Вбудований бот: автовідповідь клієнтам на /start
+let telegramOffset = 0;
+async function startTelegramBotPolling() {
+    if (!BOT_TOKEN) return;
+
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${telegramOffset}&timeout=10`);
+        const data = await res.json();
+
+        if (data.ok && Array.isArray(data.result)) {
+            for (const update of data.result) {
+                telegramOffset = update.update_id + 1;
+                if (update.message && update.message.text) {
+                    await handleBotMessage(update.message);
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Telegram Polling Error:", err.message);
+    }
+
+    setTimeout(startTelegramBotPolling, 1500);
+}
+
+async function handleBotMessage(msg) {
+    const chatId = msg.chat.id;
+    const text = msg.text || '';
+
+    if (text.startsWith('/start')) {
+        const parts = text.split(' ');
+        const bookingId = parts[1] ? parts[1].trim() : null;
+
+        if (bookingId) {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${bookingId}`, {
+                    headers: supabaseHeaders
+                });
+                const data = await response.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    const b = data[0];
+                    const confirmMsg = `✨ <b>Дякуємо за ваш запис у студію!</b>\n\n` +
+                        `📅 <b>Дата візиту:</b> ${b.date}\n` +
+                        `⏰ <b>Час:</b> ${b.time}\n` +
+                        `✂️ <b>Послуга:</b> ${b.service}\n` +
+                        `💰 <b>Вартість:</b> ${b.price || 1000} ₴\n\n` +
+                        `⚠️ <b>ВАЖЛИВЕ ПРАВИЛО СКАСУВАННЯ:</b>\n` +
+                        `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
+                        `Для скасування або зміни часу, будь ласка, напишіть безпосередньо в <b>Директ майстра</b>.`;
+
+                    await sendTelegramMessage(chatId, confirmMsg);
+                    return;
+                }
+            } catch (e) {
+                console.error("Error loading booking details:", e);
+            }
+        }
+
+        const welcomeMsg = `Вітаємо у чат-боті студії Явір Ілляни! ✨\n\nЯкщо у вас є питання або ви хочете скасувати візит, напишіть майстру в Директ.`;
+        await sendTelegramMessage(chatId, welcomeMsg);
+    }
+}
+
+async function sendTelegramMessage(chatId, text) {
     try {
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                chat_id: MASTER_TELEGRAM_ID,
-                text: messageText,
+                chat_id: chatId,
+                text: text,
                 parse_mode: 'HTML'
             })
         });
     } catch (e) {
-        console.error("Помилка відправки в Telegram:", e);
+        console.error("Error sending Telegram message:", e);
     }
 }
+
+// Запускаємо бота
+startTelegramBotPolling();
+
+// ------------------ API ROUTES ------------------
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'master.html')));
@@ -313,4 +387,4 @@ app.post('/api/create-invoice', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Сервер запущено на порту ${PORT}!`));
+app.listen(PORT, () => console.log(`Сервер та Telegram-бот запущено на порту ${PORT}!`));
