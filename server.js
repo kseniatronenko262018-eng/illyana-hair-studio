@@ -37,6 +37,9 @@ function parseTimeToDecimal(timeStr) {
 
 // ------------------ TELEGRAM BOT & NOTIFICATIONS ------------------
 
+// Очищення старих Webhook для уникнення конфліктів Telegram
+fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`).catch(() => {});
+
 // 1. Сповіщення майстру про новий запис
 async function sendMasterTelegramNotification(booking) {
     if (!BOT_TOKEN || !MASTER_TELEGRAM_ID) return;
@@ -56,11 +59,11 @@ async function sendMasterTelegramNotification(booking) {
     await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
 }
 
-// 2. Вбудований бот: автовідповідь клієнтам (із анти-дублюванням)
+// 2. Вбудований бот: автовідповідь клієнтам (з фіксацією дублів за chatId)
 let telegramOffset = 0;
 const processedUpdateIds = new Set();
 const processedMessageIds = new Set();
-const sentConfirmationsCache = new Map(); // Захист від відправки 3-х дублів клієнту
+const sentConfirmationsCache = new Map();
 let isPollingRunning = false;
 
 async function startTelegramBotPolling() {
@@ -108,18 +111,18 @@ async function handleBotMessage(msg) {
     const text = msg.text || '';
 
     if (text.startsWith('/start')) {
+        // ЖОРСТКИЙ ФІЛЬТР: Не надсилати клієнту більше 1 повідомлення протягом 10 секунд
+        const dedupeKey = `start_${chatId}`;
+        const now = Date.now();
+        if (sentConfirmationsCache.has(dedupeKey) && (now - sentConfirmationsCache.get(dedupeKey) < 10000)) {
+            return;
+        }
+        sentConfirmationsCache.set(dedupeKey, now);
+
         const parts = text.split(' ');
         const bookingId = parts[1] ? parts[1].trim() : null;
 
         if (bookingId) {
-            // ФІЛЬТР ДУБЛІКАЦІЇ: не надсилати повідомлення чату частіше ніж 1 раз на 15 секунд для одного bookingId
-            const dedupeKey = `${chatId}_${bookingId}`;
-            const now = Date.now();
-            if (sentConfirmationsCache.has(dedupeKey) && (now - sentConfirmationsCache.get(dedupeKey) < 15000)) {
-                return;
-            }
-            sentConfirmationsCache.set(dedupeKey, now);
-
             try {
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${bookingId}`, {
                     headers: supabaseHeaders
