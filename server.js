@@ -9,7 +9,7 @@ app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// ⚠️ НАЛАШТУВАННЯ TELEGRAM (Новий токен та ID)
+// ⚠️ НАЛАШТУВАННЯ TELEGRAM
 const BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI'; 
 const MASTER_TELEGRAM_ID = '956742572'; 
 
@@ -40,20 +40,24 @@ async function sendMasterTelegramNotification(booking) {
 
     const messageText = `⚡ <b>НОВИЙ ЗАПИС У СТУДІЮ!</b>\n\n` +
         `<code>` +
-        `👤 Клієнт:  ${booking.name}\n` +
-        `📞 Телефон: ${booking.phone}\n` +
-        `📅 Дата:    ${booking.date} о ${booking.time}\n` +
-        `✂️ Послуга: ${booking.service}\n` +
-        `💰 Сума:    ${booking.price} ₴\n` +
-        `📧 Email:   ${booking.email || '—'}\n` +
+        `👤 Клієнт:   ${booking.name}\n` +
+        `📞 Телефон:  ${booking.phone}\n` +
+        `📅 Дата:     ${booking.date} о ${booking.time}\n` +
+        `✂️ Послуга:  ${booking.service}\n` +
+        `💰 Сума:     ${booking.price} ₴\n` +
+        `📧 Email:    ${booking.email || '—'}\n` +
         `💬 Соцмережа: ${booking.social || '—'}` +
         `</code>`;
 
     await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
 }
 
-// 2. Вбудований бот: автовідповідь клієнтам на /start
+// 2. Вбудований бот: автовідповідь клієнтам (із захистом від дублювання)
 let telegramOffset = 0;
+const processedUpdateIds = new Set();
+const processedMessageIds = new Set();
+let isPollingStarted = false;
+
 async function startTelegramBotPolling() {
     if (!BOT_TOKEN) return;
 
@@ -63,8 +67,25 @@ async function startTelegramBotPolling() {
 
         if (data.ok && Array.isArray(data.result)) {
             for (const update of data.result) {
-                telegramOffset = update.update_id + 1;
+                // Захист від повторної обробки того самого update_id
+                if (processedUpdateIds.has(update.update_id)) continue;
+                processedUpdateIds.add(update.update_id);
+                if (processedUpdateIds.size > 500) {
+                    const firstVal = processedUpdateIds.values().next().value;
+                    processedUpdateIds.delete(firstVal);
+                }
+
+                telegramOffset = Math.max(telegramOffset, update.update_id + 1);
+
                 if (update.message && update.message.text) {
+                    const msgKey = `${update.message.chat.id}_${update.message.message_id}`;
+                    if (processedMessageIds.has(msgKey)) continue;
+                    processedMessageIds.add(msgKey);
+                    if (processedMessageIds.size > 500) {
+                        const firstVal = processedMessageIds.values().next().value;
+                        processedMessageIds.delete(firstVal);
+                    }
+
                     await handleBotMessage(update.message);
                 }
             }
@@ -73,7 +94,13 @@ async function startTelegramBotPolling() {
         console.error("Telegram Polling Error:", err.message);
     }
 
-    setTimeout(startTelegramBotPolling, 1500);
+    setTimeout(startTelegramBotPolling, 2000);
+}
+
+function initBotPolling() {
+    if (isPollingStarted) return;
+    isPollingStarted = true;
+    startTelegramBotPolling();
 }
 
 async function handleBotMessage(msg) {
@@ -103,7 +130,6 @@ async function handleBotMessage(msg) {
                         `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\n` +
                         `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.`;
 
-                    // Інтерактивні кнопки під карткою запису
                     const inlineButtons = {
                         inline_keyboard: [
                             [
@@ -156,8 +182,7 @@ async function sendTelegramMessage(chatId, text, replyMarkup = null) {
     }
 }
 
-// Запускаємо бота
-startTelegramBotPolling();
+initBotPolling();
 
 // ------------------ API ROUTES ------------------
 
@@ -414,4 +439,4 @@ app.post('/api/create-invoice', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Сервер та новий Telegram-бот запущено на порту ${PORT}!`));
+app.listen(PORT, () => console.log(`Сервер та Telegram-бот запущено на порту ${PORT}!`));
