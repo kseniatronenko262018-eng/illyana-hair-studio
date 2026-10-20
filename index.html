@@ -3,584 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Явір Ілляна // CRM Кабінет Майстра</title>
+    <title>Явір Ілляна // Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        body { padding: 12px; }
-        .master-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 14px 16px;
-            margin-bottom: 14px;
-        }
-        .master-header h2 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--text-main); }
-        .master-nav {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            margin-bottom: 14px;
-        }
-        .m-chip {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            padding: 10px 4px;
-            border-radius: 12px;
-            text-align: center;
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
-        .m-chip.active {
-            background: var(--accent);
-            color: var(--accent-invert);
-            border-color: var(--accent);
-        }
-
-        /* 🗓️ Стилі для календаря майстра */
-        .master-calendar-wrapper {
-            background: var(--card-hover);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 12px;
-        }
-        .master-calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-        .master-calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            text-align: center;
-        }
-        .m-day-header {
-            font-size: 8px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            padding-bottom: 4px;
-        }
-        .m-day-cell {
-            height: 42px;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-main);
-            cursor: pointer;
-            position: relative;
-            transition: all 0.2s ease;
-        }
-        .m-day-cell.selected {
-            border-color: var(--accent);
-            background: rgba(216, 140, 154, 0.2);
-        }
-        .m-day-cell.has-bookings::after {
-            content: '';
-            width: 5px;
-            height: 5px;
-            background: var(--accent);
-            border-radius: 50%;
-            position: absolute;
-            bottom: 4px;
-            box-shadow: 0 0 6px var(--accent);
-        }
-
-        .booking-card {
-            background: var(--card-hover);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .booking-card:hover { border-color: var(--accent); }
-        .booking-card .b-header { display: flex; justify-content: space-between; align-items: center; }
-        .booking-card .b-name { font-size: 12px; font-weight: 700; color: var(--text-main); }
-        .booking-card .b-time { font-size: 10px; font-weight: 800; color: var(--accent); background: rgba(216,140,154,0.15); padding: 2px 6px; border-radius: 6px; }
-        .booking-card .b-sub { font-size: 10px; color: var(--text-muted); }
-        
-        .booking-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.85);
-            z-index: 99999;
-            padding: 16px;
-            justify-content: center;
-            align-items: center;
-        }
-        .booking-modal-body {
-            width: 100%;
-            max-width: 400px;
-            max-height: 90vh;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-        }
-        .btn-cancel-booking {
-            background: #ff4d4d;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-top: 6px;
-        }
-    </style>
 </head>
 <body>
 
-    <div class="mobile-container" style="max-width: 480px;">
-        <div class="master-header">
-            <h2>✨ ЯВІР ІЛЛЯНА // CRM</h2>
-            <button class="control-btn" onclick="fetchMasterData()">🔄 Оновити</button>
-        </div>
-
-        <div class="master-nav">
-            <div class="m-chip active" onclick="switchMasterTab('bookings', this)">📅 Календар записів</div>
-            <div class="m-chip" onclick="switchMasterTab('blocked', this)">🔒 Вихідні</div>
-            <div class="m-chip" onclick="switchMasterTab('portfolio', this)">✨ Роботи</div>
-        </div>
-
-        <!-- СЕКЦІЯ 1: КАЛЕНДАР ТА СПИСОК ЗАПИСІВ -->
-        <div id="mPaneBookings" class="section-pane active">
+    <div class="mobile-container">
+        
+        <!-- ШАПКА ТА ПРОФІЛЬ МАТРА -->
+        <header class="profile-card">
+            <div class="profile-hero-bg" id="profileHeroBg"></div>
+            <div class="profile-header-top">
+                <button class="lang-btn" id="langToggle" onclick="toggleLang()">UA / EN</button>
+                <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+            </div>
             
-            <!-- Інтерактивний календар майстра -->
-            <div class="master-calendar-wrapper">
-                <div class="master-calendar-header">
-                    <button class="control-btn" onclick="changeMasterMonth(-1)">←</button>
-                    <span id="masterMonthTitle">Жовтень 2026</span>
-                    <button class="control-btn" onclick="changeMasterMonth(1)">→</button>
-                </div>
-                <div class="master-calendar-grid" id="masterCalendarDaysGrid"></div>
+            <div class="profile-avatar">
+                <img id="profileAvatarImg" src="https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg" alt="Явір Ілляна">
             </div>
-
-            <div class="form-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <label class="field-label" id="selectedDateLabel" style="margin:0;">Записи на обрану дату:</label>
-                    <button class="control-btn" style="font-size:8px;" onclick="resetDateFilter()">Всі записи</button>
-                </div>
-                <div id="masterBookingsList" style="display: flex; flex-direction: column; gap: 8px;">
-                    <div style="font-size:10px; color:var(--text-muted); text-align:center;">Завантаження записів...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- СЕКЦІЯ 2: УПРАВЛІННЯ ВИХІДНИМИ ДНЯМИ -->
-        <div id="mPaneBlocked" class="section-pane">
-            <div class="form-card">
-                <label class="field-label">Заблокувати / Розблокувати день</label>
-                <input type="date" id="blockDateInput" class="input-box">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
-                    <button class="btn-main" onclick="manageDayBlock('block')">🔒 Заблокувати</button>
-                    <button class="btn-main" style="background:var(--card-hover); color:var(--text-main);" onclick="manageDayBlock('unblock')">🔓 Розблокувати</button>
-                </div>
-            </div>
-            <div class="form-card">
-                <label class="field-label">Заблоковані дати:</label>
-                <div id="blockedDaysList" style="font-size: 10px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px;"></div>
-            </div>
-        </div>
-
-        <!-- СЕКЦІЯ 3: УПРАВЛІННЯ ПОРТФОЛІО -->
-        <div id="mPanePortfolio" class="section-pane">
-            <div class="form-card">
-                <label class="field-label">Додати нову роботу в галерею</label>
-                <input type="file" id="newWorkPhotoInput" class="input-box" accept="image/*">
-                <input type="text" id="newWorkTitleInput" class="input-box" placeholder="Назва / опис роботи (необов'язково)">
-                <button class="btn-main" onclick="uploadNewWork()">📸 Опублікувати роботу</button>
-            </div>
-            <div class="form-card">
-                <label class="field-label">Поточні роботи в портфоліо</label>
-                <div id="masterWorksList" class="works-grid-full"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- МОДАЛЬНЕ ВІКНО ДЕТАЛЕЙ ЗАПИСУ -->
-    <div id="bookingDetailModal" class="booking-modal">
-        <div class="booking-modal-body">
-            <h3 style="font-size: 12px; color: var(--text-main); text-align: center; text-transform: uppercase;">✨ ДЕТАЛІ ЗАПИСУ</h3>
-            <div id="modalBookingDetailsContent" style="font-size: 10.5px; color: var(--text-main); line-height: 1.6; display: flex; flex-direction: column; gap: 6px;"></div>
-            <button class="btn-cancel-booking" onclick="cancelCurrentBooking()">🗑 Відмінити запис</button>
-            <button class="btn-main" style="background:var(--card-hover); color:var(--text-main);" onclick="closeBookingModal()">Закрити</button>
-        </div>
-    </div>
-
-    <script>
-        let allBookingsCache = [];
-        let activeSelectedBooking = null;
-        let masterCurrentDate = new Date();
-        let selectedFilterDate = null;
-
-        const monthNamesUa = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
-
-        // Надійний запуск скрипта незалежно від затримок Telegram WebView
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initMasterCRM);
-        } else {
-            initMasterCRM();
-        }
-
-        function initMasterCRM() {
-            renderMasterCalendar();
-            fetchMasterData();
-        }
-
-        function switchMasterTab(tabName, element) {
-            document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.m-chip').forEach(c => c.classList.remove('active'));
-
-            if (tabName === 'bookings') document.getElementById('mPaneBookings').classList.add('active');
-            if (tabName === 'blocked') document.getElementById('mPaneBlocked').classList.add('active');
-            if (tabName === 'portfolio') {
-                document.getElementById('mPanePortfolio').classList.add('active');
-                loadMasterWorks();
-            }
-            if (element) element.classList.add('active');
-        }
-
-        async function fetchMasterData() {
-            try {
-                const res = await fetch('/api/bookings');
-                const data = await res.json();
-                allBookingsCache = Array.isArray(data) ? data : [];
-            } catch (e) {
-                console.error("Помилка завантаження даних записів:", e);
-                allBookingsCache = [];
-            }
-
-            renderMasterCalendar();
-            filterAndRenderBookings();
-
-            try {
-                const bRes = await fetch('/api/blocked-days');
-                const blockedDays = await bRes.json();
-                renderBlockedDays(Array.isArray(blockedDays) ? blockedDays : []);
-            } catch (e) {
-                console.error("Помилка завантаження вихідних:", e);
-            }
-        }
-
-        function changeMasterMonth(delta) {
-            masterCurrentDate.setMonth(masterCurrentDate.getMonth() + delta);
-            renderMasterCalendar();
-        }
-
-        function renderMasterCalendar() {
-            const grid = document.getElementById('masterCalendarDaysGrid');
-            const monthTitle = document.getElementById('masterMonthTitle');
-            if (!grid || !monthTitle) return;
-
-            const year = masterCurrentDate.getFullYear();
-            const month = masterCurrentDate.getMonth();
-            monthTitle.innerText = `${monthNamesUa[month]} ${year}`;
-
-            grid.innerHTML = '';
-
-            const dayHeaders = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
-            dayHeaders.forEach(dh => {
-                grid.innerHTML += `<div class="m-day-header">${dh}</div>`;
-            });
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
             
-            let startOffset = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
+            <h1 class="profile-title">ЯВІР ІЛЛЯНА</h1>
+            <p class="profile-sub" data-i18n="profile_sub">квір хейр стиліст • перукар дніпро</p>
+            <p class="profile-bio" data-i18n="profile_bio">не відрощуй волосся — відрощуй індивідуальність</p>
+            
+            <!-- ШВИДКА НАВІГАЦІЯ -->
+            <nav class="quick-nav">
+                <div class="nav-chip active" onclick="switchTab('book', this)" data-i18n="tab_book">Запис</div>
+                <div class="nav-chip" onclick="switchTab('works', this)" data-i18n="tab_works">Приклади робіт</div>
+                <div class="nav-chip" onclick="switchTab('loc', this)" data-i18n="tab_loc">Локація</div>
+            </nav>
+        </header>
 
-            for (let i = 0; i < startOffset; i++) {
-                grid.innerHTML += `<div></div>`;
-            }
-
-            const safeBookingsList = Array.isArray(allBookingsCache) ? allBookingsCache : [];
-            const bookedDatesSet = new Set(safeBookingsList.map(b => b.date));
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const formattedDay = String(day).padStart(2, '0');
-                const formattedMonth = String(month + 1).padStart(2, '0');
-                const isoDate = `${year}-${formattedMonth}-${formattedDay}`;
-
-                const hasBookings = bookedDatesSet.has(isoDate);
-                const isSelected = selectedFilterDate === isoDate;
-
-                const dayCell = document.createElement('div');
-                dayCell.className = `m-day-cell ${hasBookings ? 'has-bookings' : ''} ${isSelected ? 'selected' : ''}`;
-                dayCell.innerText = day;
-                dayCell.onclick = () => selectMasterCalendarDate(isoDate);
-
-                grid.appendChild(dayCell);
-            }
-        }
-
-        function selectMasterCalendarDate(isoDate) {
-            if (selectedFilterDate === isoDate) {
-                selectedFilterDate = null;
-            } else {
-                selectedFilterDate = isoDate;
-            }
-            renderMasterCalendar();
-            filterAndRenderBookings();
-        }
-
-        function resetDateFilter() {
-            selectedFilterDate = null;
-            renderMasterCalendar();
-            filterAndRenderBookings();
-        }
-
-        function filterAndRenderBookings() {
-            const label = document.getElementById('selectedDateLabel');
-            const safeBookingsList = Array.isArray(allBookingsCache) ? allBookingsCache : [];
-            let filtered = safeBookingsList;
-
-            if (selectedFilterDate) {
-                filtered = safeBookingsList.filter(b => b.date === selectedFilterDate);
-                if (label) label.innerText = `Записи на ${selectedFilterDate}:`;
-            } else {
-                if (label) label.innerText = `Всі актуальні записи:`;
-            }
-
-            renderBookingsList(filtered);
-        }
-
-        function renderBookingsList(bookings) {
-            const container = document.getElementById('masterBookingsList');
-            if (!container) return;
-
-            if (!Array.isArray(bookings) || bookings.length === 0) {
-                container.innerHTML = '<div style="font-size:10px; color:var(--text-muted); text-align:center; padding:12px;">Записів немає</div>';
-                return;
-            }
-
-            container.innerHTML = bookings.map(b => `
-                <div class="booking-card" onclick="openBookingModal('${b.id}')">
-                    <div class="b-header">
-                        <span class="b-name">${b.name} ${b.isRegular ? '<span style="color:#4cd964; font-size:9px;">(Постійний)</span>' : ''}</span>
-                        <span class="b-time">${b.date} о ${b.time}</span>
+        <!-- СЕКЦІЯ 1: ОФОРМЛЕННЯ ЗАПИСУ -->
+        <main id="paneBook" class="section-pane active">
+            
+            <!-- ПУНКТ 1: КАТЕГОРІЯ -->
+            <section class="form-card">
+                <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
+                <div class="service-selection-grid">
+                    <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
+                        <div>
+                            <div class="s-title" data-i18n="cut_title">Стрижка</div>
+                            <div class="s-sub" data-i18n="cut_sub">1000 ₴ • 1.5 год</div>
+                        </div>
                     </div>
-                    <div class="b-sub">✂️ ${b.service} • 💰 ${b.price || 1000} ₴</div>
-                    <div class="b-sub">📞 ${b.phone}</div>
+
+                    <div class="service-card-row" id="mainCardColor" onclick="selectMainCategory('color')">
+                        <div>
+                            <div class="s-title" data-i18n="color_title">Фарбування</div>
+                            <div class="s-sub" data-i18n="color_sub">Підбір за станом</div>
+                        </div>
+                    </div>
+
+                    <div class="service-card-row" id="mainCardComplex" onclick="selectMainCategory('complex')">
+                        <div>
+                            <div class="s-title" data-i18n="complex_title">Стрижка + Фарбування коріння</div>
+                            <div class="s-sub" data-i18n="complex_sub">3000 ₴ • 3 год (до 2 см)</div>
+                        </div>
+                    </div>
                 </div>
-            `).join('');
-        }
+            </section>
 
-        function openBookingModal(bookingId) {
-            const safeBookingsList = Array.isArray(allBookingsCache) ? allBookingsCache : [];
-            const b = safeBookingsList.find(item => String(item.id) === String(bookingId));
-            if (!b) return;
-            activeSelectedBooking = b;
+            <!-- РЕФЕРЕНСИ СТРИЖОК (з'являються при виборі Стрижки) -->
+            <section class="form-card" id="haircutExamplesSection" style="display: none;">
+                <label class="field-label" data-i18n="haircut_ref_title">✨ Оберіть референс стрижки (необов'язково):</label>
+                <div class="haircut-grid">
+                    <div class="haircut-grid-item" onclick="selectHaircutReference('Кроп / Піксі', this)">
+                        <div class="h-title">Кроп / Піксі</div>
+                    </div>
+                    <div class="haircut-grid-item" onclick="selectHaircutReference('Малет / Шеггі', this)">
+                        <div class="h-title">Малет / Шеггі</div>
+                    </div>
+                    <div class="haircut-grid-item" onclick="selectHaircutReference('Боб / Каре', this)">
+                        <div class="h-title">Боб / Каре</div>
+                    </div>
+                    <div class="haircut-grid-item" onclick="selectHaircutReference('Каскад / Текстура', this)">
+                        <div class="h-title">Каскад / Текстура</div>
+                    </div>
+                </div>
+                <div id="selectedRefNotice" style="display:none; font-size:10px; color:var(--accent); margin-top:6px; font-weight:700;" data-i18n="ref_selected_notice">✓ Обрано</div>
+            </section>
 
-            const modalContent = document.getElementById('modalBookingDetailsContent');
-            modalContent.innerHTML = `
-                <div><b>Ім'я:</b> ${b.name}</div>
-                <div><b>Телефон:</b> <a href="tel:${b.phone}" style="color:var(--accent);">${b.phone}</a></div>
-                <div><b>Статус клієнта:</b> ${b.isRegular ? '<span style="color:#4cd964; font-weight:700;">Постійний клієнт (без завдатку)</span>' : '<span style="color:var(--accent); font-weight:700;">Новий клієнт (завдаток 500 грн)</span>'}</div>
-                <div><b>Дата та час:</b> ${b.date} о ${b.time}</div>
-                <div><b>Послуга:</b> ${b.service}</div>
-                <div><b>Вартість:</b> ${b.price || 1000} ₴</div>
-                <div><b>Тривалість:</b> ${b.durationHours || 1.5} год</div>
-                <div><b>Email:</b> ${b.email || '—'}</div>
-                <div><b>Соцмережі:</b> ${b.social || '—'}</div>
-                <hr style="border:none; border-top:1px solid var(--border); margin:4px 0;">
-                <div><b>Фото-референс / волосся:</b></div>
-                ${formatReferencePhotos(b.reference)}
-            `;
+            <!-- ПІДМЕНЮ ФАРБУВАННЯ -->
+            <section class="form-card" id="categorySubmenu" style="display: none;">
+                <label class="field-label" data-i18n="step2">2. Оберіть ваш поточний стан волосся:</label>
+                <div id="submenuItems" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            </section>
 
-            document.getElementById('bookingDetailModal').style.display = 'flex';
-        }
+            <section class="form-card" id="coloringSubOptions" style="display: none;">
+                <label class="field-label" data-i18n="step3">3. Доступні послуги та довжина:</label>
+                <div id="specificServicesList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+                
+                <div id="lengthContainer" style="display: none;">
+                    <label class="field-label" data-i18n="length_label">Довжина волосся:</label>
+                    <select id="hairLengthSelect" class="input-box" onchange="updateServiceDetails()">
+                        <option value="shoulders" data-i18n="len_shoulders">До плечей</option>
+                        <option value="shoulder_blades" data-i18n="len_blades">Від плечей до лопаток</option>
+                        <option value="below_blades" data-i18n="len_below">Нижче лопаток</option>
+                    </select>
+                </div>
+            </section>
 
-        function closeBookingModal() {
-            document.getElementById('bookingDetailModal').style.display = 'none';
-            activeSelectedBooking = null;
-        }
+            <!-- ПРАВИЛА МАЙСТРА -->
+            <section class="form-card accordion-card">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <span data-i18n="rules_title">📌 Важливі примітки та правила майстра</span>
+                    <span class="acc-icon">↓</span>
+                </div>
+                <div class="accordion-content">
+                    <ul class="rules-list">
+                        <li data-i18n="rule_1">Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною відповідно до довжини.</li>
+                        <li data-i18n="rule_2">Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).</li>
+                        <li data-i18n="rule_3">Я не роблю вихід із чорного або рудого.</li>
+                        <li data-i18n="rule_4">Я не фарбую волосся після біозавивки, ботоксу, кератину.</li>
+                    </ul>
+                </div>
+            </section>
 
-        function formatReferencePhotos(refString) {
-            if (!refString || refString === 'EMPTY' || refString === 'NULL' || refString === 'Не завантажено') {
-                return '<span style="color:var(--text-muted);">Фото не надано</span>';
-            }
+            <!-- ПУНКТИ 4 ТА 5: ФОТОГРАФІЇ -->
+            <section class="form-card" id="photoUploadSection" style="display: none;">
+                <div style="margin-bottom: 12px;">
+                    <label class="field-label" data-i18n="photo_current_label">4. Завантажте фото вашого волосся (обов'язково):</label>
+                    <input type="file" id="clientHairPhoto" class="input-box" accept="image/*">
+                    <div id="hairPhotoPreviewContainer"></div>
+                </div>
 
-            const parts = refString.split('|||');
-            let html = '<div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">';
+                <div>
+                    <label class="field-label" data-i18n="photo_ref_label">5. Завантажте фото-референс бажаного результату:</label>
+                    <input type="file" id="clientRefPhoto" class="input-box" accept="image/*">
+                    <div id="refPhotoPreviewContainer"></div>
+                </div>
+            </section>
 
-            parts.forEach(part => {
-                let text = part.trim();
-                let title = '';
-                let url = '';
+            <!-- КАЛЕНДАР ТА СЛОТИ СТАНОМ НА ДАТУ -->
+            <section class="form-card">
+                <label class="field-label" data-i18n="date_label">Оберіть дату візиту</label>
+                <div class="custom-calendar-scroll" id="customCalendarGrid"></div>
+                
+                <label class="field-label" style="margin-top: 14px;" data-i18n="slots_label">Доступні слоти часу</label>
+                <div class="time-slots-grid" id="timeSlotsGrid"></div>
+            </section>
 
-                if (text.includes('ПОТОЧНИЙ СТАН:')) {
-                    title = '📷 Поточний стан волосся:';
-                    url = text.replace('ПОТОЧНИЙ СТАН:', '').trim();
-                } else if (text.includes('РЕФЕРЕНС:')) {
-                    title = '✨ Обраний референс:';
-                    url = text.replace('РЕФЕРЕНС:', '').trim();
-                } else {
-                    url = text;
-                }
+            <!-- ДАНІ КЛІЄНТА -->
+            <section class="form-card">
+                <label class="field-label">Контактні дані</label>
+                <input type="text" id="clientName" class="input-box" data-i18n-placeholder="name_placeholder" placeholder="Як до вас звертатися">
+                <input type="tel" id="clientPhone" class="input-box" placeholder="+380 (__) ___-__-__">
+                <input type="email" id="clientEmail" class="input-box" placeholder="your@email.com" data-i18n-placeholder="email_label">
+                <input type="text" id="clientSocial" class="input-box" placeholder="Telegram або Instagram нік" data-i18n-placeholder="social_label">
+            </section>
 
-                if (url.startsWith('data:image') || url.startsWith('http') || url.endsWith('.png') || url.endsWith('.jpg')) {
-                    html += `
-                        <div style="background:var(--card-hover); padding:8px; border-radius:10px; border:1px solid var(--border);">
-                            ${title ? `<div style="font-size:9.5px; font-weight:700; color:var(--accent); margin-bottom:4px;">${title}</div>` : ''}
-                            <a href="${url}" target="_blank">
-                                <img src="${url}" style="max-width:100%; max-height:180px; border-radius:8px; object-fit:cover; display:block; border:1px solid var(--border);">
-                            </a>
-                        </div>
-                    `;
-                } else if (url && url !== 'EMPTY') {
-                    html += `<div style="font-size:10px; color:var(--text-main);">${title} ${url}</div>`;
-                }
-            });
+            <!-- ПІДСУМОК ТА КНОПКА ЗАПИСУ -->
+            <section class="form-card">
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <span id="summaryServiceTitle" data-i18n="select_service_placeholder">Оберіть послугу вище</span>
+                        <span class="price-badge" id="summaryPriceBadge">0 ₴</span>
+                    </div>
+                    <div class="summary-meta" id="summaryMeta" style="display: none;">
+                        <span>⏱ <span id="summaryDuration">1.5 год</span></span>
+                        <span id="summaryDateTime" style="color:var(--accent); font-weight:700;"></span>
+                    </div>
+                </div>
 
-            html += '</div>';
-            return html;
-        }
+                <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;" data-i18n="deposit_notice">
+                    ⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.
+                </div>
 
-        async function cancelCurrentBooking() {
-            if (!activeSelectedBooking) return;
-            if (!confirm(`Ви дійсно бажаєте скасувати запис клієнта ${activeSelectedBooking.name}?`)) return;
+                <button class="btn-main" onclick="submitBooking()" data-i18n="pay_btn">Забронювати візит</button>
+                
+                <div style="text-align: center; margin-top: 10px;">
+                    <a href="#" onclick="openOffer(); return false;" style="font-size: 9px; color: var(--text-muted); text-decoration: underline;" data-i18n="modal_title">Публічний договір оферти</a>
+                </div>
+            </section>
 
-            try {
-                const res = await fetch('/api/cancel-booking', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: activeSelectedBooking.id })
-                });
+        </main>
 
-                if (res.ok) {
-                    alert("Запис успішно скасовано!");
-                    closeBookingModal();
-                    fetchMasterData();
-                } else {
-                    alert("Не вдалося скасувати запис.");
-                }
-            } catch (e) {
-                alert("Помилка під час скасування.");
-            }
-        }
+        <!-- СЕКЦІЯ 2: ПОРТФОЛІО -->
+        <main id="paneWorks" class="section-pane">
+            <div class="form-card">
+                <label class="field-label" data-i18n="tab_works">Приклади робіт майстра</label>
+                <div class="works-grid-full" id="uploadedWorksContainer"></div>
+            </div>
+        </main>
 
-        async function manageDayBlock(action) {
-            const dateInput = document.getElementById('blockDateInput').value;
-            if (!dateInput) return alert("Оберіть дату!");
+        <!-- СЕКЦІЯ 3: ЛОКАЦІЯ -->
+        <main id="paneLoc" class="section-pane">
+            <div class="form-card">
+                <div style="font-size: 11px; color: var(--text-main); line-height: 1.6;" data-i18n="loc_info">
+                    📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>Приватний простір, мінімалізм та фокус на якості.
+                </div>
+                <a href="https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро" target="_blank" class="btn-main" style="text-decoration: none; text-align: center; margin-top: 12px; display: block;" data-i18n="map_btn">Відкрити в Google Maps</a>
+            </div>
+        </main>
 
-            const endpoint = action === 'block' ? '/api/block-day' : '/api/unblock-day';
-            try {
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: dateInput, password: '1988' })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert(action === 'block' ? "День заблоковано!" : "День розблоковано!");
-                    renderBlockedDays(data.blockedDays);
-                } else {
-                    alert(data.error || "Помилка доступу");
-                }
-            } catch (e) {
-                alert("Помилка виконання.");
-            }
-        }
+    </div>
 
-        function renderBlockedDays(days) {
-            const container = document.getElementById('blockedDaysList');
-            if (!container) return;
-            if (!Array.isArray(days) || days.length === 0) {
-                container.innerHTML = 'Заблокованих днів немає.';
-                return;
-            }
-            container.innerHTML = days.map(d => `<span style="background:var(--card-hover); padding:4px 8px; border-radius:6px; border:1px solid var(--border);">${d}</span>`).join('');
-        }
+    <!-- ПЛАВАЮЧА ПАНЕЛЬ ЗНИЗУ -->
+    <div class="sticky-bottom-bar" id="stickyBottomBar" style="display: none;">
+        <div>
+            <div id="stickyBarTitle" style="font-size: 10px; font-weight: 700; color: var(--text-main);">Послуга</div>
+            <div id="stickyBarPrice" style="font-size: 11px; font-weight: 800; color: var(--accent);">0 ₴</div>
+        </div>
+        <button class="btn-main" style="width: auto; padding: 8px 16px; font-size: 9px;" onclick="scrollToCalendar()">Обрати час ↓</button>
+    </div>
 
-        async function loadMasterWorks() {
-            const container = document.getElementById('masterWorksList');
-            if (!container) return;
+    <!-- МОДАЛЬНЕ ВІКНО ОФЕРТИ -->
+    <div id="offerModal" class="booking-modal">
+        <div class="booking-modal-body">
+            <h3 data-i18n="modal_title">Публічний договір оферти</h3>
+            <div style="font-size: 10px; color: var(--text-muted); max-height: 200px; overflow-y: auto; line-height: 1.5;">
+                Запис на послугу здійснюється після внесення завдатку у розмірі 500 грн. Завдаток є гарантією бронування часу. Скасування чи перенесення візиту без втрати завдатку можливе не пізніше ніж за 48 годин до узгодженого часу.
+            </div>
+            <button class="btn-main" onclick="closeOffer()" data-i18n="modal_btn">Зрозуміло</button>
+        </div>
+    </div>
 
-            try {
-                const res = await fetch('/api/works');
-                const works = await res.json();
-                if (Array.isArray(works) && works.length > 0) {
-                    container.innerHTML = works.map(w => `
-                        <div class="works-carousel-item" style="position:relative;">
-                            <img src="${w.image}" alt="Робота">
-                            <button onclick="deleteWork('${w.id}')" style="position:absolute; top:6px; right:6px; background:#ff4d4d; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:8px; font-weight:800; cursor:pointer;">🗑 Видалити</button>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<div style="font-size:10px; color:var(--text-muted);">Портфоліо порожнє</div>';
-                }
-            } catch (e) {}
-        }
+    <!-- МОДАЛЬНЕ ВІКНО ПЕРЕГЛЯДУ ФОТО (LIGHTBOX) -->
+    <div id="imageLightboxModal" class="booking-modal" onclick="closeLightbox()">
+        <div style="max-width: 90vw; max-height: 90vh;">
+            <img id="lightboxImage" src="" style="width: 100%; height: auto; border-radius: 12px; object-fit: contain;">
+        </div>
+    </div>
 
-        async function uploadNewWork() {
-            const fileInput = document.getElementById('newWorkPhotoInput');
-            const titleInput = document.getElementById('newWorkTitleInput');
-
-            if (!fileInput.files || !fileInput.files[0]) return alert("Оберіть фотографію!");
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const base64Image = e.target.result;
-                try {
-                    const res = await fetch('/api/works', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title: titleInput.value.trim(), image: base64Image })
-                    });
-                    if (res.ok) {
-                        alert("Роботу успішно опубліковано!");
-                        fileInput.value = '';
-                        titleInput.value = '';
-                        loadMasterWorks();
-                    }
-                } catch (err) {
-                    alert("Не вдалося завантажити роботу.");
-                }
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        }
-
-        async function deleteWork(workId) {
-            if (!confirm("Видалити цю роботу з портфоліо?")) return;
-            try {
-                await fetch('/api/delete-work', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: workId })
-                });
-                loadMasterWorks();
-            } catch (e) {}
-        }
-    </script>
+    <!-- ПІДКТЮЧЕННЯ ГОЛОВНОГО СКРИПТА -->
+    <script src="app.js"></script>
 </body>
 </html>
