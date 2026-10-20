@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ua" data-theme="light">
+<html lang="ua" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -25,10 +25,11 @@
             </div>
         </div>
 
-        <!-- Профіль майстра -->
+        <!-- Профіль майстра з фоновим баннером -->
         <div class="profile-card">
+            <div id="profileHeroBg" class="profile-hero-bg"></div>
             <div class="avatar-wrap">
-                <img src="PXL_20241102_164641261.jpg" alt="Явір Ілляна">
+                <img src="PXL_20241102_164641261.jpg" id="profileAvatarImg" alt="Явір Ілляна">
             </div>
             <h1>Явір Ілляна</h1>
             <p data-i18n="profile_sub">квір хейр стиліст • перукар дніпро</p>
@@ -36,7 +37,7 @@
         </div>
 
         <!-- Навігація по вкладках -->
-        <div class="quick-nav" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="quick-nav">
             <div class="nav-chip active" onclick="switchTab('book', this)" data-i18n="tab_book">Запис</div>
             <div class="nav-chip" onclick="switchTab('works', this)" data-i18n="tab_works">Приклади робіт</div>
             <div class="nav-chip" onclick="switchTab('loc', this)" data-i18n="tab_loc">Локація</div>
@@ -44,6 +45,15 @@
 
         <!-- ВКЛАДКА: ЗАПИС (BOOKING) -->
         <div id="paneBook" class="section-pane active">
+            
+            <!-- Трекер кроків для зручності -->
+            <div class="step-tracker">
+                <div class="step-item active">1. Послуга</div>
+                <div class="step-item">2. Стан</div>
+                <div class="step-item">3. Фото</div>
+                <div class="step-item">4. Бронь</div>
+            </div>
+
             <div class="form-card">
                 <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
                 
@@ -113,7 +123,7 @@
                     </div>
                 </div>
 
-                <!-- Випадаючий акордеон для правил майстра -->
+                <!-- Акордеон для правил майстра -->
                 <div class="accordion-container" style="margin-top: 10px;">
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <span data-i18n="rules_title">📌 Важливі примітки та правила майстра</span>
@@ -129,15 +139,17 @@
                     </div>
                 </div>
 
-                <!-- Фото -->
+                <!-- Блок завантаження фотографій з живим прев'ю -->
                 <div id="photoUploadSection" style="display: none;">
                     <div class="photo-upload-container">
-                        <label data-i18n="photo_current_label">4. Завантажте фото вашого волосся:</label>
-                        <input type="file" id="clientHairPhoto" accept="image/*">
+                        <label class="field-label" data-i18n="photo_current_label">4. Завантажте фото вашого волосся:</label>
+                        <input type="file" id="clientHairPhoto" class="input-box" accept="image/*">
+                        <div id="hairPhotoPreviewContainer"></div>
                     </div>
-                    <div class="photo-upload-container" style="margin-top: 8px;">
-                        <label data-i18n="photo_ref_label">5. Завантажте фото-референс:</label>
-                        <input type="file" id="clientRefPhoto" accept="image/*">
+                    <div class="photo-upload-container" style="margin-top: 10px;">
+                        <label class="field-label" data-i18n="photo_ref_label">5. Завантажте фото-референс:</label>
+                        <input type="file" id="clientRefPhoto" class="input-box" accept="image/*">
+                        <div id="refPhotoPreviewContainer"></div>
                     </div>
                 </div>
             </div>
@@ -221,15 +233,6 @@
                     <div class="works-carousel-item" onclick="openLightbox('10_20261005_205818_0009.png')"><img src="10_20261005_205818_0009.png" alt="Приклад 10"></div>
                     <div class="works-carousel-item" onclick="openLightbox('11_20261005_205818_0010.png')"><img src="11_20261005_205818_0010.png" alt="Приклад 11"></div>
                     <div class="works-carousel-item" onclick="openLightbox('12_20261005_205818_0011.png')"><img src="12_20261005_205818_0011.png" alt="Приклад 12"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('13_20261005_205818_0012.png')"><img src="13_20261005_205818_0012.png" alt="Приклад 13"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('14_20261005_205818_0013.png')"><img src="14_20261005_205818_0013.png" alt="Приклад 14"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('15_20261005_205818_0014.png')"><img src="15_20261005_205818_0014.png" alt="Приклад 15"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('16_20261005_205818_0015.png')"><img src="16_20261005_205818_0015.png" alt="Приклад 16"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('17_20261005_205818_0016.png')"><img src="17_20261005_205818_0016.png" alt="Приклад 17"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('18_20261005_205818_0017.png')"><img src="18_20261005_205818_0017.png" alt="Приклад 18"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('19_20261005_205818_0018.png')"><img src="19_20261005_205818_0018.png" alt="Приклад 19"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('20_20261005_205818_0019.png')"><img src="20_20261005_205818_0019.png" alt="Приклад 20"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('21_20261005_205818_0020.png')"><img src="21_20261005_205818_0020.png" alt="Приклад 21"></div>
                 </div>
             </div>
         </div>
@@ -242,6 +245,16 @@
                 <a href="https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро" target="_blank" class="map-btn" data-i18n="map_btn">Відкрити в Google Maps</a>
             </div>
         </div>
+
+        <!-- Плаваюча нижня плашка для мобільних -->
+        <div id="stickyBottomBar" class="sticky-bottom-bar">
+            <div class="bar-info">
+                <span id="stickyBarTitle" class="bar-title">Оберіть послугу</span>
+                <span id="stickyBarPrice" class="bar-price">0 ₴</span>
+            </div>
+            <button onclick="scrollToCalendar()">Обрати час ↓</button>
+        </div>
+
     </div>
 
     <!-- Модальне вікно оферти -->
@@ -271,7 +284,7 @@
                 4.2. Виконавець не несе відповідальності за кінцевий результат фарбування та стан волосся у випадках, якщо Клієнт приховав або надав неправдиву інформацію про попередні процедури на волоссі.<br>
                 4.3. Виконавець залишає за собою право відмовити у наданні послуги (з поверненням завдатку або без, залежно від ситуації) безпосередньо в студії, якщо стан волосся Клієнта унеможливлює безпечне проведення процедури без шкоди для здоров'я волосся.<br><br>
                 
-                <b>5. ФІНАНСОВІ УМОВИ ТА ЦІНИ</b><br>
+                <b>5. ФІНАНСОВІ УМУВИ ТА ЦІНИ</b><br>
                 5.1. Остаточна вартість послуг формується відповідно до прайсу на сайті, довжини та стану волосся Клієнта.<br>
                 5.2. Усі розрахунки проводяться у національній валюті України гривні.<br><br>
                 
