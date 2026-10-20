@@ -13,7 +13,6 @@ const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 const BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI'; 
 const MASTER_TELEGRAM_ID = '956742572'; 
 
-// Посилання на Instagram майстра та точну локацію
 const INSTAGRAM_URL = 'https://www.instagram.com/i.ll.yana?cplk=MTVjbTd6bDZ5aXF4ZQ==';
 const LOCATION_MAPS_URL = 'https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро';
 
@@ -38,12 +37,16 @@ function parseTimeToDecimal(timeStr) {
 
 // ------------------ TELEGRAM BOT & NOTIFICATIONS ------------------
 
-// Очищення старих Webhook для уникнення конфліктів Telegram
 fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`).catch(() => {});
 
-// 1. Сповіщення майстру про новий запис
+// 1. Сповіщення майстру з перевіркою статусу клієнта
 async function sendMasterTelegramNotification(booking) {
     if (!BOT_TOKEN || !MASTER_TELEGRAM_ID) return;
+
+    const isReg = booking.isRegular === true;
+    const clientStatusLine = isReg 
+        ? `👤 Статус: Постійний клієнт (без завдатку)` 
+        : `💳 Завдаток: 500 ₴ (новий клієнт)`;
 
     const messageText = `⚡ <b>НОВИЙ ЗАПИС У СТУДІЮ!</b>\n\n` +
         `<code>` +
@@ -52,7 +55,7 @@ async function sendMasterTelegramNotification(booking) {
         `📅 Дата:     ${booking.date} о ${booking.time}\n` +
         `✂️ Послуга:  ${booking.service}\n` +
         `💰 Загалом:  ${booking.price} ₴\n` +
-        `💳 Завдаток: 500 ₴ (новий клієнт)\n` +
+        `${clientStatusLine}\n` +
         `📧 Email:    ${booking.email || '—'}\n` +
         `💬 Соцмережа: ${booking.social || '—'}` +
         `</code>`;
@@ -60,11 +63,10 @@ async function sendMasterTelegramNotification(booking) {
     await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
 }
 
-// 2. Вбудований бот: автовідповідь клієнтам
+// 2. Вбудований бот клієнтам (із блокуванням потрійного надсилання)
 let telegramOffset = 0;
 const processedUpdateIds = new Set();
-const processedMessageIds = new Set();
-const sentConfirmationsCache = new Map();
+const lastStartMap = new Map(); // Блокування частіших ніж 12 сек запитів /start
 let isPollingRunning = false;
 
 async function startTelegramBotPolling() {
@@ -87,14 +89,6 @@ async function startTelegramBotPolling() {
                 }
 
                 if (update.message && update.message.text) {
-                    const msgKey = `${update.message.chat.id}_${update.message.message_id}`;
-                    if (processedMessageIds.has(msgKey)) continue;
-                    processedMessageIds.add(msgKey);
-                    if (processedMessageIds.size > 500) {
-                        const firstVal = processedMessageIds.values().next().value;
-                        processedMessageIds.delete(firstVal);
-                    }
-
                     await handleBotMessage(update.message);
                 }
             }
@@ -112,12 +106,11 @@ async function handleBotMessage(msg) {
     const text = msg.text || '';
 
     if (text.startsWith('/start')) {
-        const dedupeKey = `start_${chatId}`;
         const now = Date.now();
-        if (sentConfirmationsCache.has(dedupeKey) && (now - sentConfirmationsCache.get(dedupeKey) < 10000)) {
-            return;
+        if (lastStartMap.has(chatId) && (now - lastStartMap.get(chatId) < 12000)) {
+            return; // Захист від подвійних/потрійних спрацьовувань
         }
-        sentConfirmationsCache.set(dedupeKey, now);
+        lastStartMap.set(chatId, now);
 
         const parts = text.split(' ');
         const bookingId = parts[1] ? parts[1].trim() : null;
@@ -131,25 +124,23 @@ async function handleBotMessage(msg) {
 
                 if (Array.isArray(data) && data.length > 0) {
                     const b = data[0];
+                    const isReg = b.isRegular === true;
+                    const depositLine = isReg ? '' : `\n💳 ЗАВДАТОК: 500 ₴ (враховано у вартість)`;
+
                     const confirmMsg = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
                         `<code>` +
                         `📅 ДАТА:     ${b.date}\n` +
                         `⏰ ЧАС:      ${b.time}\n` +
                         `✂️ ПОСЛУГА:  ${b.service}\n` +
-                        `💰 ВАРТІСТЬ: ${b.price || 1000} ₴\n` +
-                        `💳 ЗАВДАТОК: 500 ₴ (враховано у вартість)` +
+                        `💰 ВАРТІСТЬ: ${b.price \vert{}\vert{} 1000} ₴${depositLine}` +
                         `</code>\n\n` +
                         `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\n` +
                         `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.`;
 
                     const inlineButtons = {
                         inline_keyboard: [
-                            [
-                                { text: "📍 Локація студії", url: LOCATION_MAPS_URL }
-                            ],
-                            [
-                                { text: "📸 Instagram майстра", url: INSTAGRAM_URL }
-                            ]
+                            [{ text: "📍 Локація студії", url: LOCATION_MAPS_URL }],
+                            [{ text: "📸 Instagram майстра", url: INSTAGRAM_URL }]
                         ]
                     };
 
@@ -161,15 +152,11 @@ async function handleBotMessage(msg) {
             }
         }
 
-        const welcomeMsg = `Вітаємо у чат-боті студії <b>Явір Ілляни</b>! ✨\n\nТут зберігаються деталі ваших візитів. Якщо у вас є питання або ви бажаєте змінити час — напишіть майстру в Instagram.`;
+        const welcomeMsg = `Вітаємо у чат-боті студії <b>Явір Ілляни</b>! ✨\n\nТут зберігаються деталі ваших візитів. Якщо у вас є питання — напишіть майстру в Instagram.`;
         const defaultButtons = {
             inline_keyboard: [
-                [
-                    { text: "📍 Локація студії", url: LOCATION_MAPS_URL }
-                ],
-                [
-                    { text: "📸 Instagram майстра", url: INSTAGRAM_URL }
-                ]
+                [{ text: "📍 Локація студії", url: LOCATION_MAPS_URL }],
+                [{ text: "📸 Instagram майстра", url: INSTAGRAM_URL }]
             ]
         };
 
@@ -179,23 +166,15 @@ async function handleBotMessage(msg) {
 
 async function sendTelegramMessage(chatId, text, replyMarkup = null) {
     try {
-        const bodyPayload = {
-            chat_id: chatId,
-            text: text,
-            parse_mode: 'HTML'
-        };
-        if (replyMarkup) {
-            bodyPayload.reply_markup = replyMarkup;
-        }
+        const bodyPayload = { chat_id: chatId, text: text, parse_mode: 'HTML' };
+        if (replyMarkup) bodyPayload.reply_markup = replyMarkup;
 
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bodyPayload)
         });
-    } catch (e) {
-        console.error("Error sending Telegram message:", e);
-    }
+    } catch (e) {}
 }
 
 startTelegramBotPolling();
@@ -265,7 +244,7 @@ app.post('/api/bookings', async (req, res) => {
             });
 
             if (isOverlap) {
-                return res.status(400).json({ success: false, error: "На жаль, цей часовий слот вже зайнято іншим записом!" });
+                return res.status(400).json({ success: false, error: "На жаль, цей часовий слот вже зайнято!" });
             }
         }
 
