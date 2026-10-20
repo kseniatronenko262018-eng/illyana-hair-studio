@@ -56,29 +56,31 @@ async function sendMasterTelegramNotification(booking) {
     await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
 }
 
-// 2. Вбудований бот: автовідповідь клієнтам (із захистом від дублювання)
+// 2. Вбудований бот: автовідповідь клієнтам (із анти-дублюванням)
 let telegramOffset = 0;
 const processedUpdateIds = new Set();
 const processedMessageIds = new Set();
-let isPollingStarted = false;
+const sentConfirmationsCache = new Map(); // Захист від відправки 3-х дублів клієнту
+let isPollingRunning = false;
 
 async function startTelegramBotPolling() {
-    if (!BOT_TOKEN) return;
+    if (!BOT_TOKEN || isPollingRunning) return;
+    isPollingRunning = true;
 
     try {
-        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${telegramOffset}&timeout=10`);
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${telegramOffset}&timeout=5`);
         const data = await res.json();
 
         if (data.ok && Array.isArray(data.result)) {
             for (const update of data.result) {
+                telegramOffset = Math.max(telegramOffset, update.update_id + 1);
+
                 if (processedUpdateIds.has(update.update_id)) continue;
                 processedUpdateIds.add(update.update_id);
                 if (processedUpdateIds.size > 500) {
                     const firstVal = processedUpdateIds.values().next().value;
                     processedUpdateIds.delete(firstVal);
                 }
-
-                telegramOffset = Math.max(telegramOffset, update.update_id + 1);
 
                 if (update.message && update.message.text) {
                     const msgKey = `${update.message.chat.id}_${update.message.message_id}`;
@@ -95,15 +97,10 @@ async function startTelegramBotPolling() {
         }
     } catch (err) {
         console.error("Telegram Polling Error:", err.message);
+    } finally {
+        isPollingRunning = false;
+        setTimeout(startTelegramBotPolling, 2000);
     }
-
-    setTimeout(startTelegramBotPolling, 2000);
-}
-
-function initBotPolling() {
-    if (isPollingStarted) return;
-    isPollingStarted = true;
-    startTelegramBotPolling();
 }
 
 async function handleBotMessage(msg) {
@@ -115,6 +112,14 @@ async function handleBotMessage(msg) {
         const bookingId = parts[1] ? parts[1].trim() : null;
 
         if (bookingId) {
+            // ФІЛЬТР ДУБЛІКАЦІЇ: не надсилати повідомлення чату частіше ніж 1 раз на 15 секунд для одного bookingId
+            const dedupeKey = `${chatId}_${bookingId}`;
+            const now = Date.now();
+            if (sentConfirmationsCache.has(dedupeKey) && (now - sentConfirmationsCache.get(dedupeKey) < 15000)) {
+                return;
+            }
+            sentConfirmationsCache.set(dedupeKey, now);
+
             try {
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${bookingId}`, {
                     headers: supabaseHeaders
@@ -190,7 +195,7 @@ async function sendTelegramMessage(chatId, text, replyMarkup = null) {
     }
 }
 
-initBotPolling();
+startTelegramBotPolling();
 
 // ------------------ API ROUTES ------------------
 
