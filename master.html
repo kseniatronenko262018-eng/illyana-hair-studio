@@ -18,20 +18,20 @@
             padding: 14px 16px;
             margin-bottom: 14px;
         }
-        .master-header h2 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--text-main); }
+        .master-header h2 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; color: var(--text-main); }
         .master-nav {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
             margin-bottom: 14px;
         }
         .m-chip {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 10px 4px;
+            padding: 10px 2px;
             border-radius: 12px;
             text-align: center;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 700;
             text-transform: uppercase;
             cursor: pointer;
@@ -43,7 +43,23 @@
             border-color: var(--accent);
         }
 
-        /* 🗓️ Стилі для календаря майстра */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+        .stat-card .num { font-size: 14px; font-weight: 800; color: var(--accent); }
+        .stat-card .label { font-size: 8.5px; color: var(--text-muted); text-transform: uppercase; }
+
+        /* 🗓️ Календар майстра */
         .master-calendar-wrapper {
             background: var(--card-hover);
             border: 1px solid var(--border);
@@ -94,6 +110,11 @@
             border-color: var(--accent);
             background: rgba(216, 140, 154, 0.2);
         }
+        .m-day-cell.blocked-day {
+            background: rgba(255, 77, 77, 0.12);
+            border-color: rgba(255, 77, 77, 0.4);
+            color: #ff4d4d;
+        }
         .m-day-cell.has-bookings::after {
             content: '';
             width: 5px;
@@ -134,7 +155,7 @@
         }
         .booking-modal-body {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             max-height: 90vh;
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -167,16 +188,16 @@
             <button class="control-btn" onclick="fetchMasterData()">🔄 Оновити</button>
         </div>
 
+        <!-- НАВІГАЦІЯ ПО Вкладках -->
         <div class="master-nav">
-            <div class="m-chip active" onclick="switchMasterTab('bookings', this)">📅 Календар записів</div>
+            <div class="m-chip active" onclick="switchMasterTab('bookings', this)">📅 Календар</div>
+            <div class="m-chip" onclick="switchMasterTab('stats', this)">📊 Каса</div>
             <div class="m-chip" onclick="switchMasterTab('blocked', this)">🔒 Вихідні</div>
-            <div class="m-chip" onclick="switchMasterTab('portfolio', this)">✨ Роботи</div>
+            <div class="m-chip" onclick="switchMasterTab('profile', this)">⚙️ Майстер</div>
         </div>
 
         <!-- СЕКЦІЯ 1: КАЛЕНДАР ТА СПИСОК ЗАПИСІВ -->
         <div id="mPaneBookings" class="section-pane active">
-            
-            <!-- Інтерактивний календар майстра -->
             <div class="master-calendar-wrapper">
                 <div class="master-calendar-header">
                     <button class="control-btn" onclick="changeMasterMonth(-1)">←</button>
@@ -191,13 +212,32 @@
                     <label class="field-label" id="selectedDateLabel" style="margin:0;">Записи на обрану дату:</label>
                     <button class="control-btn" style="font-size:8px;" onclick="resetDateFilter()">Всі записи</button>
                 </div>
-                <div id="masterBookingsList" style="display: flex; flex-direction: column; gap: 8px;">
-                    <div style="font-size:10px; color:var(--text-muted); text-align:center;">Завантаження записів...</div>
+                <div id="masterBookingsList" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                    <div style="font-size:10px; color:var(--text-muted); text-align:center;">Завантаження...</div>
                 </div>
             </div>
         </div>
 
-        <!-- СЕКЦІЯ 2: УПРАВЛІННЯ ВИХІДНИМИ ДНЯМИ -->
+        <!-- СЕКЦІЯ 2: СТАТИСТИКА ТА КАСА -->
+        <div id="mPaneStats" class="section-pane">
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="num" id="statTotalBookings">0</div>
+                    <div class="label">Записів за місяць</div>
+                </div>
+                <div class="stat-card">
+                    <div class="num" id="statTotalIncome">0 ₴</div>
+                    <div class="label">Очікуваний дохід</div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <label class="field-label">Клієнтська база (останні записи):</label>
+                <div id="masterClientsBaseList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+            </div>
+        </div>
+
+        <!-- СЕКЦІЯ 3: ВИХІДНІ ДНІ -->
         <div id="mPaneBlocked" class="section-pane">
             <div class="form-card">
                 <label class="field-label">Заблокувати / Розблокувати день</label>
@@ -208,21 +248,28 @@
                 </div>
             </div>
             <div class="form-card">
-                <label class="field-label">Заблоковані дати:</label>
+                <label class="field-label">Список заблокованих дат:</label>
                 <div id="blockedDaysList" style="font-size: 10px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px;"></div>
             </div>
         </div>
 
-        <!-- СЕКЦІЯ 3: УПРАВЛІННЯ ПОРТФОЛІО -->
-        <div id="mPanePortfolio" class="section-pane">
+        <!-- СЕКЦІЯ 4: НАЛАШТУВАННЯ ТА ПОРТФОЛІО -->
+        <div id="mPaneProfile" class="section-pane">
+            <div class="form-card">
+                <label class="field-label">📸 Змінити аватарку майстра на сайті</label>
+                <input type="file" id="masterAvatarFileInput" class="input-box" accept="image/*">
+                <button class="btn-main" onclick="updateMasterAvatar()">Оновити фото майстра</button>
+            </div>
+
             <div class="form-card">
                 <label class="field-label">Додати нову роботу в галерею</label>
                 <input type="file" id="newWorkPhotoInput" class="input-box" accept="image/*">
-                <input type="text" id="newWorkTitleInput" class="input-box" placeholder="Назва / опис роботи (необов'язково)">
+                <input type="text" id="newWorkTitleInput" class="input-box" placeholder="Опис роботи (необов'язково)">
                 <button class="btn-main" onclick="uploadNewWork()">📸 Опублікувати роботу</button>
             </div>
+
             <div class="form-card">
-                <label class="field-label">Поточні роботи в портфоліо</label>
+                <label class="field-label">Роботи в портфоліо:</label>
                 <div id="masterWorksList" class="works-grid-full"></div>
             </div>
         </div>
@@ -233,31 +280,50 @@
         <div class="booking-modal-body">
             <h3 style="font-size: 12px; color: var(--text-main); text-align: center; text-transform: uppercase;">✨ ДЕТАЛІ ЗАПИСУ</h3>
             <div id="modalBookingDetailsContent" style="font-size: 10.5px; color: var(--text-main); line-height: 1.6; display: flex; flex-direction: column; gap: 6px;"></div>
-            <button class="btn-cancel-booking" onclick="cancelCurrentBooking()">🗑 Відмінити запис</button>
+            <button class="btn-cancel-booking" onclick="cancelCurrentBooking()">🗑 Скасувати запис</button>
             <button class="btn-main" style="background:var(--card-hover); color:var(--text-main);" onclick="closeBookingModal()">Закрити</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНЕ ВІКНО ПЕРЕГЛЯДУ ФОТО -->
+    <div id="imageLightboxModal" class="booking-modal" onclick="closeMasterLightbox()">
+        <div style="max-width: 90vw; max-height: 90vh;">
+            <img id="lightboxImage" src="" style="width: 100%; height: auto; border-radius: 12px; object-fit: contain;">
         </div>
     </div>
 
     <script>
         let allBookingsCache = [];
+        let blockedDaysCache = [];
         let activeSelectedBooking = null;
         let masterCurrentDate = new Date();
         let selectedFilterDate = null;
 
         const monthNamesUa = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
 
-        window.addEventListener('DOMContentLoaded', () => {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMasterCRM);
+        } else {
+            initMasterCRM();
+        }
+
+        function initMasterCRM() {
+            renderMasterCalendar();
             fetchMasterData();
-        });
+        }
 
         function switchMasterTab(tabName, element) {
             document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.m-chip').forEach(c => c.classList.remove('active'));
 
             if (tabName === 'bookings') document.getElementById('mPaneBookings').classList.add('active');
+            if (tabName === 'stats') {
+                document.getElementById('mPaneStats').classList.add('active');
+                calculateStats();
+            }
             if (tabName === 'blocked') document.getElementById('mPaneBlocked').classList.add('active');
-            if (tabName === 'portfolio') {
-                document.getElementById('mPanePortfolio').classList.add('active');
+            if (tabName === 'profile') {
+                document.getElementById('mPaneProfile').classList.add('active');
                 loadMasterWorks();
             }
             if (element) element.classList.add('active');
@@ -266,21 +332,30 @@
         async function fetchMasterData() {
             try {
                 const res = await fetch('/api/bookings');
-                allBookingsCache = await res.json();
-                renderMasterCalendar();
-                filterAndRenderBookings();
-
-                const bRes = await fetch('/api/blocked-days');
-                const blockedDays = await bRes.json();
-                renderBlockedDays(blockedDays);
+                const data = await res.json();
+                allBookingsCache = Array.isArray(data) ? data : [];
             } catch (e) {
-                console.error("Помилка завантаження даних майстра:", e);
+                allBookingsCache = [];
             }
+
+            try {
+                const bRes = await fetch('/api/blocked-days');
+                const blockedData = await bRes.json();
+                blockedDaysCache = Array.isArray(blockedData) ? blockedData : [];
+            } catch (e) {
+                blockedDaysCache = [];
+            }
+
+            renderMasterCalendar();
+            filterAndRenderBookings();
+            renderBlockedDays(blockedDaysCache);
+            calculateStats();
         }
 
         function changeMasterMonth(delta) {
             masterCurrentDate.setMonth(masterCurrentDate.getMonth() + delta);
             renderMasterCalendar();
+            calculateStats();
         }
 
         function renderMasterCalendar() {
@@ -290,7 +365,7 @@
 
             const year = masterCurrentDate.getFullYear();
             const month = masterCurrentDate.getMonth();
-            monthTitle.innerText = `${monthNamesUa[month]}${year}`;
+            monthTitle.innerText = `${monthNamesUa[month]} ${year}`;
 
             grid.innerHTML = '';
 
@@ -301,7 +376,6 @@
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
             let startOffset = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
 
             for (let i = 0; i < startOffset; i++) {
@@ -309,6 +383,7 @@
             }
 
             const bookedDatesSet = new Set(allBookingsCache.map(b => b.date));
+            const blockedSet = new Set(blockedDaysCache);
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const formattedDay = String(day).padStart(2, '0');
@@ -316,10 +391,11 @@
                 const isoDate = `${year}-${formattedMonth}-${formattedDay}`;
 
                 const hasBookings = bookedDatesSet.has(isoDate);
+                const isBlocked = blockedSet.has(isoDate);
                 const isSelected = selectedFilterDate === isoDate;
 
                 const dayCell = document.createElement('div');
-                dayCell.className = `m-day-cell ${hasBookings ? 'has-bookings' : ''} ${isSelected ? 'selected' : ''}`;
+                dayCell.className = `m-day-cell ${hasBookings ? 'has-bookings' : ''} ${isBlocked ? 'blocked-day' : ''} ${isSelected ? 'selected' : ''}`;
                 dayCell.innerText = day;
                 dayCell.onclick = () => selectMasterCalendarDate(isoDate);
 
@@ -328,11 +404,7 @@
         }
 
         function selectMasterCalendarDate(isoDate) {
-            if (selectedFilterDate === isoDate) {
-                selectedFilterDate = null;
-            } else {
-                selectedFilterDate = isoDate;
-            }
+            selectedFilterDate = (selectedFilterDate === isoDate) ? null : isoDate;
             renderMasterCalendar();
             filterAndRenderBookings();
         }
@@ -369,13 +441,51 @@
             container.innerHTML = bookings.map(b => `
                 <div class="booking-card" onclick="openBookingModal('${b.id}')">
                     <div class="b-header">
-                        <span class="b-name">${b.name}${b.isRegular ? '<span style="color:#4cd964; font-size:9px;">(Постійний)</span>' : ''}</span>
+                        <span class="b-name">${b.name} ${b.isRegular ? '<span style="color:#4cd964; font-size:9px;">(Постійний)</span>' : ''}</span>
                         <span class="b-time">${b.date} о ${b.time}</span>
                     </div>
                     <div class="b-sub">✂️ ${b.service} • 💰 ${b.price || 1000} ₴</div>
                     <div class="b-sub">📞 ${b.phone}</div>
                 </div>
             `).join('');
+        }
+
+        function calculateStats() {
+            const currentYearMonth = masterCurrentDate.toISOString().slice(0, 7);
+            const monthBookings = allBookingsCache.filter(b => b.date && b.date.startsWith(currentYearMonth));
+            
+            const totalCount = monthBookings.length;
+            const totalIncome = monthBookings.reduce((sum, b) => sum + Number(b.price || 1000), 0);
+
+            const statCountEl = document.getElementById('statTotalBookings');
+            const statIncomeEl = document.getElementById('statTotalIncome');
+
+            if (statCountEl) statCountEl.innerText = totalCount;
+            if (statIncomeEl) statIncomeEl.innerText = totalIncome + " ₴";
+
+            const clientsContainer = document.getElementById('masterClientsBaseList');
+            if (clientsContainer) {
+                if (allBookingsCache.length === 0) {
+                    clientsContainer.innerHTML = '<div style="font-size:10px; color:var(--text-muted);">База порожня</div>';
+                    return;
+                }
+                const uniqueClientsMap = new Map();
+                allBookingsCache.forEach(b => {
+                    if (b.phone && !uniqueClientsMap.has(b.phone)) {
+                        uniqueClientsMap.set(b.phone, b);
+                    }
+                });
+
+                clientsContainer.innerHTML = Array.from(uniqueClientsMap.values()).map(c => `
+                    <div style="background:var(--card-hover); border:1px solid var(--border); padding:8px 10px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-size:11px; font-weight:700; color:var(--text-main);">${c.name}</div>
+                            <div style="font-size:9px; color:var(--text-muted);">${c.phone}</div>
+                        </div>
+                        <a href="tel:${c.phone}" style="background:var(--accent); color:var(--accent-invert); padding:4px 8px; border-radius:6px; font-size:9px; text-decoration:none; font-weight:700;">📞 Дзвінок</a>
+                    </div>
+                `).join('');
+            }
         }
 
         function openBookingModal(bookingId) {
@@ -386,3 +496,209 @@
             const modalContent = document.getElementById('modalBookingDetailsContent');
             modalContent.innerHTML = `
                 <div><b>Ім'я:</b> ${b.name}</div>
+                <div><b>Телефон:</b> <a href="tel:${b.phone}" style="color:var(--accent); font-weight:700;">${b.phone}</a></div>
+                <div><b>Статус клієнта:</b> ${b.isRegular ? '<span style="color:#4cd964; font-weight:700;">Постійний клієнт (без завдатку)</span>' : '<span style="color:var(--accent); font-weight:700;">Новий клієнт (завдаток 500 грн)</span>'}</div>
+                <div><b>Дата та час:</b> ${b.date} о ${b.time}</div>
+                <div><b>Послуга:</b> ${b.service}</div>
+                <div><b>Вартість:</b> ${b.price || 1000} ₴</div>
+                <div><b>Тривалість:</b> ${b.durationHours || 1.5} год</div>
+                <div><b>Email:</b> ${b.email || '—'}</div>
+                <div><b>Соцмережі:</b> ${b.social || '—'}</div>
+                <hr style="border:none; border-top:1px solid var(--border); margin:4px 0;">
+                <div><b>Фото-референс / волосся:</b></div>
+                ${formatReferencePhotos(b.reference)}
+            `;
+
+            document.getElementById('bookingDetailModal').style.display = 'flex';
+        }
+
+        function closeBookingModal() {
+            document.getElementById('bookingDetailModal').style.display = 'none';
+            activeSelectedBooking = null;
+        }
+
+        function formatReferencePhotos(refString) {
+            if (!refString || refString === 'EMPTY' || refString === 'NULL' || refString === 'Не завантажено') {
+                return '<span style="color:var(--text-muted);">Фото не надано</span>';
+            }
+
+            const parts = refString.split('|||');
+            let html = '<div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">';
+
+            parts.forEach(part => {
+                let text = part.trim();
+                let title = '';
+                let url = '';
+
+                if (text.includes('ПОТОЧНИЙ СТАН:')) {
+                    title = '📷 Поточний стан волосся:';
+                    url = text.replace('ПОТОЧНИЙ СТАН:', '').trim();
+                } else if (text.includes('РЕФЕРЕНС:')) {
+                    title = '✨ Обраний референс:';
+                    url = text.replace('РЕФЕРЕНС:', '').trim();
+                } else {
+                    url = text;
+                }
+
+                if (url.startsWith('data:image') || url.startsWith('http')) {
+                    html += `
+                        <div style="background:var(--card-hover); padding:8px; border-radius:10px; border:1px solid var(--border);">
+                            ${title ? `<div style="font-size:9.5px; font-weight:700; color:var(--accent); margin-bottom:4px;">${title}</div>` : ''}
+                            <img src="${url}" onclick="openMasterLightbox('${url}')" style="max-width:100%; max-height:180px; border-radius:8px; object-fit:cover; display:block; cursor:pointer; border:1px solid var(--border);">
+                        </div>
+                    `;
+                } else if (url && url !== 'EMPTY') {
+                    html += `<div style="font-size:10px; color:var(--text-main);">${title} ${url}</div>`;
+                }
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        function openMasterLightbox(src) {
+            const img = document.getElementById('lightboxImage');
+            const modal = document.getElementById('imageLightboxModal');
+            if (img && modal) {
+                img.src = src;
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeMasterLightbox() {
+            document.getElementById('imageLightboxModal').style.display = 'none';
+        }
+
+        async function cancelCurrentBooking() {
+            if (!activeSelectedBooking) return;
+            if (!confirm(`Ви дійсно бажаєте скасувати запис клієнта ${activeSelectedBooking.name}?`)) return;
+
+            try {
+                const res = await fetch('/api/cancel-booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: activeSelectedBooking.id })
+                });
+
+                if (res.ok) {
+                    alert("Запис успішно скасовано!");
+                    closeBookingModal();
+                    fetchMasterData();
+                } else {
+                    alert("Не вдалося скасувати запис.");
+                }
+            } catch (e) {
+                alert("Помилка під час скасування.");
+            }
+        }
+
+        async function manageDayBlock(action) {
+            const dateInput = document.getElementById('blockDateInput').value;
+            if (!dateInput) return alert("Оберіть дату!");
+
+            const endpoint = action === 'block' ? '/api/block-day' : '/api/unblock-day';
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: dateInput, password: '1988' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(action === 'block' ? "День заблоковано!" : "День розблоковано!");
+                    blockedDaysCache = data.blockedDays || [];
+                    renderBlockedDays(blockedDaysCache);
+                    renderMasterCalendar();
+                } else {
+                    alert(data.error || "Помилка доступу");
+                }
+            } catch (e) {
+                alert("Помилка виконання.");
+            }
+        }
+
+        function renderBlockedDays(days) {
+            const container = document.getElementById('blockedDaysList');
+            if (!container) return;
+            if (!Array.isArray(days) || days.length === 0) {
+                container.innerHTML = 'Заблокованих днів немає.';
+                return;
+            }
+            container.innerHTML = days.map(d => `<span style="background:var(--card-hover); padding:4px 8px; border-radius:6px; border:1px solid var(--border); color:#ff4d4d; font-weight:700;">🔒 ${d}</span>`).join('');
+        }
+
+        function updateMasterAvatar() {
+            const fileInput = document.getElementById('masterAvatarFileInput');
+            if (!fileInput.files || !fileInput.files[0]) return alert("Оберіть нове фото!");
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                localStorage.setItem('illiana_custom_master_photo', e.target.result);
+                alert("Аватарку майстра успішно оновлено!");
+                fileInput.value = '';
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        async function loadMasterWorks() {
+            const container = document.getElementById('masterWorksList');
+            if (!container) return;
+
+            try {
+                const res = await fetch('/api/works');
+                const works = await res.json();
+                if (Array.isArray(works) && works.length > 0) {
+                    container.innerHTML = works.map(w => `
+                        <div class="works-carousel-item" style="position:relative;">
+                            <img src="${w.image}" alt="Робота">
+                            <button onclick="deleteWork('${w.id}')" style="position:absolute; top:6px; right:6px; background:#ff4d4d; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:8px; font-weight:800; cursor:pointer;">🗑</button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="font-size:10px; color:var(--text-muted);">Портфоліо порожнє</div>';
+                }
+            } catch (e) {}
+        }
+
+        async function uploadNewWork() {
+            const fileInput = document.getElementById('newWorkPhotoInput');
+            const titleInput = document.getElementById('newWorkTitleInput');
+
+            if (!fileInput.files || !fileInput.files[0]) return alert("Оберіть фотографію!");
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64Image = e.target.result;
+                try {
+                    const res = await fetch('/api/works', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: titleInput.value.trim(), image: base64Image })
+                    });
+                    if (res.ok) {
+                        alert("Роботу успішно опубліковано!");
+                        fileInput.value = '';
+                        titleInput.value = '';
+                        loadMasterWorks();
+                    }
+                } catch (err) {
+                    alert("Не вдалося завантажити роботу.");
+                }
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        async function deleteWork(workId) {
+            if (!confirm("Видалити цю роботу з портфоліо?")) return;
+            try {
+                await fetch('/api/delete-work', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: workId })
+                });
+                loadMasterWorks();
+            } catch (e) {}
+        }
+    </script>
+</body>
+</html>
