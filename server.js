@@ -1,5 +1,4 @@
 const express = require('express');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const path = require('path');
 const app = express();
 
@@ -37,9 +36,9 @@ function parseTimeToDecimal(timeStr) {
 
 // ------------------ TELEGRAM BOT & NOTIFICATIONS ------------------
 
+// Очищення старих Webhook
 fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`).catch(() => {});
 
-// 1. Сповіщення майстру з перевіркою статусу клієнта
 async function sendMasterTelegramNotification(booking) {
     if (!BOT_TOKEN || !MASTER_TELEGRAM_ID) return;
 
@@ -63,10 +62,9 @@ async function sendMasterTelegramNotification(booking) {
     await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
 }
 
-// 2. Вбудований бот клієнтам (із блокуванням потрійного надсилання)
 let telegramOffset = 0;
 const processedUpdateIds = new Set();
-const lastStartMap = new Map(); // Блокування частіших ніж 12 сек запитів /start
+const lastStartMap = new Map(); 
 let isPollingRunning = false;
 
 async function startTelegramBotPolling() {
@@ -108,7 +106,7 @@ async function handleBotMessage(msg) {
     if (text.startsWith('/start')) {
         const now = Date.now();
         if (lastStartMap.has(chatId) && (now - lastStartMap.get(chatId) < 12000)) {
-            return; // Захист від подвійних/потрійних спрацьовувань
+            return;
         }
         lastStartMap.set(chatId, now);
 
@@ -132,7 +130,7 @@ async function handleBotMessage(msg) {
                         `📅 ДАТА:     ${b.date}\n` +
                         `⏰ ЧАС:      ${b.time}\n` +
                         `✂️ ПОСЛУГА:  ${b.service}\n` +
-                        `💰 ВАРТІСТЬ: ${b.price \vert{}\vert{} 1000} ₴${depositLine}` +
+                        `💰 ВАРТІСТЬ: ${b.price || 1000} ₴${depositLine}` +
                         `</code>\n\n` +
                         `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\n` +
                         `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.`;
