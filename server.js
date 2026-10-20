@@ -1,630 +1,390 @@
-let currentLang = 'ua';
-let selectedCategory = null;
-let selectedServiceData = null;
-let selectedHaircutRef = null;
-let selectedCondition = null;
-let selectedDate = null;
-let selectedTimeSlot = null;
-let bookedSlotsCache = {};
+const express = require('express');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const path = require('path');
+const app = express();
 
-const TELEGRAM_BOT_URL = 'https://t.me/illianahair_bot';
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.static(path.join(__dirname)));
 
-const translations = {
-    ua: {
-        tab_book: "Запис",
-        tab_works: "Приклади робіт",
-        tab_loc: "Локація",
-        profile_sub: "квір хейр стиліст • перукар дніпро",
-        profile_bio: "не відрощуй волосся — відрощуй індивідуальність",
-        step1: "1. Оберіть категорію послуг",
-        cut_title: "Стрижка",
-        cut_sub: "1000 ₴ • 1.5 год",
-        color_title: "Фарбування",
-        color_sub: "Підбір за станом",
-        complex_title: "Стрижка + Фарбування коріння",
-        complex_sub: "3000 ₴ • 3 год (до 2 см)",
-        haircut_ref_title: "✨ Оберіть референс стрижки:",
-        choose_btn: "Обрати",
-        ref_selected_notice: "✓ Обрано",
-        step2: "2. Оберіть ваш поточний стан волосся:",
-        step3: "3. Доступні послуги та довжина:",
-        length_label: "Довжина волосся:",
-        len_shoulders: "До плечей",
-        len_blades: "Від плечей до лопаток",
-        len_below: "Нижче лопаток",
-        rules_title: "📌 Важливі примітки та правила майстра",
-        rule_1: "Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною відповідно до довжини.",
-        rule_2: "Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).",
-        rule_3: "Я не роблю вихід із чорного або рудого.",
-        rule_4: "Я не фарбую волосся після біозавивки, ботоксу, кератину.",
-        photo_current_label: "4. Завантажте фото вашого волосся:",
-        photo_ref_label: "5. Завантажте фото-референс:",
-        selected_service_label: "Обрана послуга та час",
-        select_service_placeholder: "Спочатку оберіть категорію вище",
-        date_label: "Дата візиту",
-        name_label: "Ім'я",
-        name_placeholder: "Як звертатись",
-        phone_label: "Телефон",
-        email_label: "Email (обов'язково)",
-        social_label: "Нік / соцмережа",
-        slots_label: "Доступні слоти часу (останній запис о 19:00)",
-        deposit_notice: "⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.",
-        pay_btn: "Сплатити завдаток 500 ₴ та забронювати",
-        modal_title: "Публічний договір оферти",
-        modal_btn: "Зрозуміло",
-        loc_info: "📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>Приватний простір, мінімалізм та фокус на якості.",
-        map_btn: "Відкрити в Google Maps"
-    },
-    en: {
-        tab_book: "Booking",
-        tab_works: "Portfolio",
-        tab_loc: "Location",
-        profile_sub: "queer hair stylist • dnipro",
-        profile_bio: "don't grow hair — grow individuality",
-        step1: "1. Select service category",
-        cut_title: "Haircut",
-        cut_sub: "1000 ₴ • 1.5 hrs",
-        color_title: "Coloring",
-        color_sub: "Selection by condition",
-        complex_title: "Haircut + Root Coloring",
-        complex_sub: "3000 ₴ • 3 hrs (up to 2 cm)",
-        haircut_ref_title: "✨ Choose haircut reference:",
-        choose_btn: "Select",
-        ref_selected_notice: "✓ Selected",
-        step2: "2. Select your current hair condition:",
-        step3: "3. Available services & length:",
-        length_label: "Hair length:",
-        len_shoulders: "To shoulders",
-        len_blades: "Shoulder to shoulder blades",
-        len_below: "Below shoulder blades",
-        rules_title: "📌 Important notes & master rules",
-        rule_1: "If roots are over 2 cm, coloring is considered primary based on length.",
-        rule_2: "I do not do blonde techniques (AirTouch, balayage, etc.).",
-        rule_3: "I do not do black or red color correction.",
-        rule_4: "I do not dye hair after perm, botox, or keratin.",
-        photo_current_label: "4. Upload your hair photo:",
-        photo_ref_label: "5. Upload reference photo:",
-        selected_service_label: "Selected service & time",
-        select_service_placeholder: "First select a category above",
-        date_label: "Visit Date",
-        name_label: "Name",
-        name_placeholder: "How to address you",
-        phone_label: "Phone",
-        email_label: "Email (required)",
-        social_label: "Nickname / social",
-        slots_label: "Available time slots (last booking at 19:00)",
-        deposit_notice: "⚡ <b>Booking term:</b> <b>500 UAH</b> deposit confirms booking.",
-        pay_btn: "Pay deposit 500 ₴ & book",
-        modal_title: "Public Offer Agreement",
-        modal_btn: "Understood",
-        loc_info: "📍 <b>Location:</b> Dnipro, 35-B Volodymyr Vernadskyi St.<br><br>Private space, minimalism and focus on quality.",
-        map_btn: "Open in Google Maps"
-    }
+const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
+
+// ⚠️ НАЛАШТУВАННЯ TELEGRAM (Новий токен вставлено)
+const BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI'; 
+const MASTER_TELEGRAM_ID = '956742572'; // Ваш ID для тестування
+
+// Дані Supabase
+const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
+
+const supabaseHeaders = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`,
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
 };
 
-window.addEventListener('DOMContentLoaded', () => {
-    initCustomCalendar();
-    fetchBookingsData();
-    loadWorksPortfolio();
-    
-    let savedAvatar = localStorage.getItem('illiana_custom_master_photo') || 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
-    document.querySelectorAll('.profile-avatar img, #profileAvatarImg, .avatar-wrap img').forEach(img => {
-        img.src = savedAvatar;
-    });
-});
+let customWorksMemory = [];
 
-async function fetchBookingsData() {
+function parseTimeToDecimal(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h + (m / 60);
+}
+
+// ------------------ TELEGRAM BOT & NOTIFICATIONS ------------------
+
+// 1. Надсилання сповіщення майстру
+async function sendMasterTelegramNotification(booking) {
+    if (!BOT_TOKEN || !MASTER_TELEGRAM_ID) return;
+
+    const messageText = `⚡ <b>НОВИЙ ЗАПИС У СТУДІЮ!</b>\n\n` +
+        `👤 <b>Клієнт:</b> ${booking.name}\n` +
+        `📞 <b>Телефон:</b> ${booking.phone}\n` +
+        `📅 <b>Дата:</b> ${booking.date} о ${booking.time}\n` +
+        `✂️ <b>Послуга:</b> ${booking.service}\n` +
+        `💰 <b>Сума:</b> ${booking.price} ₴\n` +
+        `📧 <b>Email:</b> ${booking.email || '—'}\n` +
+        `💬 <b>Соцмережа:</b> ${booking.social || '—'}`;
+
+    await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
+}
+
+// 2. Вбудований бот: автовідповідь клієнтам на /start
+let telegramOffset = 0;
+async function startTelegramBotPolling() {
+    if (!BOT_TOKEN) return;
+
     try {
-        let res = await fetch('/api/bookings');
-        let data = await res.json();
-        bookedSlotsCache = {};
-        data.forEach(b => {
-            if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
-            bookedSlotsCache[b.date].push({
-                time: b.time,
-                duration: Number(b.durationHours || 1.5)
-            });
-        });
-        renderTimeSlots();
-    } catch(e) { console.error("Could not fetch bookings", e); }
-}
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${telegramOffset}&timeout=10`);
+        const data = await res.json();
 
-async function loadWorksPortfolio() {
-    let uploadedContainer = document.getElementById('uploadedWorksContainer');
-    if (!uploadedContainer) return;
-
-    try {
-        let res = await fetch('/api/works');
-        if (res.ok) {
-            let customWorks = await res.json();
-            if (Array.isArray(customWorks) && customWorks.length > 0) {
-                uploadedContainer.innerHTML = customWorks.map(w => 
-                    `<div class="works-carousel-item" onclick="openLightbox('${w.image}')"><img src="${w.image}" alt="${w.title || 'Робота'}"></div>`
-                ).join('');
-            }
-        }
-    } catch (e) {
-        console.error("Error loading uploaded works:", e);
-    }
-}
-
-function toggleLang() {
-    currentLang = currentLang === 'ua' ? 'en' : 'ua';
-    let langBtn = document.getElementById('langToggle');
-    if (langBtn) langBtn.innerText = currentLang.toUpperCase() + ' / ' + (currentLang === 'ua' ? 'EN' : 'UA');
-
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        let key = el.getAttribute('data-i18n');
-        if (translations[currentLang][key]) el.innerHTML = translations[currentLang][key];
-    });
-
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        let key = el.getAttribute('data-i18n-placeholder');
-        if (translations[currentLang][key]) el.setAttribute('placeholder', translations[currentLang][key]);
-    });
-    initCustomCalendar();
-}
-
-function toggleTheme() {
-    const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme');
-    html.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
-}
-
-function toggleAccordion(header) {
-    header.parentElement.classList.toggle('open');
-}
-
-function switchTab(tabName, element) {
-    document.querySelectorAll('.section-pane').forEach(pane => pane.classList.remove('active'));
-    document.querySelectorAll('.quick-nav .nav-chip').forEach(chip => chip.classList.remove('active'));
-
-    if (tabName === 'book') document.getElementById('paneBook').classList.add('active');
-    if (tabName === 'works') {
-        document.getElementById('paneWorks').classList.add('active');
-        loadWorksPortfolio();
-    }
-    if (tabName === 'loc') document.getElementById('paneLoc').classList.add('active');
-    if (element) element.classList.add('active');
-}
-
-function selectMainCategory(category) {
-    selectedCategory = category;
-    document.querySelectorAll('.service-card-row').forEach(card => card.classList.remove('selected'));
-    if (category === 'cut') document.getElementById('mainCardCut')?.classList.add('selected');
-    if (category === 'color') document.getElementById('mainCardColor')?.classList.add('selected');
-    if (category === 'complex') document.getElementById('mainCardComplex')?.classList.add('selected');
-
-    let haircutEx = document.getElementById('haircutExamplesSection');
-    let photoUp = document.getElementById('photoUploadSection');
-    if (haircutEx) haircutEx.style.display = (category === 'cut' || category === 'complex') ? 'block' : 'none';
-    if (photoUp) photoUp.style.display = 'block';
-    
-    let subMenu = document.getElementById('categorySubmenu');
-    let coloringOptions = document.getElementById('coloringSubOptions');
-
-    if (category === 'color') {
-        if (subMenu) subMenu.style.display = 'block';
-        if (coloringOptions) coloringOptions.style.display = 'block';
-        selectedServiceData = null;
-        renderSubmenuItems();
-        updateSummaryCard();
-    } else if (category === 'complex') {
-        if (subMenu) subMenu.style.display = 'none';
-        if (coloringOptions) coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка + Фарбування коріння (до 2 см)", price: 3000, durationHours: 3, durationText: "3 год" };
-        updateSummaryCard();
-    } else {
-        if (subMenu) subMenu.style.display = 'none';
-        if (coloringOptions) coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, durationHours: 1.5, durationText: "1.5 год" };
-        updateSummaryCard();
-    }
-    renderTimeSlots();
-}
-
-function selectHaircutReference(imgName, element) {
-    document.querySelectorAll('.haircut-grid-item').forEach(item => item.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedHaircutRef = imgName;
-    let notice = document.getElementById('selectedRefNotice');
-    if (notice) notice.style.display = 'block';
-    updateSummaryCard();
-}
-
-function renderSubmenuItems() {
-    let container = document.getElementById('submenuItems');
-    if (!container) return;
-    container.innerHTML = `
-        <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся', this)">
-            <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Доступні всі техніки фарбування</div></div>
-        </div>
-        <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване волосся', this)">
-            <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Корінь, тонування, однотон</div></div>
-        </div>
-    `;
-}
-
-function selectHairCondition(conditionKey, conditionTitle, element) {
-    document.querySelectorAll('#categorySubmenu .sub-service-card').forEach(card => card.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedCondition = conditionKey;
-    
-    let specList = document.getElementById('specificServicesList');
-    if (!specList) return;
-    if (conditionKey === 'natural') {
-        specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, 2.5, '2.5 год', this)">
-                <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
-            </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд / яскраві техніки', null, null, null, this)">
-                <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення з тонуванням</div></div>
-            </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, null, this)">
-                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Фарбування в один тон</div></div>
-            </div>
-        `;
-    } else {
-        specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, 2.5, '2.5 год', this)">
-                <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
-            </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, null, this)">
-                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Тонування фарбованого</div></div>
-            </div>
-        `;
-    }
-}
-
-let chosenServiceType = null;
-
-function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, fixedDurationText, element) {
-    document.querySelectorAll('#specificServicesList .sub-service-card').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
-    chosenServiceType = typeKey;
-
-    let lengthContainer = document.getElementById('lengthContainer');
-    if (lengthContainer) lengthContainer.style.display = 'block';
-
-    if (fixedPrice !== null) {
-        selectedServiceData = { title: title, price: fixedPrice, durationHours: fixedHours, durationText: fixedDurationText };
-    } else {
-        updateServiceDetails();
-    }
-    updateSummaryCard();
-    renderTimeSlots();
-}
-
-function updateServiceDetails() {
-    let lengthSelect = document.getElementById('hairLengthSelect');
-    let lengthVal = lengthSelect ? lengthSelect.value : 'shoulders';
-
-    if (chosenServiceType === 'blonde') {
-        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тотал блонд", price: 4000, durationHours: 3, durationText: "3 год" };
-        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тотал блонд", price: 6000, durationHours: 6, durationText: "6 год" };
-        else selectedServiceData = { title: "Тотал блонд", price: 7500, durationHours: 7, durationText: "7+ год" };
-    } else if (chosenServiceType === 'tone') {
-        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тонування / однотон", price: 3000, durationHours: 2, durationText: "2 год" };
-        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тонування / однотон", price: 3500, durationHours: 2.5, durationText: "2.5 год" };
-        else selectedServiceData = { title: "Тонування / однотон", price: 5000, durationHours: 3, durationText: "3 год" };
-    }
-    updateSummaryCard();
-    renderTimeSlots();
-}
-
-function updateSummaryCard() {
-    let titleEl = document.getElementById('summaryServiceTitle');
-    let priceBadge = document.getElementById('summaryPriceBadge');
-    let metaEl = document.getElementById('summaryMeta');
-    let durationEl = document.getElementById('summaryDuration');
-    let dateTimeEl = document.getElementById('summaryDateTime');
-
-    if (!titleEl) return;
-
-    if (selectedServiceData) {
-        let text = selectedServiceData.title;
-        if (selectedHaircutRef) text += " + Референс";
-        titleEl.innerText = text;
-        if (priceBadge) priceBadge.innerText = selectedServiceData.price + " ₴";
-        if (durationEl) durationEl.innerText = selectedServiceData.durationText;
-        if (metaEl) metaEl.style.display = 'flex';
-    } else {
-        titleEl.innerText = currentLang === 'ua' ? "Оберіть послугу вище" : "Select service above";
-        if (priceBadge) priceBadge.innerText = "0 ₴";
-        if (metaEl) metaEl.style.display = 'none';
-    }
-
-    if (dateTimeEl) {
-        if (selectedDate && selectedTimeSlot) {
-            dateTimeEl.innerText = `${selectedDate} о ${selectedTimeSlot}`;
-        } else if (selectedDate) {
-            dateTimeEl.innerText = `${selectedDate} (час не обрано)`;
-        }
-    }
-}
-
-function initCustomCalendar() {
-    let grid = document.getElementById('customCalendarGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    const daysUa = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-    const daysEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-    let today = new Date();
-    for (let i = 0; i < 30; i++) {
-        let d = new Date();
-        d.setDate(today.getDate() + i);
-        
-        let dayOfWeek = (currentLang === 'ua') ? daysUa[d.getDay()] : daysEn[d.getDay()];
-        let dayNum = d.getDate();
-        let isoDate = d.toISOString().split('T')[0];
-
-        let cell = document.createElement('div');
-        cell.className = 'calendar-day-cell';
-        if (i === 0 && !selectedDate) {
-            cell.classList.add('selected');
-            selectedDate = isoDate;
-        } else if (selectedDate === isoDate) {
-            cell.classList.add('selected');
-        }
-
-        cell.innerHTML = `
-            <span class="day-name">${dayOfWeek}</span>
-            <span class="day-num">${dayNum}</span>
-        `;
-        cell.onclick = () => selectCalendarDate(isoDate, cell);
-        grid.appendChild(cell);
-    }
-    renderTimeSlots();
-}
-
-function selectCalendarDate(isoDate, element) {
-    document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedDate = isoDate;
-    renderTimeSlots();
-    updateSummaryCard();
-}
-
-function renderTimeSlots() {
-    let grid = document.getElementById('timeSlotsGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    if (!selectedDate) {
-        grid.innerHTML = '<span style="font-size:9px; color:var(--text-muted);">Спочатку оберіть дату</span>';
-        return;
-    }
-
-    let bookedForDay = bookedSlotsCache[selectedDate] || [];
-    let serviceDuration = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
-
-    let slots = [];
-    for (let h = 10; h <= 19; h++) {
-        slots.push(`${String(h).padStart(2, '0')}:00`);
-        if (h < 19) slots.push(`${String(h).padStart(2, '0')}:30`);
-    }
-
-    let now = new Date();
-    let isToday = (selectedDate === now.toISOString().split('T')[0]);
-
-    let isOnlyHaircut = selectedCategory === 'cut' || 
-        (selectedServiceData && selectedServiceData.title.toLowerCase().includes('стрижка') && !selectedServiceData.title.toLowerCase().includes('фарбування'));
-
-    let maxEndDecimal = isOnlyHaircut ? 20.5 : 20.0;
-
-    slots.forEach(timeStr => {
-        let [hours, minutes] = timeStr.split(':').map(Number);
-        let slotStartDecimal = hours + (minutes / 60);
-        let slotEndDecimal = slotStartDecimal + serviceDuration;
-
-        let cell = document.createElement('div');
-        cell.className = 'time-cell';
-        cell.innerText = timeStr;
-
-        let isDisabled = false;
-
-        if (slotEndDecimal > maxEndDecimal) {
-            isDisabled = true;
-        }
-
-        if (isToday) {
-            let slotTime = new Date();
-            slotTime.setHours(hours, minutes, 0, 0);
-            let diffHours = (slotTime - now) / (1000 * 60 * 60);
-            if (diffHours < 2) {
-                isDisabled = true;
-            }
-        }
-
-        bookedForDay.forEach(b => {
-            let [bHours, bMinutes] = b.time.split(':').map(Number);
-            let bStart = bHours + (bMinutes / 60);
-            let bEnd = bStart + Number(b.duration || 1.5);
-
-            if (slotStartDecimal < bEnd && slotEndDecimal > bStart) {
-                isDisabled = true;
-            }
-        });
-
-        if (isDisabled) {
-            cell.classList.add('booked');
-            cell.style.opacity = '0.3';
-            cell.style.pointerEvents = 'none';
-        } else {
-            cell.onclick = () => selectTimeSlot(timeStr, cell);
-            if (selectedTimeSlot === timeStr) cell.classList.add('selected');
-        }
-        grid.appendChild(cell);
-    });
-}
-
-function selectTimeSlot(time, element) {
-    document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedTimeSlot = time;
-    updateSummaryCard();
-}
-
-function openOffer() { document.getElementById('offerModal').style.display = 'flex'; }
-function closeOffer() { document.getElementById('offerModal').style.display = 'none'; }
-
-function openLightbox(imgSrc) {
-    let lightbox = document.getElementById('imageLightboxModal');
-    let img = document.getElementById('lightboxImage');
-    if (lightbox && img) {
-        img.src = imgSrc;
-        lightbox.style.display = 'flex';
-    }
-}
-function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
-
-async function uploadImageToImgBB(file) {
-    if (!file) return '';
-
-    return new Promise((resolve) => {
-        let reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            let img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                let canvas = document.createElement('canvas');
-                let MAX_WIDTH = 800;
-                let scaleSize = MAX_WIDTH / img.width;
-                
-                if (img.width <= MAX_WIDTH) {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                } else {
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
+        if (data.ok && Array.isArray(data.result)) {
+            for (const update of data.result) {
+                telegramOffset = update.update_id + 1;
+                if (update.message && update.message.text) {
+                    await handleBotMessage(update.message);
                 }
-
-                let ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                resolve(compressedDataUrl);
-            };
-            img.onerror = () => resolve(event.target.result);
-        };
-        reader.onerror = () => resolve('');
-    });
-}
-
-async function submitBooking() {
-    let name = document.getElementById('clientName').value.trim();
-    let phone = document.getElementById('clientPhone').value.trim();
-    let email = document.getElementById('clientEmail').value.trim();
-    let social = document.getElementById('clientSocial')?.value.trim() || '';
-
-    if (!selectedCategory || !selectedServiceData) {
-        alert("Оберіть послугу!");
-        return;
-    }
-    if (!selectedDate || !selectedTimeSlot) {
-        alert("Оберіть дату та час візиту!");
-        return;
-    }
-    if (!name || !phone || !email) {
-        alert("Заповніть ім'я, телефон та email!");
-        return;
-    }
-
-    let submitBtn = document.querySelector('button[onclick="submitBooking()"]');
-    let originalBtnText = submitBtn ? submitBtn.innerText : '';
-    if (submitBtn) {
-        submitBtn.innerText = "⏳ Обробка та збереження фото...";
-        submitBtn.style.pointerEvents = 'none';
-        submitBtn.style.opacity = '0.7';
-    }
-
-    try {
-        let hairPhotoInput = document.getElementById('clientHairPhoto');
-        let refPhotoInput = document.getElementById('clientRefPhoto');
-
-        let uploadedPhotoUrl = '';
-        if (refPhotoInput && refPhotoInput.files && refPhotoInput.files[0]) {
-            uploadedPhotoUrl = await uploadImageToImgBB(refPhotoInput.files[0]);
-        } else if (hairPhotoInput && hairPhotoInput.files && hairPhotoInput.files[0]) {
-            uploadedPhotoUrl = await uploadImageToImgBB(hairPhotoInput.files[0]);
-        }
-
-        // ВАЖЛИВО: Завантажене клієнтом фото з телефону має вищий пріоритет над обраним з сітки
-        let finalReferenceInfo = uploadedPhotoUrl || selectedHaircutRef || 'EMPTY';
-
-        let checkRes = await fetch('/api/check-client', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
-        });
-        let checkData = await checkRes.json();
-
-        let bookingPayload = {
-            name,
-            phone,
-            email,
-            social,
-            service: selectedServiceData.title,
-            price: Number(selectedServiceData.price),
-            durationHours: Number(selectedServiceData.durationHours),
-            date: selectedDate,
-            time: selectedTimeSlot,
-            reference: finalReferenceInfo
-        };
-
-        let bookRes = await fetch('/api/bookings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bookingPayload)
-        });
-
-        let responseText = await bookRes.text();
-        let bookData;
-        try {
-            bookData = JSON.parse(responseText);
-        } catch (e) {
-            throw new Error("Відповідь сервера: " + responseText);
-        }
-
-        if (!bookRes.ok || bookData.success === false) {
-            throw new Error(bookData.error || "Помилка збереження на сервері");
-        }
-
-        let bookingId = (bookData.booking && bookData.booking.id) ? bookData.booking.id : '';
-        let botLinkWithStart = bookingId ? `${TELEGRAM_BOT_URL}?start=${bookingId}` : TELEGRAM_BOT_URL;
-
-        if (checkData.isRegular) {
-            alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено.");
-            window.location.href = botLinkWithStart;
-        } else {
-            try {
-                let invoiceRes = await fetch('/api/create-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone, email, date: selectedDate, time: selectedTimeSlot, price: selectedServiceData.price })
-                });
-                let invoiceData = await invoiceRes.json();
-                
-                if (invoiceData && invoiceData.pageUrl) {
-                    window.location.href = invoiceData.pageUrl;
-                    return;
-                }
-            } catch (invErr) {}
-
-            alert("✨ Запис успішно сформовано! Переходимо в чат-бот.");
-            window.location.href = botLinkWithStart;
+            }
         }
     } catch (err) {
-        console.error("Помилка оформлення:", err);
-        alert("Помилка: " + err.message);
-    } finally {
-        if (submitBtn) {
-            submitBtn.innerText = originalBtnText;
-            submitBtn.style.pointerEvents = 'auto';
-            submitBtn.style.opacity = '1';
+        console.error("Telegram Polling Error:", err.message);
+    }
+
+    setTimeout(startTelegramBotPolling, 1500);
+}
+
+async function handleBotMessage(msg) {
+    const chatId = msg.chat.id;
+    const text = msg.text || '';
+
+    if (text.startsWith('/start')) {
+        const parts = text.split(' ');
+        const bookingId = parts[1] ? parts[1].trim() : null;
+
+        if (bookingId) {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${bookingId}`, {
+                    headers: supabaseHeaders
+                });
+                const data = await response.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    const b = data[0];
+                    const confirmMsg = `✨ <b>Дякуємо за ваш запис у студію!</b>\n\n` +
+                        `📅 <b>Дата візиту:</b> ${b.date}\n` +
+                        `⏰ <b>Час:</b> ${b.time}\n` +
+                        `✂️ <b>Послуга:</b> ${b.service}\n` +
+                        `💰 <b>Вартість:</b> ${b.price || 1000} ₴\n\n` +
+                        `⚠️ <b>ВАЖЛИВЕ ПРАВИЛО СКАСУВАННЯ:</b>\n` +
+                        `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
+                        `Для скасування або зміни часу, будь ласка, напишіть безпосередньо в <b>Директ майстра</b>.`;
+
+                    await sendTelegramMessage(chatId, confirmMsg);
+                    return;
+                }
+            } catch (e) {
+                console.error("Error loading booking details:", e);
+            }
         }
+
+        const welcomeMsg = `Вітаємо у чат-боті студії Явір Ілляни! ✨\n\nЯкщо у вас є питання або ви хочете скасувати візит, напишіть майстру в Директ.`;
+        await sendTelegramMessage(chatId, welcomeMsg);
     }
 }
+
+async function sendTelegramMessage(chatId, text) {
+    try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: text,
+                parse_mode: 'HTML'
+            })
+        });
+    } catch (e) {
+        console.error("Error sending Telegram message:", e);
+    }
+}
+
+// Запускаємо бота
+startTelegramBotPolling();
+
+// ------------------ API ROUTES ------------------
+
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'master.html')));
+
+let blockedDays = [];
+app.get('/api/blocked-days', (req, res) => res.json(blockedDays));
+
+app.post('/api/block-day', (req, res) => {
+    const { date, password } = req.body;
+    if (password !== '1988') return res.status(403).json({ error: 'Невірний PIN-код майстра!' });
+    if (date && !blockedDays.includes(date)) blockedDays.push(date);
+    res.json({ success: true, blockedDays });
+});
+
+app.post('/api/unblock-day', (req, res) => {
+    const { date, password } = req.body;
+    if (password !== '1988') return res.status(403).json({ error: 'Невірний PIN-код майстра!' });
+    blockedDays = blockedDays.filter(d => d !== date);
+    res.json({ success: true, blockedDays });
+});
+
+app.get('/api/bookings', async (req, res) => {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        const data = await response.json();
+        
+        const formattedData = Array.isArray(data) ? data.map(b => ({
+            ...b,
+            price: b.price !== null && b.price !== undefined ? b.price : 1000,
+            durationHours: b.durationHours !== null && b.durationHours !== undefined ? Number(b.durationHours) : 1.5,
+            reference: (b.reference && b.reference !== 'EMPTY' && b.reference !== 'NULL') ? b.reference : (b.haircut_ref || '')
+        })) : [];
+
+        res.json(formattedData);
+    } catch (error) {
+        res.status(500).json([]);
+    }
+});
+
+app.post('/api/bookings', async (req, res) => {
+    const booking = req.body;
+    try {
+        const checkExisting = await fetch(`${SUPABASE_URL}/rest/v1/bookings?date=eq.${encodeURIComponent(booking.date)}`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        const existingForDay = await checkExisting.json();
+
+        if (Array.isArray(existingForDay)) {
+            const reqStart = parseTimeToDecimal(booking.time);
+            const reqDuration = Number(booking.durationHours || 1.5);
+            const reqEnd = reqStart + reqDuration;
+
+            const isOverlap = existingForDay.some(b => {
+                const bStart = parseTimeToDecimal(b.time);
+                const bDuration = Number(b.durationHours || 1.5);
+                const bEnd = bStart + bDuration;
+                return (reqStart < bEnd) && (reqEnd > bStart);
+            });
+
+            if (isOverlap) {
+                return res.status(400).json({ success: false, error: "На жаль, цей часовий слот вже зайнято іншим записом!" });
+            }
+        }
+
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
+            method: 'POST',
+            headers: supabaseHeaders,
+            body: JSON.stringify(booking)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            return res.status(500).json({ success: false, error: errText });
+        }
+
+        let createdBookingData = null;
+        const textResp = await response.text();
+        if (textResp) {
+            try { 
+                const parsed = JSON.parse(textResp);
+                createdBookingData = Array.isArray(parsed) ? parsed[0] : parsed;
+            } catch(e) {}
+        }
+
+        sendMasterTelegramNotification(booking);
+
+        try {
+            const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
+                method: 'GET',
+                headers: supabaseHeaders
+            });
+            const clientsList = await checkClient.json();
+            const cleanInputPhone = (booking.phone || '').replace(/\D/g, '').slice(-9);
+            const clientExists = Array.isArray(clientsList) && clientsList.some(c => {
+                const dbPhone = (c.phone || '').replace(/\D/g, '').slice(-9);
+                return dbPhone && dbPhone === cleanInputPhone;
+            });
+
+            if (!clientExists) {
+                await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+                    method: 'POST',
+                    headers: supabaseHeaders,
+                    body: JSON.stringify({
+                        name: booking.name,
+                        phone: booking.phone,
+                        email: booking.email || '',
+                        social: booking.social || ''
+                    })
+                });
+            }
+        } catch (clientErr) {}
+
+        return res.json({ success: true, booking: createdBookingData });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/cancel-booking', async (req, res) => {
+    try {
+        const { date, time, phone, id } = req.body;
+        let queryUrl = `${SUPABASE_URL}/rest/v1/bookings?`;
+        if (id) {
+            queryUrl += `id=eq.${id}`;
+        } else {
+            queryUrl += `date=eq.${encodeURIComponent(date)}&time=eq.${encodeURIComponent(time)}&phone=eq.${encodeURIComponent(phone)}`;
+        }
+
+        const response = await fetch(queryUrl, {
+            method: 'DELETE',
+            headers: supabaseHeaders
+        });
+
+        if (response.ok) {
+            return res.json({ success: true, message: "Запис скасовано" });
+        } else {
+            const errText = await response.text();
+            return res.status(500).json({ success: false, error: errText });
+        }
+    } catch (e) {
+        return res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.get('/api/works', async (req, res) => {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        if (response.ok) {
+            const dbWorks = await response.json();
+            if (Array.isArray(dbWorks) && dbWorks.length > 0) return res.json(dbWorks);
+        }
+    } catch (e) {}
+    res.json(customWorksMemory);
+});
+
+app.post('/api/works', async (req, res) => {
+    const { title, image } = req.body;
+    if (!image) return res.status(400).json({ success: false, error: "Зображення обов'язкове" });
+
+    const newWork = {
+        id: Date.now(),
+        title: title || 'Робота майстра',
+        image: image,
+        created_at: new Date().toISOString()
+    };
+
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/works`, {
+            method: 'POST',
+            headers: supabaseHeaders,
+            body: JSON.stringify(newWork)
+        });
+    } catch (e) {}
+
+    customWorksMemory.unshift(newWork);
+    res.json({ success: true, work: newWork });
+});
+
+app.post('/api/delete-work', async (req, res) => {
+    const { id } = req.body;
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/works?id=eq.${id}`, {
+            method: 'DELETE',
+            headers: supabaseHeaders
+        });
+    } catch (e) {}
+
+    customWorksMemory = customWorksMemory.filter(w => String(w.id) !== String(id));
+    res.json({ success: true });
+});
+
+app.post('/api/check-client', async (req, res) => {
+    const { phone } = req.body;
+    try {
+        const cleanInputPhone = (phone || '').replace(/\D/g, '').slice(-9);
+
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
+            method: 'GET',
+            headers: supabaseHeaders
+        });
+        const clients = await response.json();
+        
+        const found = Array.isArray(clients) && clients.find(c => {
+            const dbPhone = (c.phone || '').replace(/\D/g, '').slice(-9);
+            return dbPhone && dbPhone === cleanInputPhone;
+        });
+        
+        if (found) {
+            return res.json({ isRegular: true, client: found });
+        } else {
+            return res.json({ isRegular: false });
+        }
+    } catch (error) {
+        return res.status(500).json({ isRegular: false });
+    }
+});
+
+app.post('/api/create-invoice', async (req, res) => {
+    try {
+        const { name, date, time } = req.body;
+
+        const response = await fetch("https://api.monobank.ua/api/merchant/invoice/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Token": MONO_TOKEN
+            },
+            body: JSON.stringify({
+                amount: 50000,
+                ccy: 980,
+                merchantPaymInfo: {
+                    destination: "Завдаток за послугу (ФОП Явір І.В.)",
+                    comment: `Запис клієнта ${name} на ${date} о ${time}`
+                },
+                redirectUrl: req.headers.referer || "https://vercel.com",
+                webHookUrl: "https://example.com/webhook"
+            })
+        });
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: "Не вдалося створити платіж" });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Сервер та Telegram-бот запущено на порту ${PORT}!`));
