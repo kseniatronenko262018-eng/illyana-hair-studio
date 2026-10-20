@@ -7,15 +7,12 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
-
-// ⚠️ НАЛАШТУВАННЯ TELEGRAM
 const BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI'; 
 const MASTER_TELEGRAM_ID = '956742572'; 
 
 const INSTAGRAM_URL = 'https://www.instagram.com/i.ll.yana?cplk=MTVjbTd6bDZ5aXF4ZQ==';
 const LOCATION_MAPS_URL = 'https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро';
 
-// Дані Supabase
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
 
@@ -28,17 +25,26 @@ const supabaseHeaders = {
 
 let customWorksMemory = [];
 
+async function safeFetch(url, options = {}) {
+    try {
+        if (typeof globalThis.fetch === 'function') {
+            return await globalThis.fetch(url, options);
+        }
+        const { default: fetch } = await import('node-fetch');
+        return await fetch(url, options);
+    } catch (e) {
+        console.error("Fetch Execution Error:", e.message);
+        throw e;
+    }
+}
+
 function parseTimeToDecimal(timeStr) {
     if (!timeStr) return 0;
     const [h, m] = timeStr.split(':').map(Number);
     return h + (m / 60);
 }
 
-// ------------------ TELEGRAM BOT & NOTIFICATIONS ------------------
-
-// Очищення старих Webhook
-fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`).catch(() => {});
-
+// Telegram сповіщення
 async function sendMasterTelegramNotification(booking) {
     if (!BOT_TOKEN || !MASTER_TELEGRAM_ID) return;
 
@@ -72,7 +78,7 @@ async function startTelegramBotPolling() {
     isPollingRunning = true;
 
     try {
-        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${telegramOffset}&timeout=5`);
+        const res = await safeFetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${telegramOffset}&timeout=5`);
         const data = await res.json();
 
         if (data.ok && Array.isArray(data.result)) {
@@ -95,7 +101,7 @@ async function startTelegramBotPolling() {
         console.error("Telegram Polling Error:", err.message);
     } finally {
         isPollingRunning = false;
-        setTimeout(startTelegramBotPolling, 2000);
+        setTimeout(startTelegramBotPolling, 3000);
     }
 }
 
@@ -105,9 +111,7 @@ async function handleBotMessage(msg) {
 
     if (text.startsWith('/start')) {
         const now = Date.now();
-        if (lastStartMap.has(chatId) && (now - lastStartMap.get(chatId) < 12000)) {
-            return;
-        }
+        if (lastStartMap.has(chatId) && (now - lastStartMap.get(chatId) < 12000)) return;
         lastStartMap.set(chatId, now);
 
         const parts = text.split(' ');
@@ -115,7 +119,7 @@ async function handleBotMessage(msg) {
 
         if (bookingId) {
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${bookingId}`, {
+                const response = await safeFetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${bookingId}`, {
                     headers: supabaseHeaders
                 });
                 const data = await response.json();
@@ -150,7 +154,7 @@ async function handleBotMessage(msg) {
             }
         }
 
-        const welcomeMsg = `Вітаємо у чат-боті студії <b>Явір Ілляни</b>! ✨\n\nТут зберігаються деталі ваших візитів. Якщо у вас є питання — напишіть майстру в Instagram.`;
+        const welcomeMsg = `Вітаємо у чат-боті студії <b>Явір Ілляни</b>! ✨\n\nТут зберігаються деталі ваших візитів.`;
         const defaultButtons = {
             inline_keyboard: [
                 [{ text: "📍 Локація студії", url: LOCATION_MAPS_URL }],
@@ -167,7 +171,7 @@ async function sendTelegramMessage(chatId, text, replyMarkup = null) {
         const bodyPayload = { chat_id: chatId, text: text, parse_mode: 'HTML' };
         if (replyMarkup) bodyPayload.reply_markup = replyMarkup;
 
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        await safeFetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bodyPayload)
@@ -175,10 +179,7 @@ async function sendTelegramMessage(chatId, text, replyMarkup = null) {
     } catch (e) {}
 }
 
-startTelegramBotPolling();
-
-// ------------------ API ROUTES ------------------
-
+// Маршрути
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'master.html')));
 
@@ -201,19 +202,17 @@ app.post('/api/unblock-day', (req, res) => {
 
 app.get('/api/bookings', async (req, res) => {
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, {
+        const response = await safeFetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, {
             method: 'GET',
             headers: supabaseHeaders
         });
         const data = await response.json();
-        
         const formattedData = Array.isArray(data) ? data.map(b => ({
             ...b,
             price: b.price !== null && b.price !== undefined ? b.price : 1000,
             durationHours: b.durationHours !== null && b.durationHours !== undefined ? Number(b.durationHours) : 1.5,
             reference: (b.reference && b.reference !== 'EMPTY' && b.reference !== 'NULL') ? b.reference : (b.haircut_ref || '')
         })) : [];
-
         res.json(formattedData);
     } catch (error) {
         res.status(500).json([]);
@@ -223,7 +222,7 @@ app.get('/api/bookings', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
     const booking = req.body;
     try {
-        const checkExisting = await fetch(`${SUPABASE_URL}/rest/v1/bookings?date=eq.${encodeURIComponent(booking.date)}`, {
+        const checkExisting = await safeFetch(`${SUPABASE_URL}/rest/v1/bookings?date=eq.${encodeURIComponent(booking.date)}`, {
             method: 'GET',
             headers: supabaseHeaders
         });
@@ -246,7 +245,7 @@ app.post('/api/bookings', async (req, res) => {
             }
         }
 
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
+        const response = await safeFetch(`${SUPABASE_URL}/rest/v1/bookings`, {
             method: 'POST',
             headers: supabaseHeaders,
             body: JSON.stringify(booking)
@@ -269,7 +268,7 @@ app.post('/api/bookings', async (req, res) => {
         sendMasterTelegramNotification(booking);
 
         try {
-            const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
+            const checkClient = await safeFetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
                 method: 'GET',
                 headers: supabaseHeaders
             });
@@ -281,7 +280,7 @@ app.post('/api/bookings', async (req, res) => {
             });
 
             if (!clientExists) {
-                await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+                await safeFetch(`${SUPABASE_URL}/rest/v1/clients`, {
                     method: 'POST',
                     headers: supabaseHeaders,
                     body: JSON.stringify({
@@ -310,7 +309,7 @@ app.post('/api/cancel-booking', async (req, res) => {
             queryUrl += `date=eq.${encodeURIComponent(date)}&time=eq.${encodeURIComponent(time)}&phone=eq.${encodeURIComponent(phone)}`;
         }
 
-        const response = await fetch(queryUrl, {
+        const response = await safeFetch(queryUrl, {
             method: 'DELETE',
             headers: supabaseHeaders
         });
@@ -328,7 +327,7 @@ app.post('/api/cancel-booking', async (req, res) => {
 
 app.get('/api/works', async (req, res) => {
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, {
+        const response = await safeFetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, {
             method: 'GET',
             headers: supabaseHeaders
         });
@@ -352,7 +351,7 @@ app.post('/api/works', async (req, res) => {
     };
 
     try {
-        await fetch(`${SUPABASE_URL}/rest/v1/works`, {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/works`, {
             method: 'POST',
             headers: supabaseHeaders,
             body: JSON.stringify(newWork)
@@ -366,7 +365,7 @@ app.post('/api/works', async (req, res) => {
 app.post('/api/delete-work', async (req, res) => {
     const { id } = req.body;
     try {
-        await fetch(`${SUPABASE_URL}/rest/v1/works?id=eq.${id}`, {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/works?id=eq.${id}`, {
             method: 'DELETE',
             headers: supabaseHeaders
         });
@@ -381,7 +380,7 @@ app.post('/api/check-client', async (req, res) => {
     try {
         const cleanInputPhone = (phone || '').replace(/\D/g, '').slice(-9);
 
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
+        const response = await safeFetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, {
             method: 'GET',
             headers: supabaseHeaders
         });
@@ -406,7 +405,7 @@ app.post('/api/create-invoice', async (req, res) => {
     try {
         const { name, date, time } = req.body;
 
-        const response = await fetch("https://api.monobank.ua/api/merchant/invoice/create", {
+        const response = await safeFetch("https://api.monobank.ua/api/merchant/invoice/create", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -419,7 +418,7 @@ app.post('/api/create-invoice', async (req, res) => {
                     destination: "Завдаток за послугу (ФОП Явір І.В.)",
                     comment: `Запис клієнта ${name} на ${date} о ${time}`
                 },
-                redirectUrl: req.headers.referer || "https://vercel.com",
+                redirectUrl: req.headers.referer || "https://illyana-hair-studio-dn.onrender.com",
                 webHookUrl: "https://example.com/webhook"
             })
         });
@@ -432,4 +431,10 @@ app.post('/api/create-invoice', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Сервер та Telegram-бот запущено на порту ${PORT}!`));
+app.listen(PORT, () => {
+    console.log(`Сервер успішно запущено на порту ${PORT}!`);
+    
+    safeFetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`)
+        .then(() => startTelegramBotPolling())
+        .catch(() => startTelegramBotPolling());
+});
