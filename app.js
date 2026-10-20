@@ -577,33 +577,28 @@ async function submitBooking() {
     let email = document.getElementById('clientEmail').value.trim();
     let social = document.getElementById('clientSocial')?.value.trim() || '';
 
-    // 1. Обов'язкова категорія та послуга
     if (!selectedCategory || !selectedServiceData) {
         alert("⚠️ Будь ласка, оберіть категорію та послугу!");
         return;
     }
 
-    // 2. Обов'язкова дата та час
     if (!selectedDate || !selectedTimeSlot) {
         alert("⚠️ Оберіть дату та час візиту!");
         return;
     }
 
-    // 3. 100% ОБМЕЖЕННЯ: Обов'язковий вибір довжини волосся
     let lengthSelect = document.getElementById('hairLengthSelect');
     if (lengthSelect && lengthSelect.offsetParent !== null && !lengthSelect.value) {
         alert("⚠️ Будь ласка, обов'язково оберіть довжину вашого волосся!");
         return;
     }
 
-    // 4. 100% ОБМЕЖЕННЯ: Обов'язкове фото поточного стану волосся (Пункт 4)
     let hairPhotoInput = document.getElementById('clientHairPhoto');
     if (!hairPhotoInput || !hairPhotoInput.files || !hairPhotoInput.files[0]) {
         alert("⚠️ Будь ласка, обов'язково завантажте фото поточного стану вашого волосся (Пункт 4)!");
         return;
     }
 
-    // 5. 100% ОБМЕЖЕННЯ: Обов'язкове фото-референс або вибір з каталогу (Пункт 5)
     let refPhotoInput = document.getElementById('clientRefPhoto');
     let hasRefFile = refPhotoInput && refPhotoInput.files && refPhotoInput.files[0];
     if (!hasRefFile && !selectedHaircutRef) {
@@ -611,7 +606,6 @@ async function submitBooking() {
         return;
     }
 
-    // 6. Обов'язкові контактні дані
     if (!name || !phone || !email) {
         alert("⚠️ Заповніть ім'я, телефон та email!");
         return;
@@ -635,8 +629,7 @@ async function submitBooking() {
             refPhotoUrl = selectedHaircutRef;
         }
 
-        // Зберігаємо обидва фото одночасно
-        let finalReferenceInfo = `ПОТОЧНИЙ СТАН: ${hairPhotoUrl} ||| РЕФЕРЕНС: ${refPhotoUrl}`;
+        let finalReferenceInfo = `ПОТОЧНИЙ СТАН: ${hairPhotoUrl} \vert{}\vert{}\vert{} РЕФЕРЕНС: ${refPhotoUrl}`;
 
         let checkRes = await fetch('/api/check-client', {
             method: 'POST',
@@ -644,6 +637,7 @@ async function submitBooking() {
             body: JSON.stringify({ phone })
         });
         let checkData = await checkRes.json();
+        let isRegularClient = checkData.isRegular === true;
 
         let bookingPayload = {
             name,
@@ -655,7 +649,8 @@ async function submitBooking() {
             durationHours: Number(selectedServiceData.durationHours),
             date: selectedDate,
             time: selectedTimeSlot,
-            reference: finalReferenceInfo
+            reference: finalReferenceInfo,
+            isRegular: isRegularClient // Передаємо факт того, чи клієнт постійний
         };
 
         let bookRes = await fetch('/api/bookings', {
@@ -679,8 +674,8 @@ async function submitBooking() {
         let bookingId = (bookData.booking && bookData.booking.id) ? bookData.booking.id : '';
         let botLinkWithStart = bookingId ? `${TELEGRAM_BOT_URL}?start=${bookingId}` : TELEGRAM_BOT_URL;
 
-        if (checkData.isRegular) {
-            alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено.");
+        if (isRegularClient) {
+            alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено без завдатку.");
             window.location.href = botLinkWithStart;
         } else {
             try {
@@ -697,7 +692,7 @@ async function submitBooking() {
                 }
             } catch (invErr) {}
 
-            alert("✨ Запис успішно сформовано! Переходимо в чат-бот.");
+            alert("✨ Запис сформовано! Переходимо до оплати завдатку.");
             window.location.href = botLinkWithStart;
         }
     } catch (err) {
