@@ -157,13 +157,15 @@ async function fetchBookingsData() {
         let res = await fetch('/api/bookings');
         let data = await res.json();
         bookedSlotsCache = {};
-        data.forEach(b => {
-            if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
-            bookedSlotsCache[b.date].push({
-                time: b.time,
-                duration: Number(b.durationHours || 1.5)
+        if (Array.isArray(data)) {
+            data.forEach(b => {
+                if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
+                bookedSlotsCache[b.date].push({
+                    time: b.time,
+                    duration: Number(b.durationHours || 1.5)
+                });
             });
-        });
+        }
         renderTimeSlots();
     } catch(e) { console.error("Could not fetch bookings", e); }
 }
@@ -629,7 +631,7 @@ async function submitBooking() {
             refPhotoUrl = selectedHaircutRef;
         }
 
-        let finalReferenceInfo = `ПОТОЧНИЙ СТАН: ${hairPhotoUrl} \vert{}\vert{}\vert{} РЕФЕРЕНС: ${refPhotoUrl}`;
+        let finalReferenceInfo = `ПОТОЧНИЙ СТАН: ${hairPhotoUrl} ||| РЕФЕРЕНС: ${refPhotoUrl}`;
 
         let checkRes = await fetch('/api/check-client', {
             method: 'POST',
@@ -650,7 +652,7 @@ async function submitBooking() {
             date: selectedDate,
             time: selectedTimeSlot,
             reference: finalReferenceInfo,
-            isRegular: isRegularClient // Передаємо факт того, чи клієнт постійний
+            isRegular: isRegularClient
         };
 
         let bookRes = await fetch('/api/bookings', {
