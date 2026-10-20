@@ -13,8 +13,9 @@ const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 const BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI'; 
 const MASTER_TELEGRAM_ID = '956742572'; 
 
-// Посилання на Instagram майстра
+// Посилання на Instagram майстра та точну локацію
 const INSTAGRAM_URL = 'https://www.instagram.com/i.ll.yana?cplk=MTVjbTd6bDZ5aXF4ZQ==';
+const LOCATION_MAPS_URL = 'https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро';
 
 // Дані Supabase
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
@@ -59,7 +60,7 @@ async function sendMasterTelegramNotification(booking) {
     await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
 }
 
-// 2. Вбудований бот: автовідповідь клієнтам (з фіксацією дублів за chatId)
+// 2. Вбудований бот: автовідповідь клієнтам
 let telegramOffset = 0;
 const processedUpdateIds = new Set();
 const processedMessageIds = new Set();
@@ -111,7 +112,6 @@ async function handleBotMessage(msg) {
     const text = msg.text || '';
 
     if (text.startsWith('/start')) {
-        // ЖОРСТКИЙ ФІЛЬТР: Не надсилати клієнту більше 1 повідомлення протягом 10 секунд
         const dedupeKey = `start_${chatId}`;
         const now = Date.now();
         if (sentConfirmationsCache.has(dedupeKey) && (now - sentConfirmationsCache.get(dedupeKey) < 10000)) {
@@ -145,7 +145,7 @@ async function handleBotMessage(msg) {
                     const inlineButtons = {
                         inline_keyboard: [
                             [
-                                { text: "📍 Локація студії", url: "https://maps.google.com/?q=48.458,35.051" }
+                                { text: "📍 Локація студії", url: LOCATION_MAPS_URL }
                             ],
                             [
                                 { text: "📸 Instagram майстра", url: INSTAGRAM_URL }
@@ -165,7 +165,7 @@ async function handleBotMessage(msg) {
         const defaultButtons = {
             inline_keyboard: [
                 [
-                    { text: "📍 Локація студії", url: "https://maps.google.com/?q=48.458,35.051" }
+                    { text: "📍 Локація студії", url: LOCATION_MAPS_URL }
                 ],
                 [
                     { text: "📸 Instagram майстра", url: INSTAGRAM_URL }
