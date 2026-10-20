@@ -7,7 +7,8 @@ let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
 
-const TELEGRAM_BOT_URL = 'https://t.me/illianahair_bot';
+// ⚠️ ОНОВЛЕНЕ ПОСИЛАННЯ НА НОВОГО БОТА
+const TELEGRAM_BOT_URL = 'https://t.me/illyana_hair_studio_bot';
 
 const translations = {
     ua: {
