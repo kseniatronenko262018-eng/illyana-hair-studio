@@ -9,9 +9,9 @@ app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 
-// ⚠️ НАЛАШТУВАННЯ TELEGRAM (Новий токен вставлено)
+// ⚠️ НАЛАШТУВАННЯ TELEGRAM (Новий токен та ID)
 const BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI'; 
-const MASTER_TELEGRAM_ID = '956742572'; // Ваш ID для тестування
+const MASTER_TELEGRAM_ID = '956742572'; 
 
 // Дані Supabase
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
@@ -34,18 +34,20 @@ function parseTimeToDecimal(timeStr) {
 
 // ------------------ TELEGRAM BOT & NOTIFICATIONS ------------------
 
-// 1. Надсилання сповіщення майстру
+// 1. Сповіщення майстру про новий запис
 async function sendMasterTelegramNotification(booking) {
     if (!BOT_TOKEN || !MASTER_TELEGRAM_ID) return;
 
     const messageText = `⚡ <b>НОВИЙ ЗАПИС У СТУДІЮ!</b>\n\n` +
-        `👤 <b>Клієнт:</b> ${booking.name}\n` +
-        `📞 <b>Телефон:</b> ${booking.phone}\n` +
-        `📅 <b>Дата:</b> ${booking.date} о ${booking.time}\n` +
-        `✂️ <b>Послуга:</b> ${booking.service}\n` +
-        `💰 <b>Сума:</b> ${booking.price} ₴\n` +
-        `📧 <b>Email:</b> ${booking.email || '—'}\n` +
-        `💬 <b>Соцмережа:</b> ${booking.social || '—'}`;
+        `<code>` +
+        `👤 Клієнт:  ${booking.name}\n` +
+        `📞 Телефон: ${booking.phone}\n` +
+        `📅 Дата:    ${booking.date} о ${booking.time}\n` +
+        `✂️ Послуга: ${booking.service}\n` +
+        `💰 Сума:    ${booking.price} ₴\n` +
+        `📧 Email:   ${booking.email || '—'}\n` +
+        `💬 Соцмережа: ${booking.social || '—'}` +
+        `</code>`;
 
     await sendTelegramMessage(MASTER_TELEGRAM_ID, messageText);
 }
@@ -91,16 +93,27 @@ async function handleBotMessage(msg) {
 
                 if (Array.isArray(data) && data.length > 0) {
                     const b = data[0];
-                    const confirmMsg = `✨ <b>Дякуємо за ваш запис у студію!</b>\n\n` +
-                        `📅 <b>Дата візиту:</b> ${b.date}\n` +
-                        `⏰ <b>Час:</b> ${b.time}\n` +
-                        `✂️ <b>Послуга:</b> ${b.service}\n` +
-                        `💰 <b>Вартість:</b> ${b.price || 1000} ₴\n\n` +
-                        `⚠️ <b>ВАЖЛИВЕ ПРАВИЛО СКАСУВАННЯ:</b>\n` +
-                        `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
-                        `Для скасування або зміни часу, будь ласка, напишіть безпосередньо в <b>Директ майстра</b>.`;
+                    const confirmMsg = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
+                        `<code>` +
+                        `📅 ДАТА:    ${b.date}\n` +
+                        `⏰ ЧАС:     ${b.time}\n` +
+                        `✂️ ПОСЛУГА: ${b.service}\n` +
+                        `💰 ВАРТІСТЬ: ${b.price || 1000} ₴` +
+                        `</code>\n\n` +
+                        `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\n` +
+                        `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.`;
 
-                    await sendTelegramMessage(chatId, confirmMsg);
+                    // Інтерактивні кнопки під карткою запису
+                    const inlineButtons = {
+                        inline_keyboard: [
+                            [
+                                { text: "📍 Локація студії", url: "https://maps.google.com/?q=48.458,35.051" },
+                                { text: "💬 Написати майстру", url: "https://t.me/illianahair" }
+                            ]
+                        ]
+                    };
+
+                    await sendTelegramMessage(chatId, confirmMsg, inlineButtons);
                     return;
                 }
             } catch (e) {
@@ -108,21 +121,35 @@ async function handleBotMessage(msg) {
             }
         }
 
-        const welcomeMsg = `Вітаємо у чат-боті студії Явір Ілляни! ✨\n\nЯкщо у вас є питання або ви хочете скасувати візит, напишіть майстру в Директ.`;
-        await sendTelegramMessage(chatId, welcomeMsg);
+        const welcomeMsg = `Вітаємо у чат-боті студії <b>Явір Ілляни</b>! ✨\n\nТут зберігаються деталі ваших візитів. Якщо у вас є питання або ви бажаєте змінити час — натисніть кнопку нижче.`;
+        const defaultButtons = {
+            inline_keyboard: [
+                [
+                    { text: "📍 Локація", url: "https://maps.google.com/?q=48.458,35.051" },
+                    { text: "💬 Написати майстру", url: "https://t.me/illianahair" }
+                ]
+            ]
+        };
+
+        await sendTelegramMessage(chatId, welcomeMsg, defaultButtons);
     }
 }
 
-async function sendTelegramMessage(chatId, text) {
+async function sendTelegramMessage(chatId, text, replyMarkup = null) {
     try {
+        const bodyPayload = {
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'HTML'
+        };
+        if (replyMarkup) {
+            bodyPayload.reply_markup = replyMarkup;
+        }
+
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: text,
-                parse_mode: 'HTML'
-            })
+            body: JSON.stringify(bodyPayload)
         });
     } catch (e) {
         console.error("Error sending Telegram message:", e);
@@ -387,4 +414,4 @@ app.post('/api/create-invoice', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Сервер та Telegram-бот запущено на порту ${PORT}!`));
+app.listen(PORT, () => console.log(`Сервер та новий Telegram-бот запущено на порту ${PORT}!`));
