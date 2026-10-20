@@ -27,7 +27,7 @@
             <p class="profile-sub" data-i18n="profile_sub">квір хейр стиліст • перукар дніпро</p>
             <p class="profile-bio" data-i18n="profile_bio">не відрощуй волосся — відрощуй індивідуальність</p>
             
-            <!-- ШВИДКА НАВІГАЦІЯ -->
+            <!-- НАВІГАЦІЯ -->
             <nav class="quick-nav">
                 <div class="nav-chip active" onclick="switchTab('book', this)" data-i18n="tab_book">Запис</div>
                 <div class="nav-chip" onclick="switchTab('works', this)" data-i18n="tab_works">Приклади робіт</div>
@@ -65,7 +65,7 @@
                 </div>
             </section>
 
-            <!-- РЕФЕРЕНСИ СТРИЖОК (з'являються при виборі Стрижки) -->
+            <!-- РЕФЕРЕНСИ СТРИЖОК -->
             <section class="form-card" id="haircutExamplesSection" style="display: none;">
                 <label class="field-label" data-i18n="haircut_ref_title">✨ Оберіть референс стрижки (необов'язково):</label>
                 <div class="haircut-grid">
@@ -136,7 +136,7 @@
                 </div>
             </section>
 
-            <!-- КАЛЕНДАР ТА СЛОТИ СТАНОМ НА ДАТУ -->
+            <!-- КАЛЕНДАР ТА СЛОТИ -->
             <section class="form-card">
                 <label class="field-label" data-i18n="date_label">Оберіть дату візиту</label>
                 <div class="custom-calendar-scroll" id="customCalendarGrid"></div>
@@ -220,14 +220,13 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНЕ ВІКНО ПЕРЕГЛЯДУ ФОТО (LIGHTBOX) -->
+    <!-- МОДАЛЬНЕ ВІКНО LIGHTBOX -->
     <div id="imageLightboxModal" class="booking-modal" onclick="closeLightbox()">
         <div style="max-width: 90vw; max-height: 90vh;">
             <img id="lightboxImage" src="" style="width: 100%; height: auto; border-radius: 12px; object-fit: contain;">
         </div>
     </div>
 
-    <!-- ПІДКТЮЧЕННЯ ГОЛОВНОГО СКРИПТА -->
     <script src="app.js"></script>
 </body>
 </html>
