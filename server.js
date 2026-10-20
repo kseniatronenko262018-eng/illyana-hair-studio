@@ -13,6 +13,9 @@ const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 const BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI'; 
 const MASTER_TELEGRAM_ID = '956742572'; 
 
+// Посилання на Instagram майстра
+const INSTAGRAM_URL = 'https://www.instagram.com/i.ll.yana?cplk=MTVjbTd6bDZ5aXF4ZQ==';
+
 // Дані Supabase
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
@@ -44,7 +47,8 @@ async function sendMasterTelegramNotification(booking) {
         `📞 Телефон:  ${booking.phone}\n` +
         `📅 Дата:     ${booking.date} о ${booking.time}\n` +
         `✂️ Послуга:  ${booking.service}\n` +
-        `💰 Сума:     ${booking.price} ₴\n` +
+        `💰 Загалом:  ${booking.price} ₴\n` +
+        `💳 Завдаток: 500 ₴ (новий клієнт)\n` +
         `📧 Email:    ${booking.email || '—'}\n` +
         `💬 Соцмережа: ${booking.social || '—'}` +
         `</code>`;
@@ -67,7 +71,6 @@ async function startTelegramBotPolling() {
 
         if (data.ok && Array.isArray(data.result)) {
             for (const update of data.result) {
-                // Захист від повторної обробки того самого update_id
                 if (processedUpdateIds.has(update.update_id)) continue;
                 processedUpdateIds.add(update.update_id);
                 if (processedUpdateIds.size > 500) {
@@ -122,10 +125,11 @@ async function handleBotMessage(msg) {
                     const b = data[0];
                     const confirmMsg = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
                         `<code>` +
-                        `📅 ДАТА:    ${b.date}\n` +
-                        `⏰ ЧАС:     ${b.time}\n` +
-                        `✂️ ПОСЛУГА: ${b.service}\n` +
-                        `💰 ВАРТІСТЬ: ${b.price || 1000} ₴` +
+                        `📅 ДАТА:     ${b.date}\n` +
+                        `⏰ ЧАС:      ${b.time}\n` +
+                        `✂️ ПОСЛУГА:  ${b.service}\n` +
+                        `💰 ВАРТІСТЬ: ${b.price || 1000} ₴\n` +
+                        `💳 ЗАВДАТОК: 500 ₴ (враховано у вартість)` +
                         `</code>\n\n` +
                         `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\n` +
                         `Зміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.`;
@@ -133,8 +137,10 @@ async function handleBotMessage(msg) {
                     const inlineButtons = {
                         inline_keyboard: [
                             [
-                                { text: "📍 Локація студії", url: "https://maps.google.com/?q=48.458,35.051" },
-                                { text: "💬 Написати майстру", url: "https://t.me/illianahair" }
+                                { text: "📍 Локація студії", url: "https://maps.google.com/?q=48.458,35.051" }
+                            ],
+                            [
+                                { text: "📸 Instagram майстра", url: INSTAGRAM_URL }
                             ]
                         ]
                     };
@@ -147,12 +153,14 @@ async function handleBotMessage(msg) {
             }
         }
 
-        const welcomeMsg = `Вітаємо у чат-боті студії <b>Явір Ілляни</b>! ✨\n\nТут зберігаються деталі ваших візитів. Якщо у вас є питання або ви бажаєте змінити час — натисніть кнопку нижче.`;
+        const welcomeMsg = `Вітаємо у чат-боті студії <b>Явір Ілляни</b>! ✨\n\nТут зберігаються деталі ваших візитів. Якщо у вас є питання або ви бажаєте змінити час — напишіть майстру в Instagram.`;
         const defaultButtons = {
             inline_keyboard: [
                 [
-                    { text: "📍 Локація", url: "https://maps.google.com/?q=48.458,35.051" },
-                    { text: "💬 Написати майстру", url: "https://t.me/illianahair" }
+                    { text: "📍 Локація студії", url: "https://maps.google.com/?q=48.458,35.051" }
+                ],
+                [
+                    { text: "📸 Instagram майстра", url: INSTAGRAM_URL }
                 ]
             ]
         };
