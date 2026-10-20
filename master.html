@@ -42,6 +42,69 @@
             color: var(--accent-invert);
             border-color: var(--accent);
         }
+
+        /* 🗓️ Стилі для календаря майстра */
+        .master-calendar-wrapper {
+            background: var(--card-hover);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .master-calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .master-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+        .m-day-header {
+            font-size: 8px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding-bottom: 4px;
+        }
+        .m-day-cell {
+            height: 42px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .m-day-cell.selected {
+            border-color: var(--accent);
+            background: rgba(216, 140, 154, 0.2);
+        }
+        .m-day-cell.has-bookings::after {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background: var(--accent);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 4px;
+            box-shadow: 0 0 6px var(--accent);
+        }
+
         .booking-card {
             background: var(--card-hover);
             border: 1px solid var(--border);
@@ -105,15 +168,29 @@
         </div>
 
         <div class="master-nav">
-            <div class="m-chip active" onclick="switchMasterTab('bookings', this)">📅 Записи</div>
+            <div class="m-chip active" onclick="switchMasterTab('bookings', this)">📅 Календар записів</div>
             <div class="m-chip" onclick="switchMasterTab('blocked', this)">🔒 Вихідні</div>
             <div class="m-chip" onclick="switchMasterTab('portfolio', this)">✨ Роботи</div>
         </div>
 
-        <!-- СЕКЦІЯ 1: СПИСОК ЗАПИСІВ -->
+        <!-- СЕКЦІЯ 1: КАЛЕНДАР ТА СПИСОК ЗАПИСІВ -->
         <div id="mPaneBookings" class="section-pane active">
+            
+            <!-- Інтерактивний календар майстра -->
+            <div class="master-calendar-wrapper">
+                <div class="master-calendar-header">
+                    <button class="control-btn" onclick="changeMasterMonth(-1)">←</button>
+                    <span id="masterMonthTitle">Жовтень 2026</span>
+                    <button class="control-btn" onclick="changeMasterMonth(1)">→</button>
+                </div>
+                <div class="master-calendar-grid" id="masterCalendarDaysGrid"></div>
+            </div>
+
             <div class="form-card">
-                <label class="field-label">Всі актуальні записи</label>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label class="field-label" id="selectedDateLabel" style="margin:0;">Записи на обрану дату:</label>
+                    <button class="control-btn" style="font-size:8px;" onclick="resetDateFilter()">Всі записи</button>
+                </div>
                 <div id="masterBookingsList" style="display: flex; flex-direction: column; gap: 8px;">
                     <div style="font-size:10px; color:var(--text-muted); text-align:center;">Завантаження записів...</div>
                 </div>
@@ -155,17 +232,19 @@
     <div id="bookingDetailModal" class="booking-modal">
         <div class="booking-modal-body">
             <h3 style="font-size: 12px; color: var(--text-main); text-align: center; text-transform: uppercase;">✨ ДЕТАЛІ ЗАПИСУ</h3>
-            
             <div id="modalBookingDetailsContent" style="font-size: 10.5px; color: var(--text-main); line-height: 1.6; display: flex; flex-direction: column; gap: 6px;"></div>
-
             <button class="btn-cancel-booking" onclick="cancelCurrentBooking()">🗑 Відмінити запис</button>
-            <button class="btn-main" style="background:var(--card-hover); color:var(--text-main);" onclick="closeBookingModal()">Зрозуміло / Закрити</button>
+            <button class="btn-main" style="background:var(--card-hover); color:var(--text-main);" onclick="closeBookingModal()">Закрити</button>
         </div>
     </div>
 
     <script>
         let allBookingsCache = [];
         let activeSelectedBooking = null;
+        let masterCurrentDate = new Date();
+        let selectedFilterDate = null;
+
+        const monthNamesUa = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchMasterData();
@@ -188,7 +267,8 @@
             try {
                 const res = await fetch('/api/bookings');
                 allBookingsCache = await res.json();
-                renderBookingsList(allBookingsCache);
+                renderMasterCalendar();
+                filterAndRenderBookings();
 
                 const bRes = await fetch('/api/blocked-days');
                 const blockedDays = await bRes.json();
@@ -198,19 +278,98 @@
             }
         }
 
+        function changeMasterMonth(delta) {
+            masterCurrentDate.setMonth(masterCurrentDate.getMonth() + delta);
+            renderMasterCalendar();
+        }
+
+        function renderMasterCalendar() {
+            const grid = document.getElementById('masterCalendarDaysGrid');
+            const monthTitle = document.getElementById('masterMonthTitle');
+            if (!grid || !monthTitle) return;
+
+            const year = masterCurrentDate.getFullYear();
+            const month = masterCurrentDate.getMonth();
+            monthTitle.innerText = `${monthNamesUa[month]}${year}`;
+
+            grid.innerHTML = '';
+
+            const dayHeaders = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+            dayHeaders.forEach(dh => {
+                grid.innerHTML += `<div class="m-day-header">${dh}</div>`;
+            });
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            let startOffset = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
+
+            for (let i = 0; i < startOffset; i++) {
+                grid.innerHTML += `<div></div>`;
+            }
+
+            const bookedDatesSet = new Set(allBookingsCache.map(b => b.date));
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const formattedDay = String(day).padStart(2, '0');
+                const formattedMonth = String(month + 1).padStart(2, '0');
+                const isoDate = `${year}-${formattedMonth}-${formattedDay}`;
+
+                const hasBookings = bookedDatesSet.has(isoDate);
+                const isSelected = selectedFilterDate === isoDate;
+
+                const dayCell = document.createElement('div');
+                dayCell.className = `m-day-cell ${hasBookings ? 'has-bookings' : ''} ${isSelected ? 'selected' : ''}`;
+                dayCell.innerText = day;
+                dayCell.onclick = () => selectMasterCalendarDate(isoDate);
+
+                grid.appendChild(dayCell);
+            }
+        }
+
+        function selectMasterCalendarDate(isoDate) {
+            if (selectedFilterDate === isoDate) {
+                selectedFilterDate = null;
+            } else {
+                selectedFilterDate = isoDate;
+            }
+            renderMasterCalendar();
+            filterAndRenderBookings();
+        }
+
+        function resetDateFilter() {
+            selectedFilterDate = null;
+            renderMasterCalendar();
+            filterAndRenderBookings();
+        }
+
+        function filterAndRenderBookings() {
+            const label = document.getElementById('selectedDateLabel');
+            let filtered = allBookingsCache;
+
+            if (selectedFilterDate) {
+                filtered = allBookingsCache.filter(b => b.date === selectedFilterDate);
+                if (label) label.innerText = `Записи на ${selectedFilterDate}:`;
+            } else {
+                if (label) label.innerText = `Всі актуальні записи:`;
+            }
+
+            renderBookingsList(filtered);
+        }
+
         function renderBookingsList(bookings) {
             const container = document.getElementById('masterBookingsList');
             if (!container) return;
 
             if (!Array.isArray(bookings) || bookings.length === 0) {
-                container.innerHTML = '<div style="font-size:10px; color:var(--text-muted); text-align:center; padding:12px;">Актуальних записів немає</div>';
+                container.innerHTML = '<div style="font-size:10px; color:var(--text-muted); text-align:center; padding:12px;">Записів немає</div>';
                 return;
             }
 
             container.innerHTML = bookings.map(b => `
                 <div class="booking-card" onclick="openBookingModal('${b.id}')">
                     <div class="b-header">
-                        <span class="b-name">${b.name}</span>
+                        <span class="b-name">${b.name}${b.isRegular ? '<span style="color:#4cd964; font-size:9px;">(Постійний)</span>' : ''}</span>
                         <span class="b-time">${b.date} о ${b.time}</span>
                     </div>
                     <div class="b-sub">✂️ ${b.service} • 💰 ${b.price || 1000} ₴</div>
@@ -227,183 +386,3 @@
             const modalContent = document.getElementById('modalBookingDetailsContent');
             modalContent.innerHTML = `
                 <div><b>Ім'я:</b> ${b.name}</div>
-                <div><b>Телефон:</b> <a href="tel:${b.phone}" style="color:var(--accent);">${b.phone}</a></div>
-                <div><b>Дата та час:</b> ${b.date} о ${b.time}</div>
-                <div><b>Послуга:</b> ${b.service}</div>
-                <div><b>Вартість:</b> ${b.price || 1000} ₴</div>
-                <div><b>Тривалість:</b> ${b.durationHours || 1.5} год</div>
-                <div><b>Email:</b> ${b.email || '—'}</div>
-                <div><b>Соцмережі:</b> ${b.social || '—'}</div>
-                <hr style="border:none; border-top:1px solid var(--border); margin:4px 0;">
-                <div><b>Фото-референс / волосся:</b></div>
-                ${formatReferencePhotos(b.reference)}
-            `;
-
-            document.getElementById('bookingDetailModal').style.display = 'flex';
-        }
-
-        function closeBookingModal() {
-            document.getElementById('bookingDetailModal').style.display = 'none';
-            activeSelectedBooking = null;
-        }
-
-        // Парсер для розділення фотографій поточного стану та референсу
-        function formatReferencePhotos(refString) {
-            if (!refString || refString === 'EMPTY' || refString === 'NULL' || refString === 'Не завантажено') {
-                return '<span style="color:var(--text-muted);">Фото не надано</span>';
-            }
-
-            const parts = refString.split('|||');
-            let html = '<div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">';
-
-            parts.forEach(part => {
-                let text = part.trim();
-                let title = '';
-                let url = '';
-
-                if (text.includes('ПОТОЧНИЙ СТАН:')) {
-                    title = '📷 Поточний стан волосся:';
-                    url = text.replace('ПОТОЧНИЙ СТАН:', '').trim();
-                } else if (text.includes('РЕФЕРЕНС:')) {
-                    title = '✨ Обраний референс:';
-                    url = text.replace('РЕФЕРЕНС:', '').trim();
-                } else {
-                    url = text;
-                }
-
-                if (url.startsWith('data:image') || url.startsWith('http') || url.endsWith('.png') || url.endsWith('.jpg')) {
-                    html += `
-                        <div style="background:var(--card-hover); padding:8px; border-radius:10px; border:1px solid var(--border);">
-                            ${title ? `<div style="font-size:9.5px; font-weight:700; color:var(--accent); margin-bottom:4px;">${title}</div>` : ''}
-                            <a href="${url}" target="_blank">
-                                <img src="${url}" style="max-width:100%; max-height:180px; border-radius:8px; object-fit:cover; display:block; border:1px solid var(--border);">
-                            </a>
-                        </div>
-                    `;
-                } else if (url && url !== 'EMPTY') {
-                    html += `<div style="font-size:10px; color:var(--text-main);">${title} ${url}</div>`;
-                }
-            });
-
-            html += '</div>';
-            return html;
-        }
-
-        async function cancelCurrentBooking() {
-            if (!activeSelectedBooking) return;
-            if (!confirm(`Ви дійсно бажаєте скасувати запис клієнта ${activeSelectedBooking.name}?`)) return;
-
-            try {
-                const res = await fetch('/api/cancel-booking', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: activeSelectedBooking.id })
-                });
-
-                if (res.ok) {
-                    alert("Запис успішно скасовано!");
-                    closeBookingModal();
-                    fetchMasterData();
-                } else {
-                    alert("Не вдалося скасувати запис.");
-                }
-            } catch (e) {
-                alert("Помилка під час скасування.");
-            }
-        }
-
-        async function manageDayBlock(action) {
-            const dateInput = document.getElementById('blockDateInput').value;
-            if (!dateInput) return alert("Оберіть дату!");
-
-            const endpoint = action === 'block' ? '/api/block-day' : '/api/unblock-day';
-            try {
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: dateInput, password: '1988' })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert(action === 'block' ? "День заблоковано!" : "День розблоковано!");
-                    renderBlockedDays(data.blockedDays);
-                } else {
-                    alert(data.error || "Помилка доступу");
-                }
-            } catch (e) {
-                alert("Помилка виконання.");
-            }
-        }
-
-        function renderBlockedDays(days) {
-            const container = document.getElementById('blockedDaysList');
-            if (!container) return;
-            if (!Array.isArray(days) || days.length === 0) {
-                container.innerHTML = 'Заблокованих днів немає.';
-                return;
-            }
-            container.innerHTML = days.map(d => `<span style="background:var(--card-hover); padding:4px 8px; border-radius:6px; border:1px solid var(--border);">${d}</span>`).join('');
-        }
-
-        async function loadMasterWorks() {
-            const container = document.getElementById('masterWorksList');
-            if (!container) return;
-
-            try {
-                const res = await fetch('/api/works');
-                const works = await res.json();
-                if (Array.isArray(works) && works.length > 0) {
-                    container.innerHTML = works.map(w => `
-                        <div class="works-carousel-item" style="position:relative;">
-                            <img src="${w.image}" alt="Робота">
-                            <button onclick="deleteWork('${w.id}')" style="position:absolute; top:6px; right:6px; background:#ff4d4d; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:8px; font-weight:800; cursor:pointer;">🗑 Видалити</button>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<div style="font-size:10px; color:var(--text-muted);">Портфоліо порожнє</div>';
-                }
-            } catch (e) {}
-        }
-
-        async function uploadNewWork() {
-            const fileInput = document.getElementById('newWorkPhotoInput');
-            const titleInput = document.getElementById('newWorkTitleInput');
-
-            if (!fileInput.files || !fileInput.files[0]) return alert("Оберіть фотографію!");
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const base64Image = e.target.result;
-                try {
-                    const res = await fetch('/api/works', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title: titleInput.value.trim(), image: base64Image })
-                    });
-                    if (res.ok) {
-                        alert("Роботу успішно опубліковано!");
-                        fileInput.value = '';
-                        titleInput.value = '';
-                        loadMasterWorks();
-                    }
-                } catch (err) {
-                    alert("Не вдалося завантажити роботу.");
-                }
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        }
-
-        async function deleteWork(workId) {
-            if (!confirm("Видалити цю роботу з портфоліо?")) return;
-            try {
-                await fetch('/api/delete-work', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: workId })
-                });
-                loadMasterWorks();
-            } catch (e) {}
-        }
-    </script>
-</body>
-</html>
