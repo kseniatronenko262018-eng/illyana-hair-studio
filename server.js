@@ -66,7 +66,7 @@ async function sendTelegramNotification(chatId, text) {
 // Зберігаємо повідомлення для клієнтів, поки вони не натиснуть /start у боті
 let pendingClientMessages = {};
 
-// Telegram Long Polling (Щоб бот відповідав клієнту одразу, як той перейде за посиланням)
+// Telegram Long Polling
 let lastUpdateId = 0;
 async function pollTelegram() {
     try {
@@ -79,12 +79,11 @@ async function pollTelegram() {
                     let chatId = update.message.chat.id;
                     let parts = update.message.text.split(' ');
                     
-                    // Якщо клієнт перейшов за унікальним посиланням після оплати/запису
                     if (parts.length > 1) {
                         let ref = parts[1];
                         if (pendingClientMessages[ref]) {
                             await sendTelegramNotification(chatId, pendingClientMessages[ref]);
-                            delete pendingClientMessages[ref]; // Видаляємо після надсилання
+                            delete pendingClientMessages[ref]; 
                         } else {
                             await sendTelegramNotification(chatId, "✨ Вітаємо у студії Явір Ілляни!\nВаш запис знайдено або він вже був підтверджений раніше.");
                         }
@@ -97,7 +96,7 @@ async function pollTelegram() {
     } catch (e) {}
     setTimeout(pollTelegram, 2000);
 }
-pollTelegram(); // Запускаємо перевірку повідомлень
+pollTelegram();
 
 app.get('/api/bookings', async (req, res) => {
     try {
@@ -132,16 +131,22 @@ app.post('/api/bookings', async (req, res) => {
             });
         }
 
-        // Формуємо текст повідомлення
-        let depositInfo = isRegular 
-            ? "💎 <b>Статус:</b> Постійний клієнт (без завдатку)" 
-            : "💳 <b>ЗАВДАТОК:</b> 500 ₴ (сплачено / враховано у вартість)";
+        // Розрахунок залишку та формування повідомлення
+        let priceNum = Number(price) || 0;
+        let depositInfo = "";
+        
+        if (isRegular) {
+            depositInfo = `💎 <b>Статус:</b> Постійний клієнт\n💰 <b>До сплати:</b> ${priceNum} ₴ (без передоплати)`;
+        } else {
+            let remainder = priceNum > 500 ? priceNum - 500 : 0;
+            depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (сплачено)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
+        }
 
         let clientMessage = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
                           `📅 <b>ДАТА:</b> ${date}\n` +
                           `⏰ <b>ЧАС:</b> ${time}\n` +
                           `✂️ <b>ПОСЛУГА:</b> ${service}\n` +
-                          `💰 <b>ВАРТІСТЬ:</b> ${price} ₴\n` +
+                          `💰 <b>ЗАГАЛЬНА ВАРТІСТЬ:</b> ${priceNum} ₴\n` +
                           `${depositInfo}\n\n` +
                           `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
                           `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.`;
@@ -151,7 +156,7 @@ app.post('/api/bookings', async (req, res) => {
         // Надсилаємо повідомлення майстру
         await sendTelegramNotification(MASTER_TG_ID, masterMessage);
         
-        // Зберігаємо повідомлення для клієнта (відправиться, коли клієнт натисне /start)
+        // Зберігаємо повідомлення для клієнта
         if (bookingRef) {
             pendingClientMessages[bookingRef] = clientMessage;
         }
