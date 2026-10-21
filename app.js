@@ -5,6 +5,7 @@ let selectedCondition = null;
 let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
+let observer;
 
 const TELEGRAM_BOT_URL = 'https://t.me/illyana_hair_studio_bot';
 
@@ -12,12 +13,48 @@ window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
     fetchBookingsData();
     
-    // Відновлення збереженої теми
     let savedTheme = localStorage.getItem('illiana_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // Ініціалізація анімацій появи
+    observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    document.querySelectorAll('.fade-in-section').forEach(el => {
+        observer.observe(el);
+    });
 });
 
-// Робоче перемикання теми з пам'яттю
+// Логіка плаваючої кнопки
+window.addEventListener('scroll', () => {
+    let cta = document.getElementById('stickyCta');
+    let bookBtn = document.getElementById('mainBookBtn');
+    let paneBook = document.getElementById('paneBook');
+    
+    if(!cta || !paneBook.classList.contains('active')) {
+        if(cta) cta.classList.remove('visible');
+        return;
+    }
+    
+    let btnRect = bookBtn ? bookBtn.getBoundingClientRect() : null;
+    
+    // Показуємо кнопку, якщо проскролили вниз, але не доскролили до основної кнопки
+    if (window.scrollY > 350 && (!btnRect || btnRect.top > window.innerHeight)) {
+        cta.classList.add('visible');
+    } else {
+        cta.classList.remove('visible');
+    }
+});
+
+function scrollToBooking() {
+    document.getElementById('step1Card').scrollIntoView({ behavior: 'smooth' });
+}
+
 function toggleTheme() {
     let current = document.documentElement.getAttribute('data-theme');
     let next = current === 'dark' ? 'light' : 'dark';
@@ -64,6 +101,12 @@ function switchTab(tabName, element) {
     document.querySelectorAll('.nav-chip').forEach(c => c.classList.remove('active'));
     document.getElementById(tabName === 'book' ? 'paneBook' : tabName === 'works' ? 'paneWorks' : 'paneLoc').classList.add('active');
     if (element) element.classList.add('active');
+    
+    // Ховаємо плаваючу кнопку, якщо пішли з вкладки запису
+    if(tabName !== 'book') {
+        let cta = document.getElementById('stickyCta');
+        if(cta) cta.classList.remove('visible');
+    }
 }
 
 function selectMainCategory(category) {
@@ -73,7 +116,6 @@ function selectMainCategory(category) {
     let elId = category === 'cut' ? 'mainCardCut' : category === 'color' ? 'mainCardColor' : 'mainCardComplex';
     document.getElementById(elId)?.classList.add('selected');
 
-    // Розблоковуємо Крок 2
     let step2 = document.getElementById('step2Card');
     step2.style.opacity = '1';
     step2.style.pointerEvents = 'auto';
