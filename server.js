@@ -57,11 +57,17 @@ async function sendTelegramNotification(chatId, text) {
         await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
+            body: JSON.stringify({ 
+                chat_id: chatId, 
+                text: text, 
+                parse_mode: 'HTML',
+                disable_web_page_preview: true 
+            })
         });
     } catch (e) { console.error("Telegram error:", e); }
 }
 
+let lastClientMessagePerChat = {};
 let pendingClientMessages = {};
 let lastUpdateId = 0;
 
@@ -79,13 +85,23 @@ async function pollTelegram() {
                     if (parts.length > 1) {
                         let ref = parts[1];
                         if (pendingClientMessages[ref]) {
+                            lastClientMessagePerChat[chatId] = pendingClientMessages[ref];
                             await sendTelegramNotification(chatId, pendingClientMessages[ref]);
                             delete pendingClientMessages[ref]; 
                         } else {
-                            await sendTelegramNotification(chatId, "✨ Вітаємо у студії Явір Ілляни!\nВаш запис знайдено або він вже був підтверджений раніше.");
+                            let foundMsg = await getLastClientBookingMessage();
+                            if (foundMsg) {
+                                await sendTelegramNotification(chatId, foundMsg);
+                            } else {
+                                await sendTelegramNotification(chatId, "✨ Ваш запис оформлено.\n\n💬 Для скасування чи зміни часу напишіть у Директ майстру:\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=");
+                            }
                         }
                     } else {
-                        await sendTelegramNotification(chatId, "✨ Вітаємо у чат-боті студії Явір Ілляни!\nЯкщо ви щойно записалися, будь ласка, переходьте в бота виключно за посиланням з сайту або після оплати. Якщо виникли питання — пишіть майстру в Директ.");
+                        if (lastClientMessagePerChat[chatId]) {
+                            await sendTelegramNotification(chatId, lastClientMessagePerChat[chatId]);
+                        } else {
+                            await sendTelegramNotification(chatId, "✨ Вітаємо у студії Явір Ілляни!\n\n💬 З питань запису, скасування чи зміни часу звертайтесь у Директ майстра:\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=");
+                        }
                     }
                 }
             }
@@ -94,6 +110,31 @@ async function pollTelegram() {
     setTimeout(pollTelegram, 2000);
 }
 pollTelegram();
+
+async function getLastClientBookingMessage() {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc&limit=1`, { method: 'GET', headers: supabaseHeaders });
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+            const b = data[0];
+            let priceNum = Number(b.price) || 0;
+            let remainder = priceNum > 500 ? priceNum - 500 : 0;
+            
+            let depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (враховано)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
+
+            return `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
+                   `📅 <b>ДАТА:</b> ${b.date}\n` +
+                   `⏰ <b>ЧАС:</b> ${b.time}\n` +
+                   `✂️ <b>ПОСЛУГА:</b> ${b.service}\n` +
+                   `💰 <b>ЗАГАЛЬНА ВАРТІСТЬ:</b> ${priceNum} ₴\n` +
+                   `${depositInfo}\n\n` +
+                   `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
+                   `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
+                   `💬 <b>Для скасування чи зміни часу напишіть у Директ майстру:</b>\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=`;
+        }
+    } catch(e) {}
+    return null;
+}
 
 app.get('/api/bookings', async (req, res) => {
     try {
@@ -145,7 +186,8 @@ app.post('/api/bookings', async (req, res) => {
                           `💰 <b>ЗАГАЛЬНА ВАРТІСТЬ:</b> ${priceNum} ₴\n` +
                           `${depositInfo}\n\n` +
                           `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
-                          `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.`;
+                          `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
+                          `💬 <b>Для скасування чи зміни часу напишіть у Директ майстру:</b>\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=`;
 
         let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${name}\n📞 <b>Телефон:</b> ${phone}\n💬 <b>Соцмережі:</b> ${social || '—'}\n\n` + clientMessage;
 
