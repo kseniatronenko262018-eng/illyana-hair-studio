@@ -7,8 +7,7 @@ let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
 
-// Новий лінк на основі вашого токена бота
-const TELEGRAM_BOT_URL = 'https://t.me/illianahair_bot';
+const TELEGRAM_BOT_URL = 'https://t.me/illyana_hair_studio_bot';
 
 window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
@@ -51,6 +50,9 @@ function selectMainCategory(category) {
     let elId = category === 'cut' ? 'mainCardCut' : category === 'color' ? 'mainCardColor' : 'mainCardComplex';
     document.getElementById(elId)?.classList.add('selected');
 
+    // Показуємо крок 2
+    document.getElementById('step2Card').style.display = 'flex';
+
     document.getElementById('haircutExamplesSection').style.display = (category === 'cut' || category === 'complex') ? 'block' : 'none';
     document.getElementById('photoUploadSection').style.display = 'block';
 
@@ -64,9 +66,11 @@ function selectMainCategory(category) {
     } else if (category === 'complex') {
         subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
         selectedServiceData = { title: "Стрижка + Фарбування коріння", price: 3000, durationHours: 3 };
+        showStep3();
     } else {
         subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
         selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, durationHours: 1.5 };
+        showStep3();
     }
     updateSummaryCard(); renderTimeSlots();
 }
@@ -77,6 +81,7 @@ function selectHaircutReference(imgName, element) {
     selectedHaircutRef = imgName;
     document.getElementById('selectedRefNotice').style.display = 'block';
     updateSummaryCard();
+    showStep3();
 }
 
 function renderSubmenuItems() {
@@ -127,6 +132,7 @@ function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, eleme
 
     if (fixedPrice !== null) {
         selectedServiceData = { title, price: fixedPrice, durationHours: fixedHours };
+        showStep3();
     } else {
         updateServiceDetails();
     }
@@ -141,6 +147,22 @@ function updateServiceDetails() {
         selectedServiceData = { title: "Тонування", price: lengthVal === 'shoulders' ? 3000 : lengthVal === 'shoulder_blades' ? 3500 : 5000, durationHours: lengthVal === 'shoulders' ? 2 : lengthVal === 'shoulder_blades' ? 2.5 : 3 };
     }
     updateSummaryCard(); renderTimeSlots();
+    showStep3();
+}
+
+function showStep3() {
+    document.getElementById('step3Card').style.display = 'flex';
+    // Плавний скрол до кроку 3
+    setTimeout(() => {
+        document.getElementById('step3Card').scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+}
+
+function checkPhotoLoaded() {
+    let fileInput = document.getElementById('clientHairPhoto');
+    if (fileInput.files[0]) {
+        showStep3();
+    }
 }
 
 function updateSummaryCard() {
@@ -261,10 +283,23 @@ async function submitBooking() {
     let name = document.getElementById('clientName').value.trim();
     let phone = document.getElementById('clientPhone').value.trim();
     let email = document.getElementById('clientEmail').value.trim();
+    let hInput = document.getElementById('clientHairPhoto');
 
     if (!selectedServiceData) return alert("Оберіть послугу!");
     if (!selectedDate || !selectedTimeSlot) return alert("Оберіть дату та час!");
-    if (!name || !phone || !email) return alert("Заповніть контактні дані!");
+    if (!name || !phone) return alert("Заповніть ім'я та телефон!");
+    
+    // Суворе обмеження: перевірка наявності Email та референсу
+    if (!email) {
+        alert("⚠️ Будь ласка, введіть ваш Email (це обов'язково)!");
+        document.getElementById('clientEmail').focus();
+        return;
+    }
+    if (!hInput.files[0] && !selectedHaircutRef) {
+        alert("⚠️ Будь ласка, завантажте фото вашого волосся або оберіть референс (це обов'язково)!");
+        hInput.scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
 
     let btn = document.querySelector('.btn-main[onclick="submitBooking()"]');
     let origText = btn.innerText;
@@ -272,9 +307,7 @@ async function submitBooking() {
     btn.style.pointerEvents = 'none';
 
     try {
-        let hInput = document.getElementById('clientHairPhoto');
-        let rInput = document.getElementById('clientRefPhoto');
-        let photoUrl = await uploadImageToImgBB(rInput?.files[0] || hInput?.files[0]);
+        let photoUrl = await uploadImageToImgBB(hInput?.files[0]);
         let refFinal = selectedHaircutRef || photoUrl || 'EMPTY';
 
         let checkRes = await fetch('/api/check-client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone }) });
@@ -305,7 +338,6 @@ async function submitBooking() {
             if (invData.pageUrl) {
                 window.location.href = invData.pageUrl;
             } else {
-                alert("Переходимо у Telegram-бот.");
                 window.location.href = TELEGRAM_BOT_URL;
             }
         }
