@@ -10,7 +10,7 @@ app.use(express.static(path.join(__dirname)));
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 const TG_BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI';
 const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
-const MASTER_TG_ID = '956742572'; // Ваш Telegram ID
+const MASTER_TG_ID = '956742572'; 
 
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
@@ -28,12 +28,12 @@ app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'master.html'
 let blockedDays = [];
 app.get('/api/blocked-days', (req, res) => res.json(blockedDays));
 app.post('/api/block-day', (req, res) => {
-    if (req.body.password !== '1988') return res.status(403).json({ error: 'Невірний PIN-код!' });
+    if (req.body.password !== '1414') return res.status(403).json({ error: 'Невірний пароль!' });
     if (req.body.date && !blockedDays.includes(req.body.date)) blockedDays.push(req.body.date);
     res.json({ success: true, blockedDays });
 });
 app.post('/api/unblock-day', (req, res) => {
-    if (req.body.password !== '1988') return res.status(403).json({ error: 'Невірний PIN-код!' });
+    if (req.body.password !== '1414') return res.status(403).json({ error: 'Невірний пароль!' });
     blockedDays = blockedDays.filter(d => d !== req.body.date);
     res.json({ success: true, blockedDays });
 });
@@ -52,7 +52,6 @@ app.post('/api/delete-work', (req, res) => {
     res.json({ success: true });
 });
 
-// Функція для відправки повідомлень в Telegram
 async function sendTelegramNotification(chatId, text) {
     try {
         await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
@@ -63,11 +62,9 @@ async function sendTelegramNotification(chatId, text) {
     } catch (e) { console.error("Telegram error:", e); }
 }
 
-// Зберігаємо повідомлення для клієнтів, поки вони не натиснуть /start у боті
 let pendingClientMessages = {};
-
-// Telegram Long Polling
 let lastUpdateId = 0;
+
 async function pollTelegram() {
     try {
         let res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=20`);
@@ -131,7 +128,6 @@ app.post('/api/bookings', async (req, res) => {
             });
         }
 
-        // Розрахунок залишку та формування повідомлення
         let priceNum = Number(price) || 0;
         let depositInfo = "";
         
@@ -153,10 +149,8 @@ app.post('/api/bookings', async (req, res) => {
 
         let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${name}\n📞 <b>Телефон:</b> ${phone}\n💬 <b>Соцмережі:</b> ${social || '—'}\n\n` + clientMessage;
 
-        // Надсилаємо повідомлення майстру
         await sendTelegramNotification(MASTER_TG_ID, masterMessage);
         
-        // Зберігаємо повідомлення для клієнта
         if (bookingRef) {
             pendingClientMessages[bookingRef] = clientMessage;
         }
