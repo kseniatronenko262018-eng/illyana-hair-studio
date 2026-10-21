@@ -13,7 +13,7 @@
             --tg-card: rgba(26, 24, 22, 0.85); --tg-card-hover: rgba(38, 35, 32, 0.92);
             --tg-border: rgba(255, 255, 255, 0.1); --tg-text: #f5f2ed; --tg-muted: #9e958b;
         }
-        body { background-color: var(--tg-bg) !important; color: var(--tg-text) !important; padding-bottom: 50px; min-height: 100vh; }
+        body { background-color: var(--tg-bg) !important; color: var(--tg-text) !important; padding-bottom: 50px; min-height: 100vh; margin: 0; }
         
         .master-section, .form-card { 
             background: var(--tg-card) !important; 
@@ -39,7 +39,27 @@
 </head>
 <body>
 
-    <div class="mobile-container master-body" style="z-index: 10; position: relative;">
+    <!-- Екран авторизації (Пароль 1414) -->
+    <div id="authOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--tg-bg); z-index: 9999999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: var(--tg-card); border: 1px solid var(--accent); padding: 24px; border-radius: 20px; text-align: center; width: 100%; max-width: 320px; box-shadow: 0 12px 40px rgba(0,0,0,0.3);">
+            <h3 style="font-family: 'Syne', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--tg-text);">Вхід для майстра</h3>
+            <input type="password" id="masterPass" class="input-box" placeholder="Введіть пароль" style="text-align: center; font-size: 14px; letter-spacing: 2px; width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; margin-bottom: 16px;">
+            <button class="btn-main" onclick="checkMasterPass()" style="width: 100%; padding: 14px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); font-weight: bold; border: none; cursor: pointer;">Увійти</button>
+        </div>
+    </div>
+
+    <script>
+        function checkMasterPass() {
+            if (document.getElementById('masterPass').value === '1414') {
+                document.getElementById('authOverlay').style.display = 'none';
+            } else {
+                alert('❌ Невірний пароль!');
+                document.getElementById('masterPass').value = '';
+            }
+        }
+    </script>
+
+    <div class="mobile-container master-body" style="z-index: 10; position: relative; padding: 14px;">
         <div class="master-utility-bar">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <span style="font-family:'Syne',sans-serif; font-size:12px; font-weight:800; color:var(--tg-text);">ЯВІР ІЛЛЯНА // CRM</span>
@@ -65,24 +85,22 @@
                 </div>
             </div>
 
-            <!-- 1. КАЛЕНДАР -->
-            <div id="secCalendar" class="master-section form-card">
+            <div id="secCalendar" class="master-section form-card" style="padding: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%;">
-                    <button class="control-btn" onclick="changeMonth(-1)">◀</button>
+                    <button class="control-btn" style="background: var(--tg-card-hover); color: white; border: none; padding: 6px 12px; border-radius: 8px;" onclick="changeMonth(-1)">◀</button>
                     <h3 id="calendarTitle" style="font-size: 12px; font-family:'Syne',sans-serif;">Місяць</h3>
-                    <button class="control-btn" onclick="changeMonth(1)">▶</button>
+                    <button class="control-btn" style="background: var(--tg-card-hover); color: white; border: none; padding: 6px 12px; border-radius: 8px;" onclick="changeMonth(1)">▶</button>
                 </div>
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
-                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; font-weight: 700; color: var(--accent);">🔒 Заблокувати день (вихідний)</button>
+                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; font-weight: 700; color: var(--accent); background: var(--tg-card-hover); border: 1px solid var(--tg-border);">🔒 Заблокувати день (вихідний)</button>
                 <div style="margin-top: 10px; width: 100%;">
-                    <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted);">Записи на обраний день:</label>
+                    <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted); font-size: 9px; display: block; margin-bottom: 6px;">Записи на обраний день:</label>
                     <div id="dayBookingsContainer" style="display: flex; flex-direction: column; width: 100%;"></div>
                 </div>
             </div>
 
-            <!-- 2. ФІНАНСИ ТА АНАЛІТИКА -->
-            <div id="secFinances" class="master-section form-card" style="display: none;">
-                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase;">Фінанси та аналітика</h3>
+            <div id="secFinances" class="master-section form-card" style="display: none; padding: 16px;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; margin-bottom: 12px;">Фінанси та аналітика</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center;">
                     <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px;">
                         <div style="font-size:8px; color:var(--tg-muted);">ДОХОДИ</div>
@@ -98,53 +116,50 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 8px;">
-                    <label class="field-label" style="color:var(--tg-muted);">Додати витрату:</label>
+                <div style="margin-top: 12px;">
+                    <label class="field-label" style="color:var(--tg-muted); font-size: 9px; display: block; margin-bottom: 6px;">Додати витрату (розхідники):</label>
                     <div style="display: flex; gap: 6px;">
-                        <input type="text" id="expenseNameInput" class="input-box" placeholder="Назва">
-                        <input type="number" id="expenseAmountInput" class="input-box" placeholder="Сума ₴" style="max-width: 90px;">
-                        <button class="control-btn" onclick="addExpense()">+</button>
+                        <input type="text" id="expenseNameInput" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Назва">
+                        <input type="number" id="expenseAmountInput" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Сума ₴">
+                        <button style="padding: 10px 14px; border-radius: 8px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="addExpense()">+</button>
                     </div>
-                    <div id="expensesListContainer" style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 100px; overflow-y: auto;"></div>
+                    <div id="expensesListContainer" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 120px; overflow-y: auto;"></div>
                 </div>
-                <button class="control-btn" onclick="exportToExcel()" style="margin-top: 8px; width: 100%;">📥 Експортувати записи в Excel</button>
+                <button style="margin-top: 12px; width: 100%; padding: 12px; border-radius: 12px; background: #217346; color: white; border: none; font-weight: bold; cursor: pointer;" onclick="exportToExcel()">📥 Експортувати в Excel</button>
             </div>
 
-            <!-- 3. БАЗА КЛІЄНТІВ -->
-            <div id="secClients" class="master-section form-card" style="display: none;">
-                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase;">База клієнтів</h3>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <input type="text" id="regClientName" class="input-box" placeholder="Ім'я клієнта">
-                    <input type="tel" id="regClientPhone" class="input-box" placeholder="Телефон">
-                    <input type="text" id="regClientSocial" class="input-box" placeholder="Нікнейм (Inst / Telegram)">
-                    <button class="control-btn" onclick="addRegularClientManual()">Додати клієнта</button>
+            <div id="secClients" class="master-section form-card" style="display: none; padding: 16px;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; margin-bottom: 12px;">База клієнтів</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" id="regClientName" style="padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Ім'я клієнта">
+                    <input type="tel" id="regClientPhone" style="padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Телефон">
+                    <input type="text" id="regClientSocial" style="padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Нікнейм (Inst / Telegram)">
+                    <button style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="addRegularClientManual()">Додати клієнта</button>
                 </div>
-                <div id="regularClientsContainer" style="display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto; margin-top: 8px;"></div>
+                <div id="regularClientsContainer" style="display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto; margin-top: 12px;"></div>
             </div>
 
-            <!-- 4. ЗАВАНТАЖИТИ РОБОТИ НА САЙТ -->
-            <div id="secWorks" class="master-section form-card" style="display: none;">
-                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase;">Завантажити приклади робіт</h3>
-                <div>
-                    <label class="field-label">Назва / опис роботи:</label>
-                    <input type="text" id="newWorkTitleInput" class="input-box" placeholder="Стрижка / Тонування">
+            <div id="secWorks" class="master-section form-card" style="display: none; padding: 16px;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; margin-bottom: 12px;">Завантажити роботи</h3>
+                <div style="margin-bottom: 8px;">
+                    <label class="field-label" style="font-size: 9px; color: var(--tg-muted); margin-bottom: 6px; display: block;">Назва / опис роботи:</label>
+                    <input type="text" id="newWorkTitleInput" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Стрижка / Тонування">
                 </div>
-                <div>
-                    <label class="field-label">Фотографія роботи:</label>
-                    <input type="file" id="newWorkImageFile" class="input-box" accept="image/*" style="padding: 6px;">
+                <div style="margin-bottom: 12px;">
+                    <label class="field-label" style="font-size: 9px; color: var(--tg-muted); margin-bottom: 6px; display: block;">Фотографія роботи:</label>
+                    <input type="file" id="newWorkImageFile" accept="image/*" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;">
                 </div>
-                <button class="btn-main" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
-                <div id="masterWorksList" class="works-grid-full" style="margin-top: 8px;"></div>
+                <button style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
+                <div id="masterWorksList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; max-height: 300px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Модальне вікно деталей запису -->
     <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing: border-box;">
         <div style="background: var(--tg-card); border: 1.5px solid var(--accent); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
-            <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center;">✨ Деталі запису</h3>
+            <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center; margin: 0;">✨ Деталі запису</h3>
             <div id="modalBookingDetails" style="font-size:11px; line-height:1.6; display: flex; flex-direction: column; gap: 6px;"></div>
-            <button class="btn-main" onclick="closeBookingModal()">Закрити</button>
+            <button style="width: 100%; padding: 12px; border-radius: 12px; background: var(--tg-card-hover); border: 1px solid var(--tg-border); color: white; font-weight: bold; cursor: pointer; margin-top: 10px;" onclick="closeBookingModal()">Закрити</button>
         </div>
     </div>
 
@@ -270,14 +285,14 @@
 
             document.getElementById('modalBookingDetails').innerHTML = `
                 <div><b>Ім'я:</b> ${booking.name}</div>
-                <div><b>Телефон:</b> <a href="tel:${booking.phone}" style="color:var(--accent);">${booking.phone}</a></div>
+                <div><b>Телефон:</b> <a href="tel:${booking.phone}" style="color:var(--accent); text-decoration: none;">${booking.phone}</a></div>
                 <div><b>Дата та час:</b> ${booking.date} о ${booking.time}</div>
                 <div><b>Послуга:</b> ${booking.service}</div>
                 <div><b>Вартість:</b> ${booking.price} ₴</div>
                 <div><b>Email:</b> ${booking.email}</div>
                 <div><b>Референс / фото:</b>${refHtml}</div>
                 <hr style="border-top:1px solid var(--tg-border); margin: 12px 0;">
-                <button onclick="cancelClientBooking(${booking.id})" style="width: 100%; background: #e63946; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 700;">🗑 Видалити запис</button>
+                <button onclick="cancelClientBooking(${booking.id})" style="width: 100%; background: #e63946; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer;">🗑 Видалити запис</button>
             `;
             document.getElementById('masterDetailPopupModal').style.display = 'flex';
         }
@@ -323,9 +338,9 @@
             document.getElementById('statNetProfit').innerText = net + " ₴";
 
             document.getElementById('expensesListContainer').innerHTML = expenses.map((e, idx) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:6px 10px; border-radius:8px; font-size:9px;">
-                    <span>${e.name} — <b>${e.amount} ₴</b></span>
-                    <button onclick="removeExpense(${idx})" style="background:none; border:none; color:var(--accent); cursor:pointer;">✕</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:8px 12px; border-radius:8px; font-size:10px; border: 1px solid var(--tg-border);">
+                    <span>${e.name} — <b style="color: var(--accent);">${e.amount} ₴</b></span>
+                    <button onclick="removeExpense(${idx})" style="background:none; border:none; color:var(--tg-muted); font-size: 14px; cursor:pointer;">✕</button>
                 </div>
             `).join('');
         }
@@ -361,9 +376,9 @@
             let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
             document.getElementById('totalClientsCountBadge').innerText = clients.length;
             document.getElementById('regularClientsContainer').innerHTML = clients.map((c, idx) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:6px 10px; border-radius:8px; font-size:9px;">
-                    <div><b>${c.name}</b> (${c.phone}) — <span style="color:var(--accent);">${c.social || '—'}</span></div>
-                    <button onclick="removeRegularClient(${idx})" style="background:none; border:none; color:var(--accent); cursor:pointer;">✕</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:8px 12px; border-radius:8px; font-size:10px; border: 1px solid var(--tg-border);">
+                    <div><b>${c.name}</b> (${c.phone})<br><span style="color:var(--accent); font-size: 9px;">${c.social || '—'}</span></div>
+                    <button onclick="removeRegularClient(${idx})" style="background:none; border:none; color:var(--tg-muted); font-size: 14px; cursor:pointer;">✕</button>
                 </div>
             `).join('');
         }
@@ -396,9 +411,9 @@
                 let container = document.getElementById('masterWorksList');
                 if (container) {
                     container.innerHTML = works.map(w => `
-                        <div class="works-carousel-item" style="position:relative;">
+                        <div style="position:relative; height: 120px; border-radius: 12px; overflow: hidden; border: 1px solid var(--tg-border);">
                             <img src="${w.image}" style="width:100%; height:100%; object-fit:cover;">
-                            <button onclick="deleteWork('${w.id}')" style="position:absolute; top:6px; right:6px; background:#ff4d4d; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:8px; cursor:pointer;">🗑</button>
+                            <button onclick="deleteWork('${w.id}')" style="position:absolute; top:6px; right:6px; background:rgba(255,77,77,0.85); color:white; border:none; border-radius:6px; padding:4px 8px; font-size:10px; cursor:pointer;">🗑</button>
                         </div>
                     `).join('');
                 }
