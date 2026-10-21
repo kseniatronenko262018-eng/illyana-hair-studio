@@ -102,12 +102,15 @@ const translations = {
     }
 };
 
-window.addEventListener('DOMContentLoaded', () => {
-    initCustomCalendar();
-    fetchBookingsData();
-    loadWorksPortfolio();
-    setupPhotoPreviews();
-    
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        initCustomCalendar();
+    } catch(e) { console.error("Calendar init error:", e); }
+
+    try {
+        setupPhotoPreviews();
+    } catch(e) { console.error("Photo previews error:", e); }
+
     let savedAvatar = localStorage.getItem('illiana_custom_master_photo') || 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
     document.querySelectorAll('.profile-avatar img, #profileAvatarImg, .avatar-wrap img').forEach(img => {
         img.src = savedAvatar;
@@ -117,6 +120,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (heroBg) {
         heroBg.style.backgroundImage = `url('${savedAvatar}')`;
     }
+
+    fetchBookingsData();
+    loadWorksPortfolio();
 });
 
 function setupPhotoPreviews() {
@@ -155,6 +161,7 @@ function handlePreviewRender(input, containerId) {
 async function fetchBookingsData() {
     try {
         let res = await fetch('/api/bookings');
+        if (!res.ok) return;
         let data = await res.json();
         bookedSlotsCache = {};
         if (Array.isArray(data)) {
@@ -213,19 +220,21 @@ function toggleTheme() {
 }
 
 function toggleAccordion(header) {
-    header.parentElement.classList.toggle('open');
+    if (header && header.parentElement) {
+        header.parentElement.classList.toggle('open');
+    }
 }
 
 function switchTab(tabName, element) {
     document.querySelectorAll('.section-pane').forEach(pane => pane.classList.remove('active'));
     document.querySelectorAll('.quick-nav .nav-chip').forEach(chip => chip.classList.remove('active'));
 
-    if (tabName === 'book') document.getElementById('paneBook').classList.add('active');
+    if (tabName === 'book') document.getElementById('paneBook')?.classList.add('active');
     if (tabName === 'works') {
-        document.getElementById('paneWorks').classList.add('active');
+        document.getElementById('paneWorks')?.classList.add('active');
         loadWorksPortfolio();
     }
-    if (tabName === 'loc') document.getElementById('paneLoc').classList.add('active');
+    if (tabName === 'loc') document.getElementById('paneLoc')?.classList.add('active');
     if (element) element.classList.add('active');
 }
 
@@ -266,7 +275,7 @@ function selectMainCategory(category) {
 
 function selectHaircutReference(imgName, element) {
     document.querySelectorAll('.haircut-grid-item').forEach(item => item.classList.remove('selected'));
-    element.classList.add('selected');
+    if (element) element.classList.add('selected');
     selectedHaircutRef = imgName;
     let notice = document.getElementById('selectedRefNotice');
     if (notice) notice.style.display = 'block';
@@ -288,7 +297,7 @@ function renderSubmenuItems() {
 
 function selectHairCondition(conditionKey, conditionTitle, element) {
     document.querySelectorAll('#categorySubmenu .sub-service-card').forEach(card => card.classList.remove('selected'));
-    element.classList.add('selected');
+    if (element) element.classList.add('selected');
     selectedCondition = conditionKey;
     
     let specList = document.getElementById('specificServicesList');
@@ -321,7 +330,7 @@ let chosenServiceType = null;
 
 function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, fixedDurationText, element) {
     document.querySelectorAll('#specificServicesList .sub-service-card').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
+    if (element) element.classList.add('selected');
     chosenServiceType = typeKey;
 
     let lengthContainer = document.getElementById('lengthContainer');
@@ -440,7 +449,7 @@ function initCustomCalendar() {
 
 function selectCalendarDate(isoDate, element) {
     document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
+    if (element) element.classList.add('selected');
     selectedDate = isoDate;
     renderTimeSlots();
     updateSummaryCard();
@@ -521,13 +530,19 @@ function renderTimeSlots() {
 
 function selectTimeSlot(time, element) {
     document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
+    if (element) element.classList.add('selected');
     selectedTimeSlot = time;
     updateSummaryCard();
 }
 
-function openOffer() { document.getElementById('offerModal').style.display = 'flex'; }
-function closeOffer() { document.getElementById('offerModal').style.display = 'none'; }
+function openOffer() { 
+    let m = document.getElementById('offerModal');
+    if (m) m.style.display = 'flex'; 
+}
+function closeOffer() { 
+    let m = document.getElementById('offerModal');
+    if (m) m.style.display = 'none'; 
+}
 
 function openLightbox(imgSrc) {
     let lightbox = document.getElementById('imageLightboxModal');
@@ -537,7 +552,10 @@ function openLightbox(imgSrc) {
         lightbox.style.display = 'flex';
     }
 }
-function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
+function closeLightbox() { 
+    let m = document.getElementById('imageLightboxModal');
+    if (m) m.style.display = 'none'; 
+}
 
 async function uploadImageToImgBB(file) {
     if (!file) return '';
@@ -574,10 +592,15 @@ async function uploadImageToImgBB(file) {
 }
 
 async function submitBooking() {
-    let name = document.getElementById('clientName').value.trim();
-    let phone = document.getElementById('clientPhone').value.trim();
-    let email = document.getElementById('clientEmail').value.trim();
-    let social = document.getElementById('clientSocial')?.value.trim() || '';
+    let nameEl = document.getElementById('clientName');
+    let phoneEl = document.getElementById('clientPhone');
+    let emailEl = document.getElementById('clientEmail');
+    let socialEl = document.getElementById('clientSocial');
+
+    let name = nameEl ? nameEl.value.trim() : '';
+    let phone = phoneEl ? phoneEl.value.trim() : '';
+    let email = emailEl ? emailEl.value.trim() : '';
+    let social = socialEl ? socialEl.value.trim() : '';
 
     if (!selectedCategory || !selectedServiceData) {
         alert("⚠️ Будь ласка, оберіть категорію та послугу!");
