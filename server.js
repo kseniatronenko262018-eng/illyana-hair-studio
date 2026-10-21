@@ -10,6 +10,7 @@ app.use(express.static(path.join(__dirname)));
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 const TG_BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI';
 const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
+const MASTER_TG_ID = '956742572'; // Ваш Telegram ID
 
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
@@ -51,44 +52,74 @@ app.post('/api/delete-work', (req, res) => {
     res.json({ success: true });
 });
 
+// Функція для відправки повідомлень в Telegram
+async function sendTelegramNotification(chatId, text) {
+    try {
+        await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
+        });
+    } catch (e) { console.error("Telegram error:", e); }
+}
+
+// Зберігаємо повідомлення для клієнтів, поки вони не натиснуть /start у боті
+let pendingClientMessages = {};
+
+// Telegram Long Polling (Щоб бот відповідав клієнту одразу, як той перейде за посиланням)
+let lastUpdateId = 0;
+async function pollTelegram() {
+    try {
+        let res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=20`);
+        let data = await res.json();
+        if (data.ok && data.result.length > 0) {
+            for (let update of data.result) {
+                lastUpdateId = update.update_id;
+                if (update.message && update.message.text && update.message.text.startsWith('/start')) {
+                    let chatId = update.message.chat.id;
+                    let parts = update.message.text.split(' ');
+                    
+                    // Якщо клієнт перейшов за унікальним посиланням після оплати/запису
+                    if (parts.length > 1) {
+                        let ref = parts[1];
+                        if (pendingClientMessages[ref]) {
+                            await sendTelegramNotification(chatId, pendingClientMessages[ref]);
+                            delete pendingClientMessages[ref]; // Видаляємо після надсилання
+                        } else {
+                            await sendTelegramNotification(chatId, "✨ Вітаємо у студії Явір Ілляни!\nВаш запис знайдено або він вже був підтверджений раніше.");
+                        }
+                    } else {
+                        await sendTelegramNotification(chatId, "✨ Вітаємо у чат-боті студії Явір Ілляни!\nТут будуть зберігатися деталі ваших візитів.");
+                    }
+                }
+            }
+        }
+    } catch (e) {}
+    setTimeout(pollTelegram, 2000);
+}
+pollTelegram(); // Запускаємо перевірку повідомлень
+
 app.get('/api/bookings', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
         const data = await response.json();
-        const formattedData = Array.isArray(data) ? data.map(b => ({
-            ...b,
-            price: b.price || 1000,
-            durationHours: b.durationHours || 1.5,
-            reference: (b.reference && b.reference !== 'EMPTY' && b.reference !== 'NULL') ? b.reference : (b.haircut_ref || '')
-        })) : [];
-        res.json(formattedData);
+        res.json(Array.isArray(data) ? data : []);
     } catch (error) { res.status(500).json([]); }
 });
 
 app.post('/api/bookings', async (req, res) => {
     try {
-        const payloadToInsert = {
-            name: req.body.name,
-            phone: req.body.phone,
-            email: req.body.email || '',
-            social: req.body.social || '',
-            service: req.body.service,
-            price: req.body.price,
-            durationHours: req.body.durationHours,
-            date: req.body.date,
-            time: req.body.time,
-            reference: req.body.reference || ''
-        };
+        const { name, phone, email, social, service, price, durationHours, date, time, reference, isRegular, bookingRef } = req.body;
 
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
+        const payloadToInsert = { name, phone, email: email || '', social: social || '', service, price, durationHours, date, time, reference: reference || '' };
+
+        await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
             method: 'POST',
             headers: supabaseHeaders,
             body: JSON.stringify(payloadToInsert)
         });
 
-        if (!response.ok) return res.status(500).json({ success: false, error: await response.text() });
-
-        const cleanPhone = (req.body.phone || '').replace(/\D/g, '').slice(-9);
+        const cleanPhone = (phone || '').replace(/\D/g, '').slice(-9);
         const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
         const clientsList = await checkClient.json();
         const exists = Array.isArray(clientsList) && clientsList.some(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
@@ -97,8 +128,32 @@ app.post('/api/bookings', async (req, res) => {
             await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
                 method: 'POST',
                 headers: supabaseHeaders,
-                body: JSON.stringify({ name: req.body.name, phone: req.body.phone, email: req.body.email || '', social: req.body.social || '' })
+                body: JSON.stringify({ name, phone, email: email || '', social: social || '' })
             });
+        }
+
+        // Формуємо текст повідомлення
+        let depositInfo = isRegular 
+            ? "💎 <b>Статус:</b> Постійний клієнт (без завдатку)" 
+            : "💳 <b>ЗАВДАТОК:</b> 500 ₴ (сплачено / враховано у вартість)";
+
+        let clientMessage = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
+                          `📅 <b>ДАТА:</b> ${date}\n` +
+                          `⏰ <b>ЧАС:</b> ${time}\n` +
+                          `✂️ <b>ПОСЛУГА:</b> ${service}\n` +
+                          `💰 <b>ВАРТІСТЬ:</b> ${price} ₴\n` +
+                          `${depositInfo}\n\n` +
+                          `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
+                          `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.`;
+
+        let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${name}\n📞 <b>Телефон:</b> ${phone}\n💬 <b>Соцмережі:</b> ${social || '—'}\n\n` + clientMessage;
+
+        // Надсилаємо повідомлення майстру
+        await sendTelegramNotification(MASTER_TG_ID, masterMessage);
+        
+        // Зберігаємо повідомлення для клієнта (відправиться, коли клієнт натисне /start)
+        if (bookingRef) {
+            pendingClientMessages[bookingRef] = clientMessage;
         }
 
         res.json({ success: true });
@@ -108,11 +163,10 @@ app.post('/api/bookings', async (req, res) => {
 app.post('/api/cancel-booking', async (req, res) => {
     try {
         const { id } = req.body;
-        if (!id) return res.status(400).json({ success: false, error: "ID не передано" });
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${id}`, { method: 'DELETE', headers: supabaseHeaders });
         if (response.ok) return res.json({ success: true });
-        res.status(500).json({ success: false, error: await response.text() });
-    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+        res.status(500).json({ success: false });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/check-client', async (req, res) => {
@@ -133,8 +187,8 @@ app.post('/api/create-invoice', async (req, res) => {
             body: JSON.stringify({
                 amount: 50000,
                 ccy: 980,
-                merchantPaymInfo: { destination: "Завдаток за послугу (ФОП Явір І.В.)", comment: `Запис клієнта ${req.body.name} на ${req.body.date} о ${req.body.time}` },
-                redirectUrl: `https://t.me/${TG_BOT_USERNAME}`
+                merchantPaymInfo: { destination: "Завдаток за послугу (ФОП Явір І.В.)", comment: `Запис на ${req.body.date} о ${req.body.time}` },
+                redirectUrl: `https://t.me/${TG_BOT_USERNAME}?start=${req.body.bookingRef}`
             })
         });
         res.json(await response.json());
