@@ -11,7 +11,6 @@
 
     <div class="mobile-container">
         
-        <!-- ШАПКА ТА ПРОФІЛЬ МАЙСТРА -->
         <header class="profile-card">
             <div class="profile-hero-bg" id="profileHeroBg"></div>
             <div class="profile-header-top">
@@ -34,36 +33,43 @@
             </nav>
         </header>
 
-        <!-- СЕКЦІЯ 1: ОФОРМЛЕННЯ ЗАПИСУ -->
         <main id="paneBook" class="section-pane active">
             
+            <!-- ПУНКТ 1: КАТЕГОРІЯ З ФОТОГРАФІЯМИ ЯК НА СКРІНШОТІ -->
             <section class="form-card">
                 <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
                 <div class="service-selection-grid">
+                    
                     <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
-                        <div>
+                        <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?w=200&auto=format&fit=crop&q=80" alt="Стрижка" class="service-img">
+                        <div class="service-info">
                             <div class="s-title" data-i18n="cut_title">Стрижка</div>
                             <div class="s-sub" data-i18n="cut_sub">1000 ₴ • 1.5 год</div>
                         </div>
+                        <div class="selection-circle"></div>
                     </div>
 
                     <div class="service-card-row" id="mainCardColor" onclick="selectMainCategory('color')">
-                        <div>
+                        <img src="https://images.unsplash.com/photo-1600948836101-f9ff5f2a1b92?w=200&auto=format&fit=crop&q=80" alt="Фарбування" class="service-img">
+                        <div class="service-info">
                             <div class="s-title" data-i18n="color_title">Фарбування</div>
                             <div class="s-sub" data-i18n="color_sub">Підбір за станом</div>
                         </div>
+                        <div class="selection-circle"></div>
                     </div>
 
                     <div class="service-card-row" id="mainCardComplex" onclick="selectMainCategory('complex')">
-                        <div>
+                        <img src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=200&auto=format&fit=crop&q=80" alt="Комплекс" class="service-img">
+                        <div class="service-info">
                             <div class="s-title" data-i18n="complex_title">Стрижка + Фарбування коріння</div>
                             <div class="s-sub" data-i18n="complex_sub">3000 ₴ • 3 год (до 2 см)</div>
                         </div>
+                        <div class="selection-circle"></div>
                     </div>
+
                 </div>
             </section>
 
-            <!-- РЕФЕРЕНСИ СТРИЖОК З ФОТОГРАФІЯМИ -->
             <section class="form-card" id="haircutExamplesSection" style="display: none;">
                 <label class="field-label" data-i18n="haircut_ref_title">✨ Оберіть референс стрижки (необов'язково):</label>
                 <div class="haircut-grid">
@@ -176,7 +182,6 @@
 
         </main>
 
-        <!-- СЕКЦІЯ 2: ПОРТФОЛІО -->
         <main id="paneWorks" class="section-pane">
             <div class="form-card">
                 <label class="field-label" data-i18n="tab_works">Приклади робіт майстра</label>
@@ -184,7 +189,6 @@
             </div>
         </main>
 
-        <!-- СЕКЦІЯ 3: ЛОКАЦІЯ -->
         <main id="paneLoc" class="section-pane">
             <div class="form-card">
                 <div style="font-size: 11px; color: var(--text-main); line-height: 1.6;" data-i18n="loc_info">
