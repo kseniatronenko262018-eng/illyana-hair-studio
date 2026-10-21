@@ -211,7 +211,18 @@ function renderTimeSlots() {
         cell.className = 'time-cell';
         cell.innerText = timeStr;
 
-        let isDisabled = (timeStr !== "19:00" && slotEnd > 19.0) || (timeStr === "19:00" && dur > 1.5);
+        let isDisabled = false;
+
+        if (dur >= 7 && slotStart > 10.5) {
+            isDisabled = true;
+        }
+
+        if (slotEnd > 19.0 && dur <= 1.5 && timeStr !== "19:00") {
+            isDisabled = true; 
+        } else if (slotEnd > 19.0 && dur > 1.5) {
+            isDisabled = true;
+        }
+
         if (isToday) {
             let slotTime = new Date(); slotTime.setHours(h, m, 0, 0);
             if ((slotTime - now) / 3600000 < 3) isDisabled = true;
@@ -220,7 +231,10 @@ function renderTimeSlots() {
         booked.forEach(b => {
             let [bh, bm] = b.time.split(':').map(Number);
             let bStart = bh + (bm / 60);
-            if (slotStart < (bStart + b.duration) && slotEnd > bStart) isDisabled = true;
+            let bEnd = bStart + b.duration;
+            if (slotStart < bEnd && slotEnd > bStart) {
+                isDisabled = true;
+            }
         });
 
         if (isDisabled) {
@@ -293,7 +307,6 @@ async function submitBooking() {
         let checkRes = await fetch('/api/check-client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone }) });
         let { isRegular } = await checkRes.json();
 
-        // Генеруємо унікальний код для бота
         let bookingRef = "REF" + Date.now().toString();
 
         let bookRes = await fetch('/api/bookings', {
