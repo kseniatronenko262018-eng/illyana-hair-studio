@@ -8,6 +8,9 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
+// Новий Telegram Bot Token
+const TG_BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI';
+
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
 
@@ -34,6 +37,21 @@ app.post('/api/unblock-day', (req, res) => {
     res.json({ success: true, blockedDays });
 });
 
+// Робота з портфоліо робіт на сайті
+let worksCache = [];
+app.get('/api/works', (req, res) => res.json(worksCache));
+app.post('/api/works', (req, res) => {
+    const { title, image } = req.body;
+    const newWork = { id: Date.now().toString(), title: title || 'Робота студії', image };
+    worksCache.unshift(newWork);
+    res.json({ success: true, work: newWork });
+});
+app.post('/api/delete-work', (req, res) => {
+    const { id } = req.body;
+    worksCache = worksCache.filter(w => w.id !== id);
+    res.json({ success: true });
+});
+
 app.get('/api/bookings', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
@@ -50,7 +68,6 @@ app.get('/api/bookings', async (req, res) => {
 
 app.post('/api/bookings', async (req, res) => {
     try {
-        // Жорсткий фільтр, щоб уникнути помилки PGRST204
         const payloadToInsert = {
             name: req.body.name,
             phone: req.body.phone,
@@ -72,7 +89,6 @@ app.post('/api/bookings', async (req, res) => {
 
         if (!response.ok) return res.status(500).json({ success: false, error: await response.text() });
 
-        // Додаємо клієнта в базу, якщо його там немає
         const cleanPhone = (req.body.phone || '').replace(/\D/g, '').slice(-9);
         const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
         const clientsList = await checkClient.json();
@@ -119,7 +135,7 @@ app.post('/api/create-invoice', async (req, res) => {
                 amount: 50000,
                 ccy: 980,
                 merchantPaymInfo: { destination: "Завдаток за послугу (ФОП Явір І.В.)", comment: `Запис клієнта ${req.body.name} на ${req.body.date} о ${req.body.time}` },
-                redirectUrl: "https://t.me/illianahair_bot"
+                redirectUrl: `https://t.me/` // Посилання перенаправлення
             })
         });
         res.json(await response.json());
