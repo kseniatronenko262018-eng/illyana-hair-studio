@@ -186,7 +186,7 @@
                 <div class="policy-highlight-card">
                     <span class="ua">
                         ⚠️ <b>Правила скасування:</b> Зміна або скасування можливі не пізніш ніж за 48 годин.<br>
-                        📄 Оформлюючи запис, ви погоджуєтесь із умовами <a href="#" onclick="openOffer(); return false;" style="color: var(--accent); text-decoration: underline; font-weight: 700;">Публічного договору оферти</a>.
+                        📄 Оформлюючи запис, ви погоджуєтесь із умовами <a href="#" onclick="openOffer(); return false;" style="color: var(--accent); text-decoration: underline; font-weight: 700;">Публічного договору (оферти)</a>.
                     </span>
                     <span class="en">
                         ⚠️ <b>Cancellation Rules:</b> Changes/cancellations allowed up to 48 hours before.<br>
@@ -216,7 +216,6 @@
             </div>
         </div>
         
-        <!-- Sticky CTA Button -->
         <div class="sticky-cta" id="stickyCta">
             <button class="btn-main" onclick="scrollToBooking()">
                 <span class="ua">⚡ Забронювати час</span><span class="en">⚡ Book an appointment</span>
@@ -224,24 +223,73 @@
         </div>
     </div>
 
+    <!-- МАКСИМАЛЬНО ЮРИДИЧНИЙ ДОГОВІР ОФЕРТИ -->
     <div id="offerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center; padding: 16px;">
-        <div class="modal-body" style="background: var(--card-bg); border: 1px solid var(--border); padding: 18px; border-radius: 18px; max-width: 380px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;">
-            <h3 style="font-size: 12px; text-align: center; margin-bottom: 10px;"><span class="ua">ПУБЛІЧНИЙ ДОГОВІР (ОФЕРТА)</span><span class="en">PUBLIC SERVICE AGREEMENT (OFFER)</span></h3>
-            <div style="font-size: 9px; line-height: 1.6; overflow-y: auto; color: var(--text-muted); margin-bottom: 12px; max-height: 50vh;">
+        <div class="modal-body" style="background: var(--card-bg); border: 1px solid var(--border); padding: 22px 18px; border-radius: 18px; max-width: 420px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;">
+            <h3 style="font-size: 13px; text-align: center; margin-bottom: 12px; font-weight: 800; letter-spacing: 0.5px;">
+                <span class="ua">ДОГОВІР ПУБЛІЧНОЇ ОФЕРТИ<br>про надання послуг</span>
+                <span class="en">PUBLIC OFFER AGREEMENT<br>for the provision of services</span>
+            </h3>
+            <div style="font-size: 9.5px; line-height: 1.6; overflow-y: auto; color: var(--text-muted); margin-bottom: 16px; max-height: 55vh; padding-right: 6px; text-align: justify;">
                 <div class="ua">
-                    <b>1. Загальні положення</b><br>1.1. Цей документ є офіційною пропозицією ФОП Явір І.В.<br>1.2. Здійснення запису є акцептом.<br><br>
-                    <b>2. Порядок запису</b><br>Завдаток 500 грн.<br><br>
-                    <b>3. Скасування</b><br>Менш ніж за 48 годин завдаток не повертається.<br><br>
-                    <b>4. Реквізити</b><br>ФОП Явір Ілляна Володимирівна<br>ІПН: 3600209601<br>IBAN: UA92322001000002600532008420<br>Банк: АТ "УНІВЕРСАЛ БАНК"
+                    <b>1. ЗАГАЛЬНІ ПОЛОЖЕННЯ</b><br>
+                    1.1. Цей документ відповідно до ст. 633, 641 Цивільного кодексу України є офіційною пропозицією (публічною офертою) Фізичної особи-підприємця Явір Ілляни Володимирівни (надалі – «Виконавець»), що адресована будь-якій дієздатній фізичній особі (надалі – «Замовник»), укласти договір про надання перукарських та консультаційних послуг.<br>
+                    1.2. Факт здійснення запису через сайт та/або внесення завдатку (оплати) є повним та безумовним акцептом цієї Оферти Замовником (ст. 642 ЦКУ).<br><br>
+                    
+                    <b>2. ПРЕДМЕТ ДОГОВОРУ</b><br>
+                    2.1. Виконавець зобов'язується надати Замовнику послуги у сфері краси (стрижка, фарбування, догляд за волоссям), а Замовник зобов'язується прийняти та своєчасно оплатити ці послуги відповідно до умов даного Договору.<br><br>
+                    
+                    <b>3. ПОРЯДОК БРОНЮВАННЯ ТА ОПЛАТИ</b><br>
+                    3.1. Для підтвердження бронювання часу надання послуг Замовник зобов'язаний внести завдаток у розмірі 500,00 (п'ятсот) гривень через інтегровану платіжну систему.<br>
+                    3.2. Сума завдатку входить у загальну вартість послуг. Остаточний розрахунок здійснюється Замовником безпосередньо після надання послуг із вирахуванням внесеної суми завдатку.<br><br>
+                    
+                    <b>4. ПРАВА ТА ОБОВ'ЯЗКИ СТОРІН</b><br>
+                    4.1. <b>Виконавець зобов'язаний:</b> надати послуги належної якості у визначений час; попередити Замовника про можливі ризики процедур (наприклад, хімічний вплив на волосся).<br>
+                    4.2. <b>Замовник зобов'язаний:</b> прибути у визначений час без запізнень; надати достовірну інформацію про попередні втручання та стан здоров'я волосся/шкіри голови.<br><br>
+                    
+                    <b>5. ВІДПОВІДАЛЬНІСТЬ СТОРІН ТА СКАСУВАННЯ ЗАПИСУ</b><br>
+                    5.1. Замовник має право скасувати або перенести запис із збереженням завдатку виключно за умови повідомлення Виконавця не пізніше ніж за <b>48 (сорок вісім) годин</b> до призначеного часу візиту.<br>
+                    5.2. У разі скасування запису Замовником менш ніж за 48 годин, неявки або запізнення більше ніж на 20 хвилин, внесений завдаток не повертається та переходить у власність Виконавця як штраф, що компенсує втрачений робочий час (згідно зі ст. 571 ЦКУ).<br>
+                    5.3. Виконавець не несе відповідальності за непередбачувані алергічні реакції, якщо Замовник не попередив про наявність алергії до початку процедури.<br><br>
+                    
+                    <b>6. ФОРС-МАЖОР</b><br>
+                    6.1. Сторони звільняються від відповідальності за невиконання зобов'язань, якщо це сталося внаслідок обставин непереборної сили (повітряні тривоги, відключення електроенергії понад графік, бойові дії, стихійні лиха).<br><br>
+
+                    <b>7. РЕКВІЗИТИ ВИКОНАВЦЯ</b><br>
+                    ФОП Явір Ілляна Володимирівна<br>
+                    ІПН (РНОКПП): 3600209601<br>
+                    Р/Р (IBAN): UA92322001000002600532008420<br>
+                    Банк: АТ "УНІВЕРСАЛ БАНК" (Monobank)<br>
+                    Адреса: м. Дніпро, вул. Володимира Вернадського, 35-Б
                 </div>
                 <div class="en">
-                    <b>1. General Provisions</b><br>This is an official public offer.<br><br>
-                    <b>2. Booking</b><br>Deposit is 500 UAH.<br><br>
-                    <b>3. Cancellation</b><br>Cancellations under 48h forfeit deposit.<br><br>
-                    <b>4. Details</b><br>Sole Proprietor Yavir Illiana Volodymyrivna<br>Tax ID: 3600209601<br>IBAN: UA92322001000002600532008420
+                    <b>1. GENERAL PROVISIONS</b><br>
+                    1.1. This document constitutes a formal public offer by Sole Proprietor Yavir Illiana Volodymyrivna (hereinafter referred to as the "Contractor") addressed to any legally capable individual (hereinafter referred to as the "Client") for the provision of hairdressing services.<br>
+                    1.2. The act of booking via the website and/or paying a deposit constitutes full acceptance of this Offer by the Client.<br><br>
+                    
+                    <b>2. SUBJECT OF THE AGREEMENT</b><br>
+                    2.1. The Contractor agrees to provide beauty services, and the Client agrees to accept and pay for these services.<br><br>
+                    
+                    <b>3. BOOKING AND PAYMENT PROCEDURE</b><br>
+                    3.1. To confirm an appointment, the Client must pay a deposit of 500.00 UAH.<br>
+                    3.2. The deposit is deducted from the total cost of services at final checkout.<br><br>
+                    
+                    <b>4. CANCELLATION POLICY AND LIABILITY</b><br>
+                    4.1. The Client may cancel or reschedule the appointment without losing the deposit provided notice is given at least <b>48 hours</b> prior to the scheduled time.<br>
+                    4.2. If the Client cancels with less than 48 hours' notice, fails to appear, or arrives more than 20 minutes late, the deposit is completely non-refundable and serves as liquidated damages for the Contractor's reserved time.<br><br>
+
+                    <b>5. CONTRACTOR DETAILS</b><br>
+                    Sole Proprietor Yavir Illiana Volodymyrivna<br>
+                    Tax ID (RNKPP): 3600209601<br>
+                    IBAN: UA92322001000002600532008420<br>
+                    Bank: Universal Bank JSC (Monobank)<br>
+                    Address: Dnipro, Volodymyra Vernadskoho st., 35-B
                 </div>
             </div>
-            <button class="btn-main" onclick="closeOffer()"><span class="ua">Зрозуміло</span><span class="en">I understand & agree</span></button>
+            <button class="btn-main" onclick="closeOffer()" style="padding: 16px; font-size: 11px;">
+                <span class="ua">Я ознайомлений(а) та погоджуюсь з умовами</span>
+                <span class="en">I have read and agree to the terms</span>
+            </button>
         </div>
     </div>
 
@@ -264,7 +312,6 @@
                             </div>
                         `).join('') + grid.innerHTML;
                         
-                        // Запускаємо обзервер для нових фотографій
                         setTimeout(() => {
                             document.querySelectorAll('.works-carousel-item.fade-in-section').forEach(el => observer.observe(el));
                         }, 100);
