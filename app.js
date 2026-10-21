@@ -13,6 +13,20 @@ window.addEventListener('DOMContentLoaded', () => {
     fetchBookingsData();
 });
 
+// Функція зміни мови (UA/EN)
+function toggleLang() {
+    currentLang = currentLang === 'ua' ? 'en' : 'ua';
+    document.body.setAttribute('data-lang', currentLang);
+    
+    // Оновлення плейсхолдерів для інпутів
+    document.querySelectorAll('input[data-ph-ua]').forEach(el => {
+        el.placeholder = currentLang === 'ua' ? el.getAttribute('data-ph-ua') : el.getAttribute('data-ph-en');
+    });
+
+    updateSummaryCard();
+    initCustomCalendar(); 
+}
+
 async function fetchBookingsData() {
     try {
         let res = await fetch('/api/bookings');
@@ -61,11 +75,11 @@ function selectMainCategory(category) {
         renderSubmenuItems();
     } else if (category === 'complex') {
         subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка + Фарбування коріння", price: 3000, durationHours: 3 };
+        selectedServiceData = { title: {ua: "Стрижка + Фарбування коріння", en: "Haircut + Root touch-up"}, price: 3000, durationHours: 3 };
         showStep3();
     } else {
         subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка", price: 1000, durationHours: 1.5 };
+        selectedServiceData = { title: {ua: "Стрижка", en: "Haircut"}, price: 1000, durationHours: 1.5 };
         showStep3();
     }
     updateSummaryCard(); renderTimeSlots();
@@ -74,10 +88,16 @@ function selectMainCategory(category) {
 function renderSubmenuItems() {
     document.getElementById('submenuItems').innerHTML = `
         <div class="sub-service-card" onclick="selectHairCondition('natural', this)">
-            <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Доступні всі техніки фарбування</div></div>
+            <div>
+                <div class="s-title"><span class="ua">Натуральне волосся</span><span class="en">Natural hair</span></div>
+                <div class="s-sub"><span class="ua">Доступні всі техніки фарбування</span><span class="en">All coloring techniques available</span></div>
+            </div>
         </div>
         <div class="sub-service-card" onclick="selectHairCondition('colored', this)">
-            <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Корінь, тонування, однотон</div></div>
+            <div>
+                <div class="s-title"><span class="ua">Фарбоване волосся</span><span class="en">Colored hair</span></div>
+                <div class="s-sub"><span class="ua">Корінь, тонування, однотон</span><span class="en">Roots, toning, single process</span></div>
+            </div>
         </div>
     `;
 }
@@ -88,37 +108,37 @@ function selectHairCondition(conditionKey, element) {
     let specList = document.getElementById('specificServicesList');
     if (conditionKey === 'natural') {
         specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння', 2500, 2.5, this)">
-                <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('root', {ua: 'Фарбування коріння', en: 'Root coloring'}, 2500, 2.5, this)">
+                <div><div class="s-title"><span class="ua">Фарбування коріння (до 2 см)</span><span class="en">Root coloring (up to 2 cm)</span></div><div class="s-sub">2500 ₴ • 2.5 <span class="ua">год</span><span class="en">h</span></div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд', null, null, this)">
-                <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення</div></div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', {ua: 'Тотал блонд', en: 'Total blonde'}, null, null, this)">
+                <div><div class="s-title"><span class="ua">Тотал блонд / яскраві техніки</span><span class="en">Total blonde / bright colors</span></div><div class="s-sub"><span class="ua">Повне освітлення</span><span class="en">Full lightening</span></div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, this)">
-                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Фарбування в один тон</div></div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', {ua: 'Тонування / однотон', en: 'Toning / Single process'}, null, null, this)">
+                <div><div class="s-title"><span class="ua">Тонування / однотон</span><span class="en">Toning / Single process</span></div><div class="s-sub"><span class="ua">Фарбування в один тон</span><span class="en">Single color application</span></div></div>
             </div>
         `;
     } else {
         specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння', 2500, 2.5, this)">
-                <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('root', {ua: 'Фарбування коріння', en: 'Root coloring'}, 2500, 2.5, this)">
+                <div><div class="s-title"><span class="ua">Фарбування коріння (до 2 см)</span><span class="en">Root coloring (up to 2 cm)</span></div><div class="s-sub">2500 ₴ • 2.5 <span class="ua">год</span><span class="en">h</span></div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування', null, null, this)">
-                <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Тонування фарбованого</div></div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', {ua: 'Тонування', en: 'Toning'}, null, null, this)">
+                <div><div class="s-title"><span class="ua">Тонування / однотон</span><span class="en">Toning / Single process</span></div><div class="s-sub"><span class="ua">Тонування фарбованого</span><span class="en">Refreshing colored hair</span></div></div>
             </div>
         `;
     }
 }
 
 let chosenServiceType = null;
-function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, element) {
+function selectSpecificServiceType(typeKey, titleObj, fixedPrice, fixedHours, element) {
     document.querySelectorAll('#specificServicesList .sub-service-card').forEach(c => c.classList.remove('selected'));
     element.classList.add('selected');
     chosenServiceType = typeKey;
     document.getElementById('lengthContainer').style.display = 'block';
 
     if (fixedPrice !== null) {
-        selectedServiceData = { title, price: fixedPrice, durationHours: fixedHours };
+        selectedServiceData = { title: titleObj, price: fixedPrice, durationHours: fixedHours };
         showStep3();
     } else {
         updateServiceDetails();
@@ -127,11 +147,25 @@ function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, eleme
 }
 
 function updateServiceDetails() {
-    let lengthVal = document.getElementById('hairLengthSelect').value;
+    let selectEl = currentLang === 'ua' ? document.getElementById('hairLengthSelectUA') : document.getElementById('hairLengthSelectEN');
+    let lengthVal = selectEl.value;
+    
+    // Синхронізуємо обидва селекти (щоб якщо змінили в одній мові, зберігся вибір в іншій)
+    document.getElementById('hairLengthSelectUA').value = lengthVal;
+    document.getElementById('hairLengthSelectEN').value = lengthVal;
+
     if (chosenServiceType === 'blonde') {
-        selectedServiceData = { title: "Тотал блонд", price: lengthVal === 'shoulders' ? 4000 : lengthVal === 'shoulder_blades' ? 6000 : 7500, durationHours: lengthVal === 'shoulders' ? 3 : lengthVal === 'shoulder_blades' ? 6 : 7 };
+        selectedServiceData = { 
+            title: {ua: "Тотал блонд", en: "Total blonde"}, 
+            price: lengthVal === 'shoulders' ? 4000 : lengthVal === 'shoulder_blades' ? 6000 : 7500, 
+            durationHours: lengthVal === 'shoulders' ? 3 : lengthVal === 'shoulder_blades' ? 6 : 7 
+        };
     } else if (chosenServiceType === 'tone') {
-        selectedServiceData = { title: "Тонування", price: lengthVal === 'shoulders' ? 3000 : lengthVal === 'shoulder_blades' ? 3500 : 5000, durationHours: lengthVal === 'shoulders' ? 2 : lengthVal === 'shoulder_blades' ? 2.5 : 3 };
+        selectedServiceData = { 
+            title: {ua: "Тонування", en: "Toning"}, 
+            price: lengthVal === 'shoulders' ? 3000 : lengthVal === 'shoulder_blades' ? 3500 : 5000, 
+            durationHours: lengthVal === 'shoulders' ? 2 : lengthVal === 'shoulder_blades' ? 2.5 : 3 
+        };
     }
     updateSummaryCard(); renderTimeSlots();
     showStep3();
@@ -142,9 +176,17 @@ function showStep3() {
     setTimeout(() => { document.getElementById('step3Card').scrollIntoView({ behavior: 'smooth' }); }, 100);
 }
 
-function checkPhotoLoaded() {
-    let fileInput = document.getElementById('clientHairPhoto');
-    if (fileInput.files[0]) { showStep3(); }
+// Кастомна кнопка файлу
+function checkPhotoLoaded(input) {
+    let btn = document.getElementById('fileUploadBtn');
+    if (input.files && input.files[0]) { 
+        btn.innerHTML = `✅ ${input.files[0].name}`;
+        btn.classList.add('loaded');
+        showStep3(); 
+    } else {
+        btn.innerHTML = `<span class="ua">📁 Натисніть, щоб обрати файл</span><span class="en">📁 Click to choose a file</span>`;
+        btn.classList.remove('loaded');
+    }
 }
 
 function updateSummaryCard() {
@@ -153,17 +195,19 @@ function updateSummaryCard() {
     let metaEl = document.getElementById('summaryMeta');
 
     if (selectedServiceData) {
-        titleEl.innerText = selectedServiceData.title;
+        titleEl.innerText = selectedServiceData.title[currentLang];
         priceBadge.innerText = selectedServiceData.price + " ₴";
-        document.getElementById('summaryDuration').innerText = selectedServiceData.durationHours + " год";
+        let hText = currentLang === 'ua' ? 'год' : 'h';
+        document.getElementById('summaryDuration').innerText = selectedServiceData.durationHours + " " + hText;
         metaEl.style.display = 'flex';
     } else {
-        titleEl.innerText = "Спочатку оберіть категорію";
+        titleEl.innerHTML = `<span class="ua">Спочатку оберіть категорію вище</span><span class="en">First, choose a category above</span>`;
         priceBadge.innerText = "0 ₴";
         metaEl.style.display = 'none';
     }
     if (selectedDate) {
-        document.getElementById('summaryDateTime').innerText = selectedDate + (selectedTimeSlot ? ` о ${selectedTimeSlot}` : '');
+        let atText = currentLang === 'ua' ? ' о ' : ' at ';
+        document.getElementById('summaryDateTime').innerText = selectedDate + (selectedTimeSlot ? `${atText}${selectedTimeSlot}` : '');
     }
 }
 
@@ -171,7 +215,10 @@ function initCustomCalendar() {
     let grid = document.getElementById('customCalendarGrid');
     if (!grid) return;
     grid.innerHTML = '';
-    const days = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    
+    const daysUA = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    const daysEN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    
     let today = new Date();
     for (let i = 0; i < 30; i++) {
         let d = new Date(); d.setDate(today.getDate() + i);
@@ -179,7 +226,10 @@ function initCustomCalendar() {
         let cell = document.createElement('div');
         cell.className = 'calendar-day-cell' + (selectedDate === iso || (i === 0 && !selectedDate) ? ' selected' : '');
         if (i === 0 && !selectedDate) selectedDate = iso;
-        cell.innerHTML = `<span class="day-name">${days[d.getDay()]}</span><span class="day-num">${d.getDate()}</span>`;
+        
+        let dName = currentLang === 'ua' ? daysUA[d.getDay()] : daysEN[d.getDay()];
+        
+        cell.innerHTML = `<span class="day-name">${dName}</span><span class="day-num">${d.getDate()}</span>`;
         cell.onclick = () => {
             document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
             cell.classList.add('selected');
@@ -281,24 +331,24 @@ async function submitBooking() {
     let email = document.getElementById('clientEmail').value.trim();
     let hInput = document.getElementById('clientHairPhoto');
 
-    if (!selectedServiceData) return alert("Оберіть послугу!");
-    if (!selectedDate || !selectedTimeSlot) return alert("Оберіть дату та час!");
-    if (!name || !phone) return alert("Заповніть ім'я та телефон!");
+    if (!selectedServiceData) return alert(currentLang === 'ua' ? "Оберіть послугу!" : "Please choose a service!");
+    if (!selectedDate || !selectedTimeSlot) return alert(currentLang === 'ua' ? "Оберіть дату та час!" : "Please choose date and time!");
+    if (!name || !phone) return alert(currentLang === 'ua' ? "Заповніть ім'я та телефон!" : "Please fill in name and phone!");
     
     if (!email) {
-        alert("⚠️ Будь ласка, введіть ваш Email (це обов'язково)!");
+        alert(currentLang === 'ua' ? "⚠️ Будь ласка, введіть ваш Email (це обов'язково)!" : "⚠️ Please enter your Email (required)!");
         document.getElementById('clientEmail').focus();
         return;
     }
     if (!hInput.files[0]) {
-        alert("⚠️ Будь ласка, завантажте фото вашого волосся або референс (це обов'язково)!");
-        hInput.scrollIntoView({ behavior: 'smooth' });
+        alert(currentLang === 'ua' ? "⚠️ Будь ласка, завантажте фото вашого волосся або референс!" : "⚠️ Please upload a photo of your hair or a reference!");
+        document.getElementById('fileUploadBtn').scrollIntoView({ behavior: 'smooth' });
         return;
     }
 
     let btn = document.querySelector('.btn-main[onclick="submitBooking()"]');
-    let origText = btn.innerText;
-    btn.innerText = "⏳ Оформлення...";
+    let origHtml = btn.innerHTML;
+    btn.innerText = currentLang === 'ua' ? "⏳ Оформлення..." : "⏳ Processing...";
     btn.style.pointerEvents = 'none';
 
     try {
@@ -314,14 +364,15 @@ async function submitBooking() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 name, phone, email, social: document.getElementById('clientSocial')?.value.trim(),
-                service: selectedServiceData.title, price: selectedServiceData.price,
+                service: selectedServiceData.title.ua, // завжди передаємо українську назву в базу та телеграм
+                price: selectedServiceData.price,
                 durationHours: selectedServiceData.durationHours, date: selectedDate, time: selectedTimeSlot, reference: photoUrl, isRegular, bookingRef
             })
         });
 
-        if (!bookRes.ok) throw new Error("Помилка збереження запису.");
+        if (!bookRes.ok) throw new Error("Server error.");
 
-        alert("✨ Запис успішно створено! Переходимо в Telegram-бот для підтвердження.");
+        alert(currentLang === 'ua' ? "✨ Запис успішно створено! Переходимо в Telegram для підтвердження." : "✨ Booking successful! Redirecting to Telegram.");
 
         if (isRegular) {
             window.location.href = `${TELEGRAM_BOT_URL}?start=${bookingRef}`;
@@ -339,9 +390,9 @@ async function submitBooking() {
             }
         }
     } catch (err) {
-        alert("Помилка: " + err.message);
+        alert((currentLang === 'ua' ? "Помилка: " : "Error: ") + err.message);
     } finally {
-        btn.innerText = origText;
+        btn.innerHTML = origHtml;
         btn.style.pointerEvents = 'auto';
     }
 }
