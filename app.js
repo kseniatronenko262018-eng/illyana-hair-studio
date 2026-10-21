@@ -11,14 +11,24 @@ const TELEGRAM_BOT_URL = 'https://t.me/illyana_hair_studio_bot';
 window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
     fetchBookingsData();
+    
+    // Відновлення збереженої теми
+    let savedTheme = localStorage.getItem('illiana_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
 });
 
-// Функція зміни мови (UA/EN)
+// Робоче перемикання теми з пам'яттю
+function toggleTheme() {
+    let current = document.documentElement.getAttribute('data-theme');
+    let next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('illiana_theme', next);
+}
+
 function toggleLang() {
     currentLang = currentLang === 'ua' ? 'en' : 'ua';
     document.body.setAttribute('data-lang', currentLang);
     
-    // Оновлення плейсхолдерів для інпутів
     document.querySelectorAll('input[data-ph-ua]').forEach(el => {
         el.placeholder = currentLang === 'ua' ? el.getAttribute('data-ph-ua') : el.getAttribute('data-ph-en');
     });
@@ -63,8 +73,10 @@ function selectMainCategory(category) {
     let elId = category === 'cut' ? 'mainCardCut' : category === 'color' ? 'mainCardColor' : 'mainCardComplex';
     document.getElementById(elId)?.classList.add('selected');
 
-    document.getElementById('step2Card').style.display = 'flex';
-    document.getElementById('photoUploadSection').style.display = 'block';
+    // Розблоковуємо Крок 2
+    let step2 = document.getElementById('step2Card');
+    step2.style.opacity = '1';
+    step2.style.pointerEvents = 'auto';
 
     let subMenu = document.getElementById('categorySubmenu');
     let coloringOptions = document.getElementById('coloringSubOptions');
@@ -76,11 +88,11 @@ function selectMainCategory(category) {
     } else if (category === 'complex') {
         subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
         selectedServiceData = { title: {ua: "Стрижка + Фарбування коріння", en: "Haircut + Root touch-up"}, price: 3000, durationHours: 3 };
-        showStep3();
+        unlockStep3();
     } else {
         subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
         selectedServiceData = { title: {ua: "Стрижка", en: "Haircut"}, price: 1000, durationHours: 1.5 };
-        showStep3();
+        unlockStep3();
     }
     updateSummaryCard(); renderTimeSlots();
 }
@@ -90,7 +102,7 @@ function renderSubmenuItems() {
         <div class="sub-service-card" onclick="selectHairCondition('natural', this)">
             <div>
                 <div class="s-title"><span class="ua">Натуральне волосся</span><span class="en">Natural hair</span></div>
-                <div class="s-sub"><span class="ua">Доступні всі техніки фарбування</span><span class="en">All coloring techniques available</span></div>
+                <div class="s-sub"><span class="ua">Доступні всі техніки фарбування</span><span class="en">All techniques available</span></div>
             </div>
         </div>
         <div class="sub-service-card" onclick="selectHairCondition('colored', this)">
@@ -139,7 +151,7 @@ function selectSpecificServiceType(typeKey, titleObj, fixedPrice, fixedHours, el
 
     if (fixedPrice !== null) {
         selectedServiceData = { title: titleObj, price: fixedPrice, durationHours: fixedHours };
-        showStep3();
+        unlockStep3();
     } else {
         updateServiceDetails();
     }
@@ -150,7 +162,6 @@ function updateServiceDetails() {
     let selectEl = currentLang === 'ua' ? document.getElementById('hairLengthSelectUA') : document.getElementById('hairLengthSelectEN');
     let lengthVal = selectEl.value;
     
-    // Синхронізуємо обидва селекти (щоб якщо змінили в одній мові, зберігся вибір в іншій)
     document.getElementById('hairLengthSelectUA').value = lengthVal;
     document.getElementById('hairLengthSelectEN').value = lengthVal;
 
@@ -168,23 +179,23 @@ function updateServiceDetails() {
         };
     }
     updateSummaryCard(); renderTimeSlots();
-    showStep3();
+    unlockStep3();
 }
 
-function showStep3() {
-    document.getElementById('step3Card').style.display = 'flex';
-    setTimeout(() => { document.getElementById('step3Card').scrollIntoView({ behavior: 'smooth' }); }, 100);
+function unlockStep3() {
+    let step3 = document.getElementById('step3Card');
+    step3.style.opacity = '1';
+    step3.style.pointerEvents = 'auto';
 }
 
-// Кастомна кнопка файлу
 function checkPhotoLoaded(input) {
     let btn = document.getElementById('fileUploadBtn');
     if (input.files && input.files[0]) { 
         btn.innerHTML = `✅ ${input.files[0].name}`;
         btn.classList.add('loaded');
-        showStep3(); 
+        unlockStep3(); 
     } else {
-        btn.innerHTML = `<span class="ua">📁 Натисніть, щоб обрати файл</span><span class="en">📁 Click to choose a file</span>`;
+        btn.innerHTML = `<span class="ua">📁 Натисніть, щоб обрати файл</span><span class="en">📁 Click to choose file</span>`;
         btn.classList.remove('loaded');
     }
 }
@@ -201,7 +212,7 @@ function updateSummaryCard() {
         document.getElementById('summaryDuration').innerText = selectedServiceData.durationHours + " " + hText;
         metaEl.style.display = 'flex';
     } else {
-        titleEl.innerHTML = `<span class="ua">Спочатку оберіть категорію вище</span><span class="en">First, choose a category above</span>`;
+        titleEl.innerHTML = `<span class="ua">Оберіть послугу вище</span><span class="en">Choose service above</span>`;
         priceBadge.innerText = "0 ₴";
         metaEl.style.display = 'none';
     }
@@ -336,12 +347,12 @@ async function submitBooking() {
     if (!name || !phone) return alert(currentLang === 'ua' ? "Заповніть ім'я та телефон!" : "Please fill in name and phone!");
     
     if (!email) {
-        alert(currentLang === 'ua' ? "⚠️ Будь ласка, введіть ваш Email (це обов'язково)!" : "⚠️ Please enter your Email (required)!");
+        alert(currentLang === 'ua' ? "⚠️ Будь ласка, введіть ваш Email!" : "⚠️ Please enter your Email!");
         document.getElementById('clientEmail').focus();
         return;
     }
     if (!hInput.files[0]) {
-        alert(currentLang === 'ua' ? "⚠️ Будь ласка, завантажте фото вашого волосся або референс!" : "⚠️ Please upload a photo of your hair or a reference!");
+        alert(currentLang === 'ua' ? "⚠️ Завантажте фото вашого волосся!" : "⚠️ Please upload a hair photo!");
         document.getElementById('fileUploadBtn').scrollIntoView({ behavior: 'smooth' });
         return;
     }
@@ -364,7 +375,7 @@ async function submitBooking() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 name, phone, email, social: document.getElementById('clientSocial')?.value.trim(),
-                service: selectedServiceData.title.ua, // завжди передаємо українську назву в базу та телеграм
+                service: selectedServiceData.title.ua,
                 price: selectedServiceData.price,
                 durationHours: selectedServiceData.durationHours, date: selectedDate, time: selectedTimeSlot, reference: photoUrl, isRegular, bookingRef
             })
@@ -372,7 +383,7 @@ async function submitBooking() {
 
         if (!bookRes.ok) throw new Error("Server error.");
 
-        alert(currentLang === 'ua' ? "✨ Запис успішно створено! Переходимо в Telegram для підтвердження." : "✨ Booking successful! Redirecting to Telegram.");
+        alert(currentLang === 'ua' ? "✨ Запис успішно створено! Переходимо в Telegram." : "✨ Booking successful! Redirecting to Telegram.");
 
         if (isRegular) {
             window.location.href = `${TELEGRAM_BOT_URL}?start=${bookingRef}`;
