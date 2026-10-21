@@ -1,23 +1,25 @@
 :root[data-theme="dark"] {
     --bg-dark: #141312;
-    --card-bg: rgba(26, 24, 22, 0.78);
-    --card-hover: rgba(38, 35, 32, 0.88);
+    --card-bg: rgba(26, 24, 22, 0.82);
+    --card-hover: rgba(38, 35, 32, 0.92);
     --border: rgba(255, 255, 255, 0.08);
     --text-main: #f5f2ed;
     --text-muted: #9e958b;
     --accent: #d88c9a; 
     --accent-invert: #141312;
+    --neon-glow: 0 0 18px rgba(216, 140, 154, 0.35);
 }
 
 :root[data-theme="light"] {
     --bg-dark: #e6dfd5;
-    --card-bg: rgba(255, 252, 248, 0.85);
-    --card-hover: rgba(242, 237, 228, 0.94);
+    --card-bg: rgba(255, 252, 248, 0.88);
+    --card-hover: rgba(242, 237, 228, 0.96);
     --border: rgba(0, 0, 0, 0.06);
     --text-main: #2c2825;
     --text-muted: #756d65;
     --accent: #b86b79; 
     --accent-invert: #ffffff;
+    --neon-glow: 0 0 18px rgba(184, 107, 121, 0.35);
 }
 
 * {
@@ -38,7 +40,7 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-main);
     min-height: 100vh;
-    display: block; /* Виправлено баг зміщення вправо */
+    display: block;
     padding: 14px 8px;
     position: relative;
 }
@@ -68,7 +70,7 @@ body {
 .mobile-container {
     width: 100%;
     max-width: 420px;
-    margin: 0 auto; /* Центрування контейнера */
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -88,10 +90,7 @@ body {
     text-transform: uppercase;
 }
 
-.controls-group {
-    display: flex;
-    gap: 6px;
-}
+.controls-group { display: flex; gap: 6px; }
 
 .control-btn {
     background: var(--card-bg);
@@ -123,6 +122,7 @@ body {
     margin: 0 auto 12px auto;
     overflow: hidden;
     border: 2px solid var(--accent);
+    box-shadow: var(--neon-glow);
 }
 
 .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
@@ -177,6 +177,7 @@ body {
     background: var(--accent);
     color: var(--accent-invert);
     border-color: var(--accent);
+    box-shadow: var(--neon-glow);
 }
 
 .section-pane {
@@ -223,10 +224,11 @@ body {
     font-weight: 500;
     outline: none;
 }
-.input-box:focus { border-color: var(--accent); }
+.input-box:focus { border-color: var(--accent); box-shadow: var(--neon-glow); }
 select.input-box { appearance: none; cursor: pointer; }
 option { background: var(--bg-dark); color: var(--text-main); }
 
+/* Послуги без маленьких картинок (тільки текст) */
 .services-list {
     display: flex;
     flex-direction: column;
@@ -238,53 +240,42 @@ option { background: var(--bg-dark); color: var(--text-main); }
     background: var(--card-hover);
     border: 1.5px solid var(--border);
     border-radius: 14px;
-    padding: 10px 12px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     width: 100%;
 }
 
 .service-card-row.selected {
     border-color: var(--accent);
-    background: rgba(184, 107, 121, 0.12);
-}
-
-.service-card-row img {
-    width: 52px;
-    height: 52px;
-    min-width: 52px;
-    min-height: 52px;
-    max-width: 52px;
-    max-height: 52px;
-    object-fit: cover;
-    border-radius: 8px;
-    flex-shrink: 0;
+    background: rgba(184, 107, 121, 0.14);
+    box-shadow: var(--neon-glow);
 }
 
 .service-card-info {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
 }
 
 .service-card-info .title {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--text-main);
 }
 
 .service-card-info .sub {
-    font-size: 9px;
+    font-size: 9.5px;
     color: var(--text-muted);
 }
 
 .service-radio-indicator {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     border: 1.5px solid var(--border);
     display: flex;
@@ -306,6 +297,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
     display: flex;
     flex-direction: column;
     gap: 6px;
+    box-shadow: var(--neon-glow);
 }
 .summary-header {
     display: flex;
@@ -377,6 +369,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
 .haircut-grid-item.selected {
     border-color: var(--accent);
     border-width: 2px;
+    box-shadow: var(--neon-glow);
 }
 .haircut-grid-item img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -396,11 +389,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
     cursor: pointer;
     background: var(--card-hover);
 }
-.works-carousel-item img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-}
+.works-carousel-item img { width: 100%; height: 100%; object-fit: cover; }
 
 .sub-service-card {
     background: var(--card-hover);
@@ -416,6 +405,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
 .sub-service-card.selected {
     border-color: var(--accent);
     background: rgba(184, 107, 121, 0.16);
+    box-shadow: var(--neon-glow);
 }
 .sub-service-card .s-title { font-size: 10px; font-weight: 700; color: var(--text-main); }
 .sub-service-card .s-sub { font-size: 8px; color: var(--text-muted); }
@@ -443,7 +433,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
     align-items: center;
     justify-content: center;
 }
-.time-cell.selected { background: var(--accent); color: var(--accent-invert); border-color: var(--accent); }
+.time-cell.selected { background: var(--accent); color: var(--accent-invert); border-color: var(--accent); box-shadow: var(--neon-glow); }
 .time-cell.booked { opacity: 0.35; pointer-events: none; background: rgba(255,0,0,0.1); text-decoration: line-through; }
 
 .notice-badge, .policy-highlight-card {
@@ -523,7 +513,6 @@ option { background: var(--bg-dark); color: var(--text-main); }
 }
 
 .modal-body h3 { font-size: 12px; color: var(--text-main); margin-bottom: 10px; text-align: center; text-transform: uppercase; }
-.offer-text-content { font-size: 9.5px; color: var(--text-muted); line-height: 1.5; overflow-y: auto; max-height: 50vh; margin-bottom: 12px; }
 #lightboxImage { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 10px; }
 
 .custom-calendar-grid {
@@ -552,7 +541,7 @@ option { background: var(--bg-dark); color: var(--text-main); }
 
 .calendar-day-cell .day-name { text-transform: uppercase; font-size: 8px; margin-bottom: 2px; }
 .calendar-day-cell .day-num { font-size: 13px; color: var(--text-main); font-weight: 800; }
-.calendar-day-cell.selected { background: var(--accent); border-color: var(--accent); }
+.calendar-day-cell.selected { background: var(--accent); border-color: var(--accent); box-shadow: var(--neon-glow); }
 .calendar-day-cell.selected .day-num, .calendar-day-cell.selected .day-name { color: var(--accent-invert); }
 
 .form-row {
