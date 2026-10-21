@@ -185,7 +185,7 @@
     <div class="mobile-container" style="max-width: 480px;">
         <div class="master-header">
             <h2>✨ ЯВІР ІЛЛЯНА // CRM</h2>
-            <button class="control-btn" onclick="fetchMasterData()">🔄 Оновити</button>
+            <button class="btn-main" style="width: auto; padding: 6px 12px; font-size: 10px;" onclick="window.location.reload()">🔄 Оновити</button>
         </div>
 
         <!-- НАВІГАЦІЯ ПО Вкладках -->
@@ -200,9 +200,9 @@
         <div id="mPaneBookings" class="section-pane active">
             <div class="master-calendar-wrapper">
                 <div class="master-calendar-header">
-                    <button class="control-btn" onclick="changeMasterMonth(-1)">←</button>
+                    <button class="control-btn" style="background:var(--card-bg); border:1px solid var(--border); padding:4px 8px; border-radius:6px; color:var(--text-main);" onclick="changeMasterMonth(-1)">←</button>
                     <span id="masterMonthTitle">Жовтень 2026</span>
-                    <button class="control-btn" onclick="changeMasterMonth(1)">→</button>
+                    <button class="control-btn" style="background:var(--card-bg); border:1px solid var(--border); padding:4px 8px; border-radius:6px; color:var(--text-main);" onclick="changeMasterMonth(1)">→</button>
                 </div>
                 <div class="master-calendar-grid" id="masterCalendarDaysGrid"></div>
             </div>
@@ -210,7 +210,7 @@
             <div class="form-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <label class="field-label" id="selectedDateLabel" style="margin:0;">Записи на обрану дату:</label>
-                    <button class="control-btn" style="font-size:8px;" onclick="resetDateFilter()">Всі записи</button>
+                    <button class="btn-main" style="width:auto; padding:4px 8px; font-size:8px;" onclick="resetDateFilter()">Всі записи</button>
                 </div>
                 <div id="masterBookingsList" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
                     <div style="font-size:10px; color:var(--text-muted); text-align:center;">Завантаження...</div>
@@ -241,7 +241,7 @@
         <div id="mPaneBlocked" class="section-pane">
             <div class="form-card">
                 <label class="field-label">Заблокувати / Розблокувати день</label>
-                <input type="date" id="blockDateInput" class="input-box">
+                <input type="date" id="blockDateInput" class="input-box" style="margin-bottom:0;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
                     <button class="btn-main" onclick="manageDayBlock('block')">🔒 Заблокувати</button>
                     <button class="btn-main" style="background:var(--card-hover); color:var(--text-main);" onclick="manageDayBlock('unblock')">🔓 Розблокувати</button>
