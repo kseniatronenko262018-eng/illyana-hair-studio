@@ -10,7 +10,7 @@ app.use(express.static(path.join(__dirname)));
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 const TG_BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI';
 const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
-const MASTER_TG_ID = '956742572'; 
+const MASTER_TG_ID = '684896405'; 
 
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
@@ -38,7 +38,6 @@ app.post('/api/unblock-day', (req, res) => {
     res.json({ success: true, blockedDays });
 });
 
-// РОБОТА З ПОРТФОЛІО (Тепер через Supabase назавжди)
 app.get('/api/works', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
