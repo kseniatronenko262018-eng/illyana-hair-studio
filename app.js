@@ -7,6 +7,7 @@ let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
 
+// Новий лінк на основі вашого токена бота
 const TELEGRAM_BOT_URL = 'https://t.me/illianahair_bot';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -276,11 +277,9 @@ async function submitBooking() {
         let photoUrl = await uploadImageToImgBB(rInput?.files[0] || hInput?.files[0]);
         let refFinal = selectedHaircutRef || photoUrl || 'EMPTY';
 
-        // 1. Спочатку перевіряємо, чи клієнт постійний
         let checkRes = await fetch('/api/check-client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone }) });
         let { isRegular } = await checkRes.json();
 
-        // 2. Зберігаємо запис
         let bookRes = await fetch('/api/bookings', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -293,7 +292,6 @@ async function submitBooking() {
 
         if (!bookRes.ok) throw new Error("Помилка збереження запису.");
 
-        // 3. Маршрутизація (Бот або Оплата)
         if (isRegular) {
             alert("✨ Запис підтверджено! Переходимо в Telegram-бот.");
             window.location.href = TELEGRAM_BOT_URL;
