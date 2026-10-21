@@ -15,7 +15,6 @@
         }
         body { background-color: var(--tg-bg) !important; color: var(--tg-text) !important; padding-bottom: 50px; min-height: 100vh; }
         
-        /* Виправлення структури карток */
         .master-section, .form-card { 
             background: var(--tg-card) !important; 
             border: 1px solid var(--tg-border) !important; 
@@ -31,7 +30,6 @@
         .korea-nav-chip { background: var(--tg-card); border: 1px solid var(--tg-border); padding: 10px 14px; border-radius: 14px; font-size: 9px; font-weight: 700; color: var(--tg-muted); text-transform: uppercase; cursor: pointer; white-space: nowrap; }
         .korea-nav-chip.active { background: var(--accent); color: var(--accent-invert); border-color: var(--accent); }
         
-        /* Жорстка сітка для календаря, щоб він не розповзався */
         .crm-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; box-sizing: border-box; }
         .crm-cal-cell { background: var(--tg-card-hover); border: 1px solid var(--tg-border); border-radius: 8px; padding: 8px 2px; text-align: center; font-size: 9px; font-weight: 700; cursor: pointer; }
         .crm-cal-cell.selected { background: var(--accent); color: var(--accent-invert); }
@@ -52,7 +50,9 @@
         <div id="masterDashboard" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
             <div class="korea-nav-bar" id="koreaNavContainer">
                 <div class="korea-nav-chip active" onclick="switchMasterSection('secCalendar', this)">📅 Календар</div>
+                <div class="korea-nav-chip" onclick="switchMasterSection('secFinances', this)">💰 Фінанси</div>
                 <div class="korea-nav-chip" onclick="switchMasterSection('secClients', this)">👥 Клієнти</div>
+                <div class="korea-nav-chip" onclick="switchMasterSection('secWorks', this)">✨ Роботи</div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
@@ -66,33 +66,81 @@
                 </div>
             </div>
 
-            <!-- КАЛЕНДАР -->
+            <!-- 1. КАЛЕНДАР -->
             <div id="secCalendar" class="master-section form-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%;">
                     <button class="control-btn" onclick="changeMonth(-1)">◀</button>
                     <h3 id="calendarTitle" style="font-size: 12px; font-family:'Syne',sans-serif;">Місяць</h3>
                     <button class="control-btn" onclick="changeMonth(1)">▶</button>
                 </div>
-                
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
-                
                 <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; font-weight: 700; color: var(--accent);">🔒 Заблокувати день (вихідний)</button>
-                
                 <div style="margin-top: 10px; width: 100%;">
                     <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted);">Записи на обраний день:</label>
                     <div id="dayBookingsContainer" style="display: flex; flex-direction: column; width: 100%;"></div>
                 </div>
             </div>
 
-            <!-- БАЗА КЛІЄНТІВ -->
+            <!-- 2. ФІНАНСИ ТА АНАЛІТИКА -->
+            <div id="secFinances" class="master-section form-card" style="display: none;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase;">Фінанси та аналітика</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center;">
+                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px;">
+                        <div style="font-size:8px; color:var(--tg-muted);">ДОХОДИ</div>
+                        <div id="statCompleted" style="font-size:11px; font-weight:700;">0 ₴</div>
+                    </div>
+                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px;">
+                        <div style="font-size:8px; color:var(--tg-muted);">ВИТРАТИ</div>
+                        <div id="statExpenses" style="font-size:11px; font-weight:700; color:var(--accent);">0 ₴</div>
+                    </div>
+                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px;">
+                        <div style="font-size:8px; color:var(--tg-muted);">ПРИБУТОК</div>
+                        <div id="statNetProfit" style="font-size:11px; font-weight:700; color:#4ade80;">0 ₴</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 8px;">
+                    <label class="field-label" style="color:var(--tg-muted);">Додати витрату:</label>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="expenseNameInput" class="input-box" placeholder="Назва">
+                        <input type="number" id="expenseAmountInput" class="input-box" placeholder="Сума ₴" style="max-width: 90px;">
+                        <button class="control-btn" onclick="addExpense()">+</button>
+                    </div>
+                    <div id="expensesListContainer" style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 100px; overflow-y: auto;"></div>
+                </div>
+                <button class="control-btn" onclick="exportToExcel()" style="margin-top: 8px; width: 100%;">📥 Експортувати записи в Excel</button>
+            </div>
+
+            <!-- 3. БАЗА КЛІЄНТІВ -->
             <div id="secClients" class="master-section form-card" style="display: none;">
-                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase;">База постійних клієнтів</h3>
-                <div id="regularClientsContainer" style="display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; margin-top: 8px;"></div>
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase;">База клієнтів</h3>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <input type="text" id="regClientName" class="input-box" placeholder="Ім'я клієнта">
+                    <input type="tel" id="regClientPhone" class="input-box" placeholder="Телефон">
+                    <input type="text" id="regClientSocial" class="input-box" placeholder="Нікнейм (Inst / Telegram)">
+                    <button class="control-btn" onclick="addRegularClientManual()">Додати клієнта</button>
+                </div>
+                <div id="regularClientsContainer" style="display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto; margin-top: 8px;"></div>
+            </div>
+
+            <!-- 4. ЗАВАНТАЖИТИ РОБОТИ НА САЙТ -->
+            <div id="secWorks" class="master-section form-card" style="display: none;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase;">Завантажити приклади робіт</h3>
+                <div>
+                    <label class="field-label">Назва / опис роботи:</label>
+                    <input type="text" id="newWorkTitleInput" class="input-box" placeholder="Стрижка / Тонування">
+                </div>
+                <div>
+                    <label class="field-label">Фотографія роботи:</label>
+                    <input type="file" id="newWorkImageFile" class="input-box" accept="image/*" style="padding: 6px;">
+                </div>
+                <button class="btn-main" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
+                <div id="masterWorksList" class="works-grid-full" style="margin-top: 8px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Модальне вікно для детальної інформації про запис -->
+    <!-- Модальне вікно деталей запису -->
     <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing: border-box;">
         <div style="background: var(--tg-card); border: 1.5px solid var(--accent); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
             <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center;">✨ Деталі запису</h3>
@@ -107,7 +155,12 @@
         let allBookingsCache = [];
         let blockedDaysCache = [];
 
-        window.addEventListener('DOMContentLoaded', refreshCrmData);
+        window.addEventListener('DOMContentLoaded', () => {
+            refreshCrmData();
+            loadMasterWorks();
+            updateFinancesAndExpenses();
+            renderRegularClientsList();
+        });
 
         async function refreshCrmData() {
             try {
@@ -120,14 +173,17 @@
                 document.getElementById('totalBookingsCountBadge').innerText = allBookingsCache.length;
                 renderCrmCalendar();
                 renderSelectedDayBookings();
+                updateFinancesAndExpenses();
             } catch(e) {}
         }
 
         function switchMasterSection(sectionId, el) {
-            document.querySelectorAll('.master-section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.master-section').forEach(s => {
+                if(s.id !== 'masterDetailPopupModal') s.style.display = 'none';
+            });
             document.getElementById(sectionId).style.display = 'flex';
             document.querySelectorAll('.korea-nav-chip').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
+            if(el) el.classList.add('active');
         }
 
         function changeMonth(dir) {
@@ -221,7 +277,6 @@
                 <div><b>Вартість:</b> ${booking.price} ₴</div>
                 <div><b>Email:</b> ${booking.email}</div>
                 <div><b>Референс / фото:</b>${refHtml}</div>
-                
                 <hr style="border-top:1px solid var(--tg-border); margin: 12px 0;">
                 <button onclick="cancelClientBooking(${booking.id})" style="width: 100%; background: #e63946; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 700;">🗑 Видалити запис</button>
             `;
@@ -256,6 +311,129 @@
             let btn = document.getElementById('blockDayBtn');
             if (blockedDaysCache.includes(selectedCrmDate)) { btn.innerText = "🔓 Розблокувати день"; btn.style.borderColor = "var(--accent)"; } 
             else { btn.innerText = "🔒 Заблокувати день (вихідний)"; btn.style.borderColor = "var(--tg-border)"; }
+        }
+
+        function updateFinancesAndExpenses() {
+            let totalIncome = allBookingsCache.reduce((sum, b) => sum + Number(b.price || 1000), 0);
+            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
+            let totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+            let net = totalIncome - totalExpenses;
+
+            document.getElementById('statCompleted').innerText = totalIncome + " ₴";
+            document.getElementById('statExpenses').innerText = totalExpenses + " ₴";
+            document.getElementById('statNetProfit').innerText = net + " ₴";
+
+            document.getElementById('expensesListContainer').innerHTML = expenses.map((e, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:6px 10px; border-radius:8px; font-size:9px;">
+                    <span>${e.name} — <b>${e.amount} ₴</b></span>
+                    <button onclick="removeExpense(${idx})" style="background:none; border:none; color:var(--accent); cursor:pointer;">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function addExpense() {
+            let name = document.getElementById('expenseNameInput').value.trim();
+            let amount = document.getElementById('expenseAmountInput').value.trim();
+            if (!name || !amount) return alert("Введіть назву та суму!");
+            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
+            expenses.push({ name, amount });
+            localStorage.setItem('illiana_studio_expenses', JSON.stringify(expenses));
+            document.getElementById('expenseNameInput').value = '';
+            document.getElementById('expenseAmountInput').value = '';
+            updateFinancesAndExpenses();
+        }
+
+        function removeExpense(idx) {
+            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
+            expenses.splice(idx, 1);
+            localStorage.setItem('illiana_studio_expenses', JSON.stringify(expenses));
+            updateFinancesAndExpenses();
+        }
+
+        function exportToExcel() {
+            if (allBookingsCache.length === 0) return alert("Немає записів!");
+            let ws = XLSX.utils.json_to_sheet(allBookingsCache);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Записи");
+            XLSX.writeFile(wb, "Illiana_Studio_Bookings.xlsx");
+        }
+
+        function renderRegularClientsList() {
+            let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
+            document.getElementById('totalClientsCountBadge').innerText = clients.length;
+            document.getElementById('regularClientsContainer').innerHTML = clients.map((c, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:6px 10px; border-radius:8px; font-size:9px;">
+                    <div><b>${c.name}</b> (${c.phone}) — <span style="color:var(--accent);">${c.social || '—'}</span></div>
+                    <button onclick="removeRegularClient(${idx})" style="background:none; border:none; color:var(--accent); cursor:pointer;">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function addRegularClientManual() {
+            let name = document.getElementById('regClientName').value.trim();
+            let phone = document.getElementById('regClientPhone').value.trim();
+            let social = document.getElementById('regClientSocial').value.trim();
+            if (!name || !phone) return alert("Введіть ім'я та телефон!");
+            let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
+            clients.push({ name, phone, social });
+            localStorage.setItem('illiana_regular_clients', JSON.stringify(clients));
+            document.getElementById('regClientName').value = '';
+            document.getElementById('regClientPhone').value = '';
+            document.getElementById('regClientSocial').value = '';
+            renderRegularClientsList();
+        }
+
+        function removeRegularClient(idx) {
+            let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
+            clients.splice(idx, 1);
+            localStorage.setItem('illiana_regular_clients', JSON.stringify(clients));
+            renderRegularClientsList();
+        }
+
+        async function loadMasterWorks() {
+            try {
+                let res = await fetch('/api/works');
+                let works = await res.json();
+                let container = document.getElementById('masterWorksList');
+                if (container) {
+                    container.innerHTML = works.map(w => `
+                        <div class="works-carousel-item" style="position:relative;">
+                            <img src="${w.image}" style="width:100%; height:100%; object-fit:cover;">
+                            <button onclick="deleteWork('${w.id}')" style="position:absolute; top:6px; right:6px; background:#ff4d4d; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:8px; cursor:pointer;">🗑</button>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) {}
+        }
+
+        async function uploadWorkToMainSite() {
+            let title = document.getElementById('newWorkTitleInput').value.trim();
+            let fileInput = document.getElementById('newWorkImageFile');
+            if (!fileInput.files[0]) return alert("Оберіть фотографію!");
+            
+            let reader = new FileReader();
+            reader.onload = async (e) => {
+                await fetch('/api/works', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ title, image: e.target.result })
+                });
+                alert("Роботу успішно додано до портфоліо!");
+                document.getElementById('newWorkTitleInput').value = '';
+                fileInput.value = '';
+                loadMasterWorks();
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        async function deleteWork(id) {
+            if (!confirm("Видалити роботу?")) return;
+            await fetch('/api/delete-work', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id })
+            });
+            loadMasterWorks();
         }
 
         function closeBookingModal() { document.getElementById('masterDetailPopupModal').style.display = 'none'; }
