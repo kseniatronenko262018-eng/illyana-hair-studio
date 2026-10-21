@@ -14,7 +14,7 @@
     </div>
 
     <div class="mobile-container">
-        <div class="utility-bar">
+        <div class="utility-bar fade-in-section">
             <span>dnipro // studio</span>
             <div class="controls-group">
                 <button class="control-btn" id="langToggle" onclick="toggleLang()">UA / EN 🌓</button>
@@ -22,7 +22,7 @@
             </div>
         </div>
 
-        <div class="profile-card">
+        <div class="profile-card fade-in-section">
             <div class="avatar-wrap"><img src="PXL_20241102_164641261.jpg" alt="Явір Ілляна" id="profileAvatarImg"></div>
             <h1>Явір Ілляна</h1>
             <p>
@@ -35,8 +35,8 @@
             </div>
         </div>
 
-        <div class="quick-nav" style="grid-template-columns: repeat(3, 1fr);">
-            <div class="nav-chip active" onclick="switchTab('book', this)">
+        <div class="quick-nav fade-in-section" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="nav-chip active" id="navBook" onclick="switchTab('book', this)">
                 <span class="ua">Запис</span><span class="en">Book</span>
             </div>
             <div class="nav-chip" onclick="switchTab('works', this)">
@@ -47,10 +47,8 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА: ЗАПИС -->
         <div id="paneBook" class="section-pane active">
-            <!-- КРОК 1 -->
-            <div class="form-card" id="step1Card">
+            <div class="form-card fade-in-section" id="step1Card">
                 <label class="field-label">
                     <span class="ua">Крок 1. Оберіть категорію послуг</span>
                     <span class="en">Step 1. Choose a service category</span>
@@ -80,8 +78,7 @@
                 </div>
             </div>
 
-            <!-- КРОК 2 -->
-            <div class="form-card" id="step2Card" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+            <div class="form-card fade-in-section" id="step2Card" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
                 <div id="categorySubmenu" style="display: none;">
                     <label class="field-label"><span class="ua">Крок 2А. Оберіть стан волосся:</span><span class="en">Step 2A. Hair condition:</span></label>
                     <div id="submenuItems" style="display: flex; flex-direction: column; gap: 6px;"></div>
@@ -136,8 +133,7 @@
                 </div>
             </div>
 
-            <!-- КРОК 3 -->
-            <div class="form-card" id="step3Card" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+            <div class="form-card fade-in-section" id="step3Card" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
                 <div class="summary-card">
                     <div class="summary-header">
                         <span class="field-label" style="margin:0;"><span class="ua">Обрана послуга</span><span class="en">Selected service</span></span>
@@ -198,72 +194,51 @@
                     </span>
                 </div>
 
-                <button class="btn-main" onclick="submitBooking()">
+                <button class="btn-main" id="mainBookBtn" onclick="submitBooking()">
                     <span class="ua">Сплатити завдаток 500 ₴ та забронювати</span>
                     <span class="en">Pay 500 ₴ deposit and book</span>
                 </button>
             </div>
         </div>
 
-        <!-- ВКЛАДКА: РОБОТИ ТА ЛОКАЦІЯ -->
         <div id="paneWorks" class="section-pane">
-            <div class="form-card">
+            <div class="form-card fade-in-section">
                 <label class="field-label" style="text-align: center;"><span class="ua">✨ Приклади робіт студії</span><span class="en">✨ Studio Portfolio</span></label>
                 <div class="works-grid-full" id="publicWorksGrid"></div>
             </div>
         </div>
 
         <div id="paneLoc" class="section-pane">
-            <div class="info-card">
+            <div class="info-card fade-in-section">
                 <span class="ua">📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>Приватний простір, мінімалізм та фокус на якості.<br></span>
                 <span class="en">📍 <b>Location:</b> Dnipro, Volodymyra Vernadskoho st., 35-B.<br><br>Private space, minimalism, and focus on quality.<br></span>
                 <a href="https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро" target="_blank" class="map-btn"><span class="ua">Відкрити в Google Maps</span><span class="en">Open in Google Maps</span></a>
             </div>
         </div>
+        
+        <!-- Sticky CTA Button -->
+        <div class="sticky-cta" id="stickyCta">
+            <button class="btn-main" onclick="scrollToBooking()">
+                <span class="ua">⚡ Забронювати час</span><span class="en">⚡ Book an appointment</span>
+            </button>
+        </div>
     </div>
 
-    <!-- ОФЕРТА ЮРИДИЧНО ОФОРМЛЕНА -->
     <div id="offerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center; padding: 16px;">
         <div class="modal-body" style="background: var(--card-bg); border: 1px solid var(--border); padding: 18px; border-radius: 18px; max-width: 380px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;">
             <h3 style="font-size: 12px; text-align: center; margin-bottom: 10px;"><span class="ua">ПУБЛІЧНИЙ ДОГОВІР (ОФЕРТА)</span><span class="en">PUBLIC SERVICE AGREEMENT (OFFER)</span></h3>
             <div style="font-size: 9px; line-height: 1.6; overflow-y: auto; color: var(--text-muted); margin-bottom: 12px; max-height: 50vh;">
                 <div class="ua">
-                    <b>1. Загальні положення</b><br>
-                    1.1. Цей документ є офіційною пропозицією (публічною офертою) Фізичної особи-підприємця Явір Ілляни Володимирівни (далі – «Виконавець»), адресованою будь-якій фізичній особі (далі – «Замовник»), укласти договір про надання перукарських та інформаційно-консультаційних послуг на викладених нижче умовах.<br>
-                    1.2. Здійснення Замовником запису та/або внесення завдатку вважається безумовним акцептом (прийняттям) умов цієї оферти.<br><br>
-                    
-                    <b>2. Порядок запису та розрахунків</b><br>
-                    2.1. Для підтвердження бронювання часу надання послуг нові Замовники зобов'язані внести завдаток у розмірі 500 (п'ятсот) гривень.<br>
-                    2.2. Остаточний розрахунок здійснюється після надання послуг із вирахуванням суми завдатку.<br><br>
-                    
-                    <b>3. Права, обов'язки та відповідальність сторін</b><br>
-                    3.1. Замовник має право скасувати або перенести запис з повідомленням Виконавця не пізніше ніж за 48 годин до визначеного часу візиту.<br>
-                    3.2. У разі скасування запису Замовником менш ніж за 48 годин до візиту, внесений завдаток не повертається та визнається штрафом за порушення умов бронювання, що компенсує втрачений час Виконавця.<br><br>
-                    
-                    <b>4. Реквізити Виконавця</b><br>
-                    ФОП Явір Ілляна Володимирівна<br>
-                    ІПН (РНОКПП): 3600209601<br>
-                    Р/Р (IBAN): UA92322001000002600532008420<br>
-                    Банк: АТ "УНІВЕРСАЛ БАНК" (Monobank)
+                    <b>1. Загальні положення</b><br>1.1. Цей документ є офіційною пропозицією ФОП Явір І.В.<br>1.2. Здійснення запису є акцептом.<br><br>
+                    <b>2. Порядок запису</b><br>Завдаток 500 грн.<br><br>
+                    <b>3. Скасування</b><br>Менш ніж за 48 годин завдаток не повертається.<br><br>
+                    <b>4. Реквізити</b><br>ФОП Явір Ілляна Володимирівна<br>ІПН: 3600209601<br>IBAN: UA92322001000002600532008420<br>Банк: АТ "УНІВЕРСАЛ БАНК"
                 </div>
                 <div class="en">
-                    <b>1. General Provisions</b><br>
-                    1.1. This document is an official public offer by Sole Proprietor Yavir Illiana Volodymyrivna (hereinafter "Contractor") addressed to any individual (hereinafter "Client") to conclude an agreement for the provision of services.<br>
-                    1.2. Making a booking and/or paying a deposit constitutes unconditional acceptance of this offer.<br><br>
-                    
-                    <b>2. Booking and Payment Procedure</b><br>
-                    2.1. To confirm a booking, new Clients must pay a deposit of 500 UAH.<br>
-                    2.2. Final payment is made after the services are rendered, minus the deposit.<br><br>
-                    
-                    <b>3. Cancellation Policy</b><br>
-                    3.1. The Client has the right to cancel or reschedule by notifying the Contractor no later than 48 hours before the appointment.<br>
-                    3.2. If canceled with less than 48 hours' notice, the deposit is non-refundable and serves as a penalty to compensate for reserved time.<br><br>
-                    
-                    <b>4. Contractor Details</b><br>
-                    Sole Proprietor Yavir Illiana Volodymyrivna<br>
-                    Tax ID (RNKPP): 3600209601<br>
-                    IBAN: UA92322001000002600532008420<br>
-                    Bank: Universal Bank JSC (Monobank)
+                    <b>1. General Provisions</b><br>This is an official public offer.<br><br>
+                    <b>2. Booking</b><br>Deposit is 500 UAH.<br><br>
+                    <b>3. Cancellation</b><br>Cancellations under 48h forfeit deposit.<br><br>
+                    <b>4. Details</b><br>Sole Proprietor Yavir Illiana Volodymyrivna<br>Tax ID: 3600209601<br>IBAN: UA92322001000002600532008420
                 </div>
             </div>
             <button class="btn-main" onclick="closeOffer()"><span class="ua">Зрозуміло</span><span class="en">I understand & agree</span></button>
@@ -284,10 +259,15 @@
                     let grid = document.getElementById('publicWorksGrid');
                     if (grid) {
                         grid.innerHTML = works.map(w => `
-                            <div class="works-carousel-item" onclick="openLightbox('${w.image}')">
+                            <div class="works-carousel-item fade-in-section" onclick="openLightbox('${w.image}')">
                                 <img src="${w.image}" alt="${w.title}">
                             </div>
                         `).join('') + grid.innerHTML;
+                        
+                        // Запускаємо обзервер для нових фотографій
+                        setTimeout(() => {
+                            document.querySelectorAll('.works-carousel-item.fade-in-section').forEach(el => observer.observe(el));
+                        }, 100);
                     }
                 }
             } catch(e) {}
