@@ -38,18 +38,36 @@ app.post('/api/unblock-day', (req, res) => {
     res.json({ success: true, blockedDays });
 });
 
-let worksCache = [];
-app.get('/api/works', (req, res) => res.json(worksCache));
-app.post('/api/works', (req, res) => {
-    const { title, image } = req.body;
-    const newWork = { id: Date.now().toString(), title: title || 'Робота студії', image };
-    worksCache.unshift(newWork);
-    res.json({ success: true, work: newWork });
+// РОБОТА З ПОРТФОЛІО (Тепер через Supabase назавжди)
+app.get('/api/works', async (req, res) => {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
+        const data = await response.json();
+        res.json(Array.isArray(data) ? data : []);
+    } catch (error) { res.status(500).json([]); }
 });
-app.post('/api/delete-work', (req, res) => {
-    const { id } = req.body;
-    worksCache = worksCache.filter(w => w.id !== id);
-    res.json({ success: true });
+
+app.post('/api/works', async (req, res) => {
+    try {
+        const { title, image } = req.body;
+        await fetch(`${SUPABASE_URL}/rest/v1/works`, {
+            method: 'POST',
+            headers: supabaseHeaders,
+            body: JSON.stringify({ title: title || 'Робота студії', image })
+        });
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
+app.post('/api/delete-work', async (req, res) => {
+    try {
+        const { id } = req.body;
+        await fetch(`${SUPABASE_URL}/rest/v1/works?id=eq.${id}`, {
+            method: 'DELETE',
+            headers: supabaseHeaders
+        });
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 async function sendTelegramNotification(chatId, text) {
