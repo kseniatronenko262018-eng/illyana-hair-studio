@@ -47,7 +47,7 @@ body {
     gap: 12px;
 }
 
-/* Профіль майстра */
+/* Профіль */
 .profile-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -151,7 +151,7 @@ body {
     border-color: var(--accent);
 }
 
-/* Секції та картки */
+/* Секції */
 .section-pane {
     display: none;
     flex-direction: column;
@@ -211,7 +211,7 @@ body {
     color: var(--text-muted);
 }
 
-/* Референси */
+/* Сітка референсів стрижок з фото */
 .haircut-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -221,17 +221,54 @@ body {
 .haircut-grid-item {
     background: var(--card-hover);
     border: 1px solid var(--border);
-    padding: 10px;
     border-radius: 12px;
-    text-align: center;
+    overflow: hidden;
     cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s ease;
+}
+
+.haircut-grid-item img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    display: block;
+}
+
+.haircut-grid-item .h-title {
+    padding: 8px;
     font-size: 10px;
     font-weight: 700;
+    color: var(--text-main);
 }
 
 .haircut-grid-item.selected {
     border-color: var(--accent);
-    color: var(--accent);
+    box-shadow: 0 0 8px rgba(216, 140, 154, 0.4);
+}
+
+/* Галерея "Приклади робіт" (Фікс розтягування) */
+.works-grid-full {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+}
+
+.works-carousel-item {
+    width: 100%;
+    height: 160px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.works-carousel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 /* Календар */
@@ -336,7 +373,6 @@ body {
     cursor: pointer;
 }
 
-/* Підсумок */
 .summary-card {
     background: var(--card-hover);
     border: 1px solid var(--border);
@@ -366,7 +402,6 @@ body {
     margin-top: 6px;
 }
 
-/* Плаваюча панель */
 .sticky-bottom-bar {
     position: fixed;
     bottom: 10px;
@@ -385,7 +420,6 @@ body {
     z-index: 1000;
 }
 
-/* Аккордеон та Модалки */
 .accordion-header {
     display: flex;
     justify-content: space-between;
