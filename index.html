@@ -34,13 +34,13 @@
             <div class="nav-chip" onclick="switchTab('loc', this)">Локація</div>
         </div>
 
-        <!-- ВКЛАДКА: ЗАПИС -->
+        <!-- ВКЛАДКА: ЗАПИС (ПОКРОКОВА) -->
         <div id="paneBook" class="section-pane active">
-            <div class="form-card">
-                <label class="field-label">1. Оберіть категорію послуг</label>
+            <!-- КРОК 1: КАТЕГОРІЯ -->
+            <div class="form-card" id="step1Card">
+                <label class="field-label">Крок 1. Оберіть категорію послуг</label>
                 <div class="services-list">
                     <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
-                        <img src="PXL_20260528_101624993_exported_4255.jpg" alt="Стрижка">
                         <div class="service-card-info">
                             <div class="title">Стрижка</div>
                             <div class="sub">1000 ₴ • 1.5 год</div>
@@ -48,15 +48,13 @@
                         <div class="service-radio-indicator"></div>
                     </div>
                     <div class="service-card-row" id="mainCardColor" onclick="selectMainCategory('color')">
-                        <img src="PXL_20260531_162323458.jpg" alt="Фарбування">
                         <div class="service-card-info">
                             <div class="title">Фарбування</div>
-                            <div class="sub">Підбір за станом</div>
+                            <div class="sub">Підбір за станом волосся</div>
                         </div>
                         <div class="service-radio-indicator"></div>
                     </div>
                     <div class="service-card-row" id="mainCardComplex" onclick="selectMainCategory('complex')">
-                        <img src="hair-v2.jpg" alt="Стрижка + Фарбування">
                         <div class="service-card-info">
                             <div class="title">Стрижка + Фарбування коріння</div>
                             <div class="sub">3000 ₴ • 3 год (до 2 см)</div>
@@ -64,8 +62,11 @@
                         <div class="service-radio-indicator"></div>
                     </div>
                 </div>
+            </div>
 
-                <div id="haircutExamplesSection" style="margin-top: 12px; display: none;">
+            <!-- КРОК 2: ДЕТАЛІ (Фарбування / Стан / Референси) -->
+            <div class="form-card" id="step2Card" style="display: none;">
+                <div id="haircutExamplesSection" style="display: none; margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <label class="field-label" style="margin: 0;">✨ Оберіть референс стрижки:</label>
                         <span id="selectedRefNotice" style="font-size: 9px; color: var(--accent); font-weight: 700; display: none;">✓ Обрано</span>
@@ -78,12 +79,12 @@
                 </div>
 
                 <div id="categorySubmenu" style="display: none;">
-                    <label class="field-label" style="margin-top: 10px;">2. Оберіть ваш поточний стан волосся:</label>
+                    <label class="field-label">Крок 2А. Оберіть ваш поточний стан волосся:</label>
                     <div id="submenuItems" style="display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
 
                 <div id="coloringSubOptions" style="display: none;">
-                    <label class="field-label">3. Доступні послуги та довжина:</label>
+                    <label class="field-label">Крок 2Б. Доступні послуги та довжина:</label>
                     <div id="specificServicesList" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;"></div>
                     <div id="lengthContainer" style="display: none;">
                         <label class="field-label">Довжина волосся:</label>
@@ -110,19 +111,17 @@
                     </div>
                 </div>
 
-                <div id="photoUploadSection" style="display: none;">
+                <!-- ОБОВ'ЯЗКОВІ РЕФЕРЕНСИ -->
+                <div id="photoUploadSection" style="margin-top: 10px;">
                     <div class="photo-upload-container">
-                        <label class="field-label" style="margin-top: 10px;">4. Завантажте фото вашого волосся:</label>
-                        <input type="file" class="input-box" id="clientHairPhoto" accept="image/*">
-                    </div>
-                    <div class="photo-upload-container" style="margin-top: 8px;">
-                        <label class="field-label">5. Завантажте фото-референс:</label>
-                        <input type="file" class="input-box" id="clientRefPhoto" accept="image/*">
+                        <label class="field-label" style="color: var(--accent);">⚠️ 4. Завантажте фото вашого волосся або референс (ОБОВ'ЯЗКОВО):</label>
+                        <input type="file" class="input-box" id="clientHairPhoto" accept="image/*" onchange="checkPhotoLoaded()">
                     </div>
                 </div>
             </div>
 
-            <div class="form-card">
+            <!-- КРОК 3: ДАТА, ЧАС ТА КОНТАКТИ -->
+            <div class="form-card" id="step3Card" style="display: none;">
                 <div class="summary-card">
                     <div class="summary-header">
                         <span class="field-label" style="margin:0;">Обрана послуга та час</span>
@@ -136,7 +135,7 @@
                 </div>
 
                 <div>
-                    <label class="field-label">Дата візиту</label>
+                    <label class="field-label">Крок 5. Дата візиту</label>
                     <div class="custom-calendar-grid" id="customCalendarGrid"></div>
                 </div>
 
@@ -158,7 +157,7 @@
 
                 <div class="form-row">
                     <div>
-                        <label class="field-label">Email (обов'язково)</label>
+                        <label class="field-label" style="color: var(--accent);">Email (ОБОВ'ЯЗКОВО)</label>
                         <input type="email" id="clientEmail" class="input-box" placeholder="mail@example.com">
                     </div>
                     <div>
@@ -200,37 +199,17 @@
         </div>
     </div>
 
-    <!-- Модальне вікно оферти (повний текст) -->
+    <!-- Модальне вікно оферти -->
     <div id="offerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center; padding: 16px;">
         <div class="modal-body" style="background: var(--card-bg); border: 1px solid var(--border); padding: 18px; border-radius: 18px; max-width: 380px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;">
             <h3 style="font-size: 12px; text-align: center; margin-bottom: 10px;">ПУБЛІЧНИЙ ДОГОВІР ОФЕРТИ</h3>
-            <div style="font-size: 9.5px; line-height: 1.5; overflow-y: auto; color: var(--text-muted); margin-bottom: 12px;">
+            <div style="font-size: 9.5px; line-height: 1.5; overflow-y: auto; color: var(--text-muted); margin-bottom: 12px; max-height: 50vh;">
                 <b>про надання інформаційно-консультаційних та перукарських послуг</b><br><br>
-                Цей договір є офіційною пропозицією (офертою) фізичної особи-підприємця <b>Явір Ілляна Володимирівна</b> (далі - «Виконавець»), адресованою невизначеному колу фізичних осіб (далі - «Замовник/Клієнт»), які звертаються за послугами через сайт студії. Відповідно до ст. 633 Цивільного кодексу України, умови цього Договору є однаковими для всіх Замовників.<br><br>
-                
-                <b>1. ЗАГАЛЬНІ ПОЛОЖЕННЯ</b><br>
-                1.1. Повною та безумовною акцептом (прийняттям) цієї публічної оферти є здійснення Замовником запису на послугу через сайт та/або внесення завдатку (передоплати) за послуги Виконавця.<br>
-                1.2. Виконавець діє на підставі державної реєстрації як фізична особа-підприємець (РНОКПП: 3600209601).<br><br>
-                
-                <b>2. ПРЕДМЕТ ДОГОВОРУ ТА УМОВИ ЗАПИСУ</b><br>
-                2.1. Виконавець зобов'язується надати Замовнику перукарські послуги (стрижка, фарбування, догляд тощо) у просторі студії за адресою: м. Дніпро, вул. Володимира Вернадського, 35-Б, а Замовник зобов'язується оплатити ці послуги.<br>
-                2.2. Умова броні та завдатку: Для нових клієнтів обов'язковою умовою підтвердження бронювання часу є внесення завдатку у розмірі 500 (п'ятсот) гривень. Завдаток зараховується в рахунок оплати послуги.<br>
-                2.3. Реквізити для оплати: рахунок ФОП UA923220010000026005320084201 або через офіційне платіжне посилання Виконавця.<br><br>
-                
-                <b>3. ПРАВИЛА СКАСУВАННЯ ТА ПОВЕРНЕННЯ КОШТІВ (ЗАХИСТ МАЙСТРА)</b><br>
-                3.1. Замовник має право скасувати або перенести заброньований час не пізніш ніж за 48 годин до початку надання послуги.<br>
-                3.2. У разі скасування замовлення менш ніж за 48 годин до призначеного часу, або в разі неявки Клієнта в студію, внесений завдаток 500 грн не повертається та утримується Виконавцем як компенсація за збитки від простою робочого часу та втрати потенційного клієнта на цей слот.<br>
-                3.3. Виконавець має право в односторонньому порядку скасувати або перенести запис у разі непередбачуваних форс-мажорних обставин (відключення світла, повітряна тривога, хвороба майстра), попередивши Клієнта за першої ж можливості.<br><br>
-                
-                <b>4. ВІДПОВІДАЛЬНІСТЬ ТА ОБМЕЖЕННЯ (ПРАВИЛА СТУДІЇ)</b><br>
-                4.1. Клієнт зобов'язаний правдиво повідомити про історію свого волосся (наявність побутового барвника, хни, біозавивки, кератину, ботоксу, попереднього освітлення тощо).<br>
-                4.2. Виконавець не несе відповідальності за кінцевий результат фарбування та стан волосся у випадках, якщо Клієнт приховав або надав неправдиву інформацію про попередні процедури на волоссі.<br>
-                4.3. Виконавець залишає за собою право відмовити у наданні послуги безпосередньо в студії, якщо стан волосся Клієнта унеможливлює безпечне проведення процедури без шкоди для здоров'я волосся.<br><br>
-                
-                <b>Реквізити Виконавця:</b><br>
-                • ФОП: Явір Ілляна Володимирівна<br>
-                • РНОКПП: 3600209601<br>
-                • Рахунок (IBAN): UA923220010000026005320084201
+                Цей договір є офіційною пропозицією (офертою) фізичної особи-підприємця <b>Явір Ілляна Володимирівна</b> (далі - «Виконавець»), адресованою невизначеному колу фізичних осіб (далі - «Замовник/Клієнт»), які звертаються за послугами через сайт студії.<br><br>
+                <b>1. УМОВИ ЗАПИСУ ТА ЗАВДАТОК</b><br>
+                Для нових клієнтів обов'язковою умовою підтвердження бронювання часу є внесення завдатку у розмірі 500 гривень.<br><br>
+                <b>2. ПРАВИЛА СКАСУВАННЯ ТА ПОВЕРНЕННЯ КОШТІВ</b><br>
+                Замовник має право скасувати або перенести заброньований час не пізніш ніж за 48 годин. У разі скасування менш ніж за 48 годин, завдаток не повертається.<br>
             </div>
             <button class="btn-main" onclick="closeOffer()">Зрозуміло</button>
         </div>
@@ -243,7 +222,6 @@
 
     <script src="app.js"></script>
     <script>
-        // Автоматичне підвантаження робіт з портфоліо майстра на головну сторінку
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 let res = await fetch('/api/works');
