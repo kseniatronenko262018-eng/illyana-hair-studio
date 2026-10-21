@@ -34,9 +34,9 @@
             <div class="nav-chip" onclick="switchTab('loc', this)">Локація</div>
         </div>
 
-        <!-- ВКЛАДКА: ЗАПИС (ПОКРОКОВА) -->
+        <!-- ВКЛАДКА: ЗАПИС -->
         <div id="paneBook" class="section-pane active">
-            <!-- КРОК 1: КАТЕГОРІЯ -->
+            <!-- КРОК 1 -->
             <div class="form-card" id="step1Card">
                 <label class="field-label">Крок 1. Оберіть категорію послуг</label>
                 <div class="services-list">
@@ -64,20 +64,8 @@
                 </div>
             </div>
 
-            <!-- КРОК 2: ДЕТАЛІ (Фарбування / Стан / Референси) -->
+            <!-- КРОК 2 -->
             <div class="form-card" id="step2Card" style="display: none;">
-                <div id="haircutExamplesSection" style="display: none; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <label class="field-label" style="margin: 0;">✨ Оберіть референс стрижки:</label>
-                        <span id="selectedRefNotice" style="font-size: 9px; color: var(--accent); font-weight: 700; display: none;">✓ Обрано</span>
-                    </div>
-                    <div class="haircut-grid">
-                        <div class="haircut-grid-item" onclick="selectHaircutReference('1_20261005_205818_0000.png', this)"><img src="1_20261005_205818_0000.png"></div>
-                        <div class="haircut-grid-item" onclick="selectHaircutReference('2_20261005_205818_0001.png', this)"><img src="2_20261005_205818_0001.png"></div>
-                        <div class="haircut-grid-item" onclick="selectHaircutReference('3_20261005_205818_0002.png', this)"><img src="3_20261005_205818_0002.png"></div>
-                    </div>
-                </div>
-
                 <div id="categorySubmenu" style="display: none;">
                     <label class="field-label">Крок 2А. Оберіть ваш поточний стан волосся:</label>
                     <div id="submenuItems" style="display: flex; flex-direction: column; gap: 6px;"></div>
@@ -111,7 +99,6 @@
                     </div>
                 </div>
 
-                <!-- ОБОВ'ЯЗКОВІ РЕФЕРЕНСИ -->
                 <div id="photoUploadSection" style="margin-top: 10px;">
                     <div class="photo-upload-container">
                         <label class="field-label" style="color: var(--accent);">⚠️ 4. Завантажте фото вашого волосся або референс (ОБОВ'ЯЗКОВО):</label>
@@ -120,7 +107,7 @@
                 </div>
             </div>
 
-            <!-- КРОК 3: ДАТА, ЧАС ТА КОНТАКТИ -->
+            <!-- КРОК 3 -->
             <div class="form-card" id="step3Card" style="display: none;">
                 <div class="summary-card">
                     <div class="summary-header">
@@ -184,8 +171,7 @@
             <div class="form-card">
                 <label class="field-label" style="text-align: center;">✨ Приклади робіт студії</label>
                 <div class="works-grid-full" id="publicWorksGrid">
-                    <div class="works-carousel-item" onclick="openLightbox('1_20261005_205818_0000.png')"><img src="1_20261005_205818_0000.png"></div>
-                    <div class="works-carousel-item" onclick="openLightbox('2_20261005_205818_0001.png')"><img src="2_20261005_205818_0001.png"></div>
+                    <!-- Завантажуються динамічно -->
                 </div>
             </div>
         </div>
