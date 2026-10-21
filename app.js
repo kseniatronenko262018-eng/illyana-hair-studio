@@ -7,319 +7,110 @@ let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
 
-const TELEGRAM_BOT_URL = 'https://t.me/illyana_hair_studio_bot';
+const TELEGRAM_BOT_URL = 'https://t.me/illianahair_bot';
 
-const translations = {
-    ua: {
-        tab_book: "Запис",
-        tab_works: "Приклади робіт",
-        tab_loc: "Локація",
-        profile_sub: "квір хейр стиліст • перукар дніпро",
-        profile_bio: "не відрощуй волосся — відрощуй індивідуальність",
-        step1: "1. Оберіть категорію послуг",
-        cut_title: "Стрижка",
-        cut_sub: "1000 ₴ • 1.5 год",
-        color_title: "Фарбування",
-        color_sub: "Підбір за станом",
-        complex_title: "Стрижка + Фарбування коріння",
-        complex_sub: "3000 ₴ • 3 год (до 2 см)",
-        haircut_ref_title: "✨ Оберіть референс стрижки:",
-        choose_btn: "Обрати",
-        ref_selected_notice: "✓ Обрано",
-        step2: "2. Оберіть ваш поточний стан волосся:",
-        step3: "3. Доступні послуги та довжина:",
-        length_label: "Довжина волосся:",
-        len_shoulders: "До плечей",
-        len_blades: "Від плечей до лопаток",
-        len_below: "Нижче лопаток",
-        rules_title: "📌 Важливі примітки та правила майстра",
-        rule_1: "Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною відповідно до довжини.",
-        rule_2: "Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).",
-        rule_3: "Я не роблю вихід із чорного або рудого.",
-        rule_4: "Я не фарбую волосся після біозавивки, ботоксу, кератину.",
-        photo_current_label: "4. Завантажте фото вашого волосся:",
-        photo_ref_label: "5. Завантажте фото-референс:",
-        selected_service_label: "Обрана послуга та час",
-        select_service_placeholder: "Спочатку оберіть категорію вище",
-        date_label: "Дата візиту",
-        name_label: "Ім'я",
-        name_placeholder: "Як звертатись",
-        phone_label: "Телефон",
-        email_label: "Email (обов'язково)",
-        social_label: "Нік / соцмережа",
-        slots_label: "Доступні слоти часу (останній запис о 19:00)",
-        deposit_notice: "⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.",
-        pay_btn: "Сплатити завдаток 500 ₴ та забронювати",
-        modal_title: "Публічний договір оферти",
-        modal_btn: "Зрозуміло",
-        loc_info: "📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>Приватний простір, мінімалізм та фокус на якості.",
-        map_btn: "Відкрити в Google Maps"
-    },
-    en: {
-        tab_book: "Booking",
-        tab_works: "Portfolio",
-        tab_loc: "Location",
-        profile_sub: "queer hair stylist • dnipro",
-        profile_bio: "don't grow hair — grow individuality",
-        step1: "1. Select service category",
-        cut_title: "Haircut",
-        cut_sub: "1000 ₴ • 1.5 hrs",
-        color_title: "Coloring",
-        color_sub: "Selection by condition",
-        complex_title: "Haircut + Root Coloring",
-        complex_sub: "3000 ₴ • 3 hrs (up to 2 cm)",
-        haircut_ref_title: "✨ Choose haircut reference:",
-        choose_btn: "Select",
-        ref_selected_notice: "✓ Selected",
-        step2: "2. Select your current hair condition:",
-        step3: "3. Available services & length:",
-        length_label: "Hair length:",
-        len_shoulders: "To shoulders",
-        len_blades: "Shoulder to shoulder blades",
-        len_below: "Below shoulder blades",
-        rules_title: "📌 Important notes & master rules",
-        rule_1: "If roots are over 2 cm, coloring is considered primary based on length.",
-        rule_2: "I do not do blonde techniques (AirTouch, balayage, etc.).",
-        rule_3: "I do not do black or red color correction.",
-        rule_4: "I do not dye hair after perm, botox, or keratin.",
-        photo_current_label: "4. Upload your hair photo:",
-        photo_ref_label: "5. Upload reference photo:",
-        selected_service_label: "Selected service & time",
-        select_service_placeholder: "First select a category above",
-        date_label: "Visit Date",
-        name_label: "Name",
-        name_placeholder: "How to address you",
-        phone_label: "Phone",
-        email_label: "Email (required)",
-        social_label: "Nickname / social",
-        slots_label: "Available time slots (last booking at 19:00)",
-        deposit_notice: "⚡ <b>Booking term:</b> <b>500 UAH</b> deposit confirms booking.",
-        pay_btn: "Pay deposit 500 ₴ & book",
-        modal_title: "Public Offer Agreement",
-        modal_btn: "Understood",
-        loc_info: "📍 <b>Location:</b> Dnipro, 35-B Volodymyr Vernadskyi St.<br><br>Private space, minimalism and focus on quality.",
-        map_btn: "Open in Google Maps"
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        initCustomCalendar();
-    } catch(e) { console.error("Calendar init error:", e); }
-
-    try {
-        setupPhotoPreviews();
-    } catch(e) { console.error("Photo previews error:", e); }
-
-    let savedAvatar = localStorage.getItem('illiana_custom_master_photo') || 'https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg';
-    document.querySelectorAll('.profile-avatar img, #profileAvatarImg, .avatar-wrap img').forEach(img => {
-        img.src = savedAvatar;
-    });
-
-    let heroBg = document.getElementById('profileHeroBg');
-    if (heroBg) {
-        heroBg.style.backgroundImage = `url('${savedAvatar}')`;
-    }
-
+window.addEventListener('DOMContentLoaded', () => {
+    initCustomCalendar();
     fetchBookingsData();
-    loadWorksPortfolio();
 });
-
-function setupPhotoPreviews() {
-    const hairPhotoInput = document.getElementById('clientHairPhoto');
-    const refPhotoInput = document.getElementById('clientRefPhoto');
-
-    if (hairPhotoInput) {
-        hairPhotoInput.addEventListener('change', (e) => handlePreviewRender(e.target, 'hairPhotoPreviewContainer'));
-    }
-    if (refPhotoInput) {
-        refPhotoInput.addEventListener('change', (e) => handlePreviewRender(e.target, 'refPhotoPreviewContainer'));
-    }
-}
-
-function handlePreviewRender(input, containerId) {
-    let container = document.getElementById(containerId);
-    if (!container) return;
-
-    const file = input.files && input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            container.innerHTML = `
-                <div class="photo-preview-box">
-                    <img src="${e.target.result}" alt="Прев'ю">
-                    <span>✓ Фото успішно завантажено</span>
-                </div>
-            `;
-        };
-        reader.readAsDataURL(file);
-    } else {
-        container.innerHTML = '';
-    }
-}
 
 async function fetchBookingsData() {
     try {
         let res = await fetch('/api/bookings');
-        if (!res.ok) return;
         let data = await res.json();
         bookedSlotsCache = {};
-        if (Array.isArray(data)) {
-            data.forEach(b => {
-                if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
-                bookedSlotsCache[b.date].push({
-                    time: b.time,
-                    duration: Number(b.durationHours || 1.5)
-                });
-            });
-        }
+        data.forEach(b => {
+            if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
+            bookedSlotsCache[b.date].push({ time: b.time, duration: Number(b.durationHours || 1.5) });
+        });
         renderTimeSlots();
-    } catch(e) { console.error("Could not fetch bookings", e); }
+    } catch(e) {}
 }
 
-async function loadWorksPortfolio() {
-    let uploadedContainer = document.getElementById('uploadedWorksContainer');
-    if (!uploadedContainer) return;
-
-    try {
-        let res = await fetch('/api/works');
-        if (res.ok) {
-            let customWorks = await res.json();
-            if (Array.isArray(customWorks) && customWorks.length > 0) {
-                uploadedContainer.innerHTML = customWorks.map(w => 
-                    `<div class="works-carousel-item" onclick="openLightbox('${w.image}')"><img src="${w.image}" alt="${w.title || 'Робота'}"></div>`
-                ).join('');
-            }
-        }
-    } catch (e) {
-        console.error("Error loading uploaded works:", e);
-    }
+function toggleAccordion(header) { header.parentElement.classList.toggle('open'); }
+function openOffer() { document.getElementById('offerModal').style.display = 'flex'; }
+function closeOffer() { document.getElementById('offerModal').style.display = 'none'; }
+function openLightbox(imgSrc) {
+    let img = document.getElementById('lightboxImage');
+    if (img) { img.src = imgSrc; document.getElementById('imageLightboxModal').style.display = 'flex'; }
 }
-
-function toggleLang() {
-    currentLang = currentLang === 'ua' ? 'en' : 'ua';
-    let langBtn = document.getElementById('langToggle');
-    if (langBtn) langBtn.innerText = currentLang.toUpperCase() + ' / ' + (currentLang === 'ua' ? 'EN' : 'UA');
-
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        let key = el.getAttribute('data-i18n');
-        if (translations[currentLang][key]) el.innerHTML = translations[currentLang][key];
-    });
-
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        let key = el.getAttribute('data-i18n-placeholder');
-        if (translations[currentLang][key]) el.setAttribute('placeholder', translations[currentLang][key]);
-    });
-    initCustomCalendar();
-}
-
-function toggleTheme() {
-    const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme');
-    html.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
-}
-
-function toggleAccordion(header) {
-    if (header && header.parentElement) {
-        header.parentElement.classList.toggle('open');
-    }
-}
+function closeLightbox() { document.getElementById('imageLightboxModal').style.display = 'none'; }
 
 function switchTab(tabName, element) {
-    document.querySelectorAll('.section-pane').forEach(pane => pane.classList.remove('active'));
-    document.querySelectorAll('.quick-nav .nav-chip').forEach(chip => chip.classList.remove('active'));
-
-    if (tabName === 'book') document.getElementById('paneBook')?.classList.add('active');
-    if (tabName === 'works') {
-        document.getElementById('paneWorks')?.classList.add('active');
-        loadWorksPortfolio();
-    }
-    if (tabName === 'loc') document.getElementById('paneLoc')?.classList.add('active');
+    document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-chip').forEach(c => c.classList.remove('active'));
+    document.getElementById(tabName === 'book' ? 'paneBook' : tabName === 'works' ? 'paneWorks' : 'paneLoc').classList.add('active');
     if (element) element.classList.add('active');
 }
 
 function selectMainCategory(category) {
     selectedCategory = category;
-    document.querySelectorAll('.service-card-row').forEach(card => card.classList.remove('selected'));
-    if (category === 'cut') document.getElementById('mainCardCut')?.classList.add('selected');
-    if (category === 'color') document.getElementById('mainCardColor')?.classList.add('selected');
-    if (category === 'complex') document.getElementById('mainCardComplex')?.classList.add('selected');
-
-    let haircutEx = document.getElementById('haircutExamplesSection');
-    let photoUp = document.getElementById('photoUploadSection');
-    if (haircutEx) haircutEx.style.display = (category === 'cut' || category === 'complex') ? 'block' : 'none';
-    if (photoUp) photoUp.style.display = 'block';
+    document.querySelectorAll('.service-card-row').forEach(c => c.classList.remove('selected'));
     
+    let elId = category === 'cut' ? 'mainCardCut' : category === 'color' ? 'mainCardColor' : 'mainCardComplex';
+    document.getElementById(elId)?.classList.add('selected');
+
+    document.getElementById('haircutExamplesSection').style.display = (category === 'cut' || category === 'complex') ? 'block' : 'none';
+    document.getElementById('photoUploadSection').style.display = 'block';
+
     let subMenu = document.getElementById('categorySubmenu');
     let coloringOptions = document.getElementById('coloringSubOptions');
 
     if (category === 'color') {
-        if (subMenu) subMenu.style.display = 'block';
-        if (coloringOptions) coloringOptions.style.display = 'block';
+        subMenu.style.display = 'block'; coloringOptions.style.display = 'block';
         selectedServiceData = null;
         renderSubmenuItems();
-        updateSummaryCard();
     } else if (category === 'complex') {
-        if (subMenu) subMenu.style.display = 'none';
-        if (coloringOptions) coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка + Фарбування коріння (до 2 см)", price: 3000, durationHours: 3, durationText: "3 год" };
-        updateSummaryCard();
+        subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
+        selectedServiceData = { title: "Стрижка + Фарбування коріння", price: 3000, durationHours: 3 };
     } else {
-        if (subMenu) subMenu.style.display = 'none';
-        if (coloringOptions) coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, durationHours: 1.5, durationText: "1.5 год" };
-        updateSummaryCard();
+        subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
+        selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, durationHours: 1.5 };
     }
-    renderTimeSlots();
+    updateSummaryCard(); renderTimeSlots();
 }
 
 function selectHaircutReference(imgName, element) {
-    document.querySelectorAll('.haircut-grid-item').forEach(item => item.classList.remove('selected'));
-    if (element) element.classList.add('selected');
+    document.querySelectorAll('.haircut-grid-item').forEach(i => i.classList.remove('selected'));
+    element.classList.add('selected');
     selectedHaircutRef = imgName;
-    let notice = document.getElementById('selectedRefNotice');
-    if (notice) notice.style.display = 'block';
+    document.getElementById('selectedRefNotice').style.display = 'block';
     updateSummaryCard();
 }
 
 function renderSubmenuItems() {
-    let container = document.getElementById('submenuItems');
-    if (!container) return;
-    container.innerHTML = `
-        <div class="sub-service-card" onclick="selectHairCondition('natural', 'Натуральне волосся', this)">
+    document.getElementById('submenuItems').innerHTML = `
+        <div class="sub-service-card" onclick="selectHairCondition('natural', this)">
             <div><div class="s-title">Натуральне волосся</div><div class="s-sub">Доступні всі техніки фарбування</div></div>
         </div>
-        <div class="sub-service-card" onclick="selectHairCondition('colored', 'Фарбоване волосся', this)">
+        <div class="sub-service-card" onclick="selectHairCondition('colored', this)">
             <div><div class="s-title">Фарбоване волосся</div><div class="s-sub">Корінь, тонування, однотон</div></div>
         </div>
     `;
 }
 
-function selectHairCondition(conditionKey, conditionTitle, element) {
-    document.querySelectorAll('#categorySubmenu .sub-service-card').forEach(card => card.classList.remove('selected'));
-    if (element) element.classList.add('selected');
-    selectedCondition = conditionKey;
-    
+function selectHairCondition(conditionKey, element) {
+    document.querySelectorAll('#categorySubmenu .sub-service-card').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
     let specList = document.getElementById('specificServicesList');
-    if (!specList) return;
     if (conditionKey === 'natural') {
         specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, 2.5, '2.5 год', this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння', 2500, 2.5, this)">
                 <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд / яскраві техніки', null, null, null, this)">
-                <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення з тонуванням</div></div>
+            <div class="sub-service-card" onclick="selectSpecificServiceType('blonde', 'Тотал блонд', null, null, this)">
+                <div><div class="s-title">Тотал блонд / яскраві техніки</div><div class="s-sub">Повне освітлення</div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, null, this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, this)">
                 <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Фарбування в один тон</div></div>
             </div>
         `;
     } else {
         specList.innerHTML = `
-            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння (до 2 см)', 2500, 2.5, '2.5 год', this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('root', 'Фарбування коріння', 2500, 2.5, this)">
                 <div><div class="s-title">Фарбування коріння (до 2 см)</div><div class="s-sub">2500 ₴ • 2.5 год</div></div>
             </div>
-            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування / однотон', null, null, null, this)">
+            <div class="sub-service-card" onclick="selectSpecificServiceType('tone', 'Тонування', null, null, this)">
                 <div><div class="s-title">Тонування / однотон</div><div class="s-sub">Тонування фарбованого</div></div>
             </div>
         `;
@@ -327,87 +118,47 @@ function selectHairCondition(conditionKey, conditionTitle, element) {
 }
 
 let chosenServiceType = null;
-
-function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, fixedDurationText, element) {
+function selectSpecificServiceType(typeKey, title, fixedPrice, fixedHours, element) {
     document.querySelectorAll('#specificServicesList .sub-service-card').forEach(c => c.classList.remove('selected'));
-    if (element) element.classList.add('selected');
+    element.classList.add('selected');
     chosenServiceType = typeKey;
-
-    let lengthContainer = document.getElementById('lengthContainer');
-    if (lengthContainer) lengthContainer.style.display = 'block';
+    document.getElementById('lengthContainer').style.display = 'block';
 
     if (fixedPrice !== null) {
-        selectedServiceData = { title: title, price: fixedPrice, durationHours: fixedHours, durationText: fixedDurationText };
+        selectedServiceData = { title, price: fixedPrice, durationHours: fixedHours };
     } else {
         updateServiceDetails();
     }
-    updateSummaryCard();
-    renderTimeSlots();
+    updateSummaryCard(); renderTimeSlots();
 }
 
 function updateServiceDetails() {
-    let lengthSelect = document.getElementById('hairLengthSelect');
-    let lengthVal = lengthSelect ? lengthSelect.value : 'shoulders';
-
+    let lengthVal = document.getElementById('hairLengthSelect').value;
     if (chosenServiceType === 'blonde') {
-        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тотал блонд", price: 4000, durationHours: 3, durationText: "3 год" };
-        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тотал блонд", price: 6000, durationHours: 6, durationText: "6 год" };
-        else selectedServiceData = { title: "Тотал блонд", price: 7500, durationHours: 7, durationText: "7+ год" };
+        selectedServiceData = { title: "Тотал блонд", price: lengthVal === 'shoulders' ? 4000 : lengthVal === 'shoulder_blades' ? 6000 : 7500, durationHours: lengthVal === 'shoulders' ? 3 : lengthVal === 'shoulder_blades' ? 6 : 7 };
     } else if (chosenServiceType === 'tone') {
-        if (lengthVal === 'shoulders') selectedServiceData = { title: "Тонування / однотон", price: 3000, durationHours: 2, durationText: "2 год" };
-        else if (lengthVal === 'shoulder_blades') selectedServiceData = { title: "Тонування / однотон", price: 3500, durationHours: 2.5, durationText: "2.5 год" };
-        else selectedServiceData = { title: "Тонування / однотон", price: 5000, durationHours: 3, durationText: "3 год" };
+        selectedServiceData = { title: "Тонування", price: lengthVal === 'shoulders' ? 3000 : lengthVal === 'shoulder_blades' ? 3500 : 5000, durationHours: lengthVal === 'shoulders' ? 2 : lengthVal === 'shoulder_blades' ? 2.5 : 3 };
     }
-    updateSummaryCard();
-    renderTimeSlots();
+    updateSummaryCard(); renderTimeSlots();
 }
 
 function updateSummaryCard() {
     let titleEl = document.getElementById('summaryServiceTitle');
     let priceBadge = document.getElementById('summaryPriceBadge');
     let metaEl = document.getElementById('summaryMeta');
-    let durationEl = document.getElementById('summaryDuration');
-    let dateTimeEl = document.getElementById('summaryDateTime');
-
-    let stickyBar = document.getElementById('stickyBottomBar');
-    let stickyTitle = document.getElementById('stickyBarTitle');
-    let stickyPrice = document.getElementById('stickyBarPrice');
-
-    if (!titleEl) return;
 
     if (selectedServiceData) {
-        let text = selectedServiceData.title;
-        if (selectedHaircutRef) text += " + Референс";
-        titleEl.innerText = text;
-        if (priceBadge) priceBadge.innerText = selectedServiceData.price + " ₴";
-        if (durationEl) durationEl.innerText = selectedServiceData.durationText;
-        if (metaEl) metaEl.style.display = 'flex';
-
-        if (stickyBar) {
-            stickyBar.style.display = 'flex';
-            if (stickyTitle) stickyTitle.innerText = text;
-            if (stickyPrice) stickyPrice.innerText = selectedServiceData.price + " ₴";
-        }
+        titleEl.innerText = selectedServiceData.title + (selectedHaircutRef ? " + Референс" : "");
+        priceBadge.innerText = selectedServiceData.price + " ₴";
+        document.getElementById('summaryDuration').innerText = selectedServiceData.durationHours + " год";
+        metaEl.style.display = 'flex';
     } else {
-        titleEl.innerText = currentLang === 'ua' ? "Оберіть послугу вище" : "Select service above";
-        if (priceBadge) priceBadge.innerText = "0 ₴";
-        if (metaEl) metaEl.style.display = 'none';
-        if (stickyBar) stickyBar.style.display = 'none';
+        titleEl.innerText = "Спочатку оберіть категорію";
+        priceBadge.innerText = "0 ₴";
+        metaEl.style.display = 'none';
     }
-
-    if (dateTimeEl) {
-        if (selectedDate && selectedTimeSlot) {
-            dateTimeEl.innerText = `${selectedDate} о ${selectedTimeSlot}`;
-        } else if (selectedDate) {
-            dateTimeEl.innerText = `${selectedDate} (час не обрано)`;
-        }
-    }
-}
-
-function scrollToCalendar() {
-    let calEl = document.getElementById('customCalendarGrid');
-    if (calEl) {
-        calEl.scrollIntoView({ behavior: 'smooth' });
+    if (selectedDate) {
+        document.getElementById('summaryDateTime').innerText = selectedDate + (selectedTimeSlot ? ` о ${selectedTimeSlot}` : '');
     }
 }
 
@@ -415,319 +166,155 @@ function initCustomCalendar() {
     let grid = document.getElementById('customCalendarGrid');
     if (!grid) return;
     grid.innerHTML = '';
-
-    const daysUa = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-    const daysEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
+    const days = ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
     let today = new Date();
     for (let i = 0; i < 30; i++) {
-        let d = new Date();
-        d.setDate(today.getDate() + i);
-        
-        let dayOfWeek = (currentLang === 'ua') ? daysUa[d.getDay()] : daysEn[d.getDay()];
-        let dayNum = d.getDate();
-        let isoDate = d.toISOString().split('T')[0];
-
+        let d = new Date(); d.setDate(today.getDate() + i);
+        let iso = d.toISOString().split('T')[0];
         let cell = document.createElement('div');
-        cell.className = 'calendar-day-cell';
-        if (i === 0 && !selectedDate) {
+        cell.className = 'calendar-day-cell' + (selectedDate === iso || (i === 0 && !selectedDate) ? ' selected' : '');
+        if (i === 0 && !selectedDate) selectedDate = iso;
+        cell.innerHTML = `<span class="day-name">${days[d.getDay()]}</span><span class="day-num">${d.getDate()}</span>`;
+        cell.onclick = () => {
+            document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
             cell.classList.add('selected');
-            selectedDate = isoDate;
-        } else if (selectedDate === isoDate) {
-            cell.classList.add('selected');
-        }
-
-        cell.innerHTML = `
-            <span class="day-name">${dayOfWeek}</span>
-            <span class="day-num">${dayNum}</span>
-        `;
-        cell.onclick = () => selectCalendarDate(isoDate, cell);
+            selectedDate = iso;
+            renderTimeSlots(); updateSummaryCard();
+        };
         grid.appendChild(cell);
     }
     renderTimeSlots();
-}
-
-function selectCalendarDate(isoDate, element) {
-    document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
-    if (element) element.classList.add('selected');
-    selectedDate = isoDate;
-    renderTimeSlots();
-    updateSummaryCard();
 }
 
 function renderTimeSlots() {
     let grid = document.getElementById('timeSlotsGrid');
     if (!grid) return;
     grid.innerHTML = '';
+    if (!selectedDate) return;
 
-    if (!selectedDate) {
-        grid.innerHTML = '<span style="font-size:9px; color:var(--text-muted);">Спочатку оберіть дату</span>';
-        return;
-    }
-
-    let bookedForDay = bookedSlotsCache[selectedDate] || [];
-    let serviceDuration = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
-
-    let slots = [];
-    for (let h = 10; h <= 19; h++) {
-        slots.push(`${String(h).padStart(2, '0')}:00`);
-        if (h < 19) slots.push(`${String(h).padStart(2, '0')}:30`);
-    }
-
+    let booked = bookedSlotsCache[selectedDate] || [];
+    let dur = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
+    let slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
     let now = new Date();
     let isToday = (selectedDate === now.toISOString().split('T')[0]);
 
-    let isOnlyHaircut = selectedCategory === 'cut' || 
-        (selectedServiceData && selectedServiceData.title.toLowerCase().includes('стрижка') && !selectedServiceData.title.toLowerCase().includes('фарбування'));
-
-    let maxEndDecimal = isOnlyHaircut ? 20.5 : 20.0;
-
     slots.forEach(timeStr => {
-        let [hours, minutes] = timeStr.split(':').map(Number);
-        let slotStartDecimal = hours + (minutes / 60);
-        let slotEndDecimal = slotStartDecimal + serviceDuration;
-
+        let [h, m] = timeStr.split(':').map(Number);
+        let slotStart = h + (m / 60);
+        let slotEnd = slotStart + dur;
         let cell = document.createElement('div');
         cell.className = 'time-cell';
         cell.innerText = timeStr;
 
-        let isDisabled = false;
-
-        if (slotEndDecimal > maxEndDecimal) {
-            isDisabled = true;
-        }
-
+        let isDisabled = (timeStr !== "19:00" && slotEnd > 19.0) || (timeStr === "19:00" && dur > 1.5);
         if (isToday) {
-            let slotTime = new Date();
-            slotTime.setHours(hours, minutes, 0, 0);
-            let diffHours = (slotTime - now) / (1000 * 60 * 60);
-            if (diffHours < 2) {
-                isDisabled = true;
-            }
+            let slotTime = new Date(); slotTime.setHours(h, m, 0, 0);
+            if ((slotTime - now) / 3600000 < 3) isDisabled = true;
         }
 
-        bookedForDay.forEach(b => {
-            let [bHours, bMinutes] = b.time.split(':').map(Number);
-            let bStart = bHours + (bMinutes / 60);
-            let bEnd = bStart + Number(b.duration || 1.5);
-
-            if (slotStartDecimal < bEnd && slotEndDecimal > bStart) {
-                isDisabled = true;
-            }
+        booked.forEach(b => {
+            let [bh, bm] = b.time.split(':').map(Number);
+            let bStart = bh + (bm / 60);
+            if (slotStart < (bStart + b.duration) && slotEnd > bStart) isDisabled = true;
         });
 
         if (isDisabled) {
             cell.classList.add('booked');
-            cell.style.opacity = '0.3';
-            cell.style.pointerEvents = 'none';
         } else {
-            cell.onclick = () => selectTimeSlot(timeStr, cell);
+            cell.onclick = () => {
+                document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected'));
+                cell.classList.add('selected');
+                selectedTimeSlot = timeStr;
+                updateSummaryCard();
+            };
             if (selectedTimeSlot === timeStr) cell.classList.add('selected');
         }
         grid.appendChild(cell);
     });
 }
 
-function selectTimeSlot(time, element) {
-    document.querySelectorAll('.time-cell').forEach(c => c.classList.remove('selected'));
-    if (element) element.classList.add('selected');
-    selectedTimeSlot = time;
-    updateSummaryCard();
-}
-
-function openOffer() { 
-    let m = document.getElementById('offerModal');
-    if (m) m.style.display = 'flex'; 
-}
-function closeOffer() { 
-    let m = document.getElementById('offerModal');
-    if (m) m.style.display = 'none'; 
-}
-
-function openLightbox(imgSrc) {
-    let lightbox = document.getElementById('imageLightboxModal');
-    let img = document.getElementById('lightboxImage');
-    if (lightbox && img) {
-        img.src = imgSrc;
-        lightbox.style.display = 'flex';
-    }
-}
-function closeLightbox() { 
-    let m = document.getElementById('imageLightboxModal');
-    if (m) m.style.display = 'none'; 
-}
-
 async function uploadImageToImgBB(file) {
     if (!file) return '';
-
     return new Promise((resolve) => {
         let reader = new FileReader();
-        reader.onload = (event) => {
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
             let img = new Image();
+            img.src = e.target.result;
             img.onload = () => {
                 let canvas = document.createElement('canvas');
                 let MAX_WIDTH = 800;
-                let scaleSize = MAX_WIDTH / img.width;
-                
-                if (img.width <= MAX_WIDTH) {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                } else {
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = Math.round(img.height * scaleSize);
-                }
-
-                let ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                resolve(compressedDataUrl);
+                let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
             };
-            img.onerror = () => resolve(event.target.result || '');
-            img.src = event.target.result;
+            img.onerror = () => resolve('');
         };
         reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
     });
 }
 
 async function submitBooking() {
-    let nameEl = document.getElementById('clientName');
-    let phoneEl = document.getElementById('clientPhone');
-    let emailEl = document.getElementById('clientEmail');
-    let socialEl = document.getElementById('clientSocial');
+    let name = document.getElementById('clientName').value.trim();
+    let phone = document.getElementById('clientPhone').value.trim();
+    let email = document.getElementById('clientEmail').value.trim();
 
-    let name = nameEl ? nameEl.value.trim() : '';
-    let phone = phoneEl ? phoneEl.value.trim() : '';
-    let email = emailEl ? emailEl.value.trim() : '';
-    let social = socialEl ? socialEl.value.trim() : '';
+    if (!selectedServiceData) return alert("Оберіть послугу!");
+    if (!selectedDate || !selectedTimeSlot) return alert("Оберіть дату та час!");
+    if (!name || !phone || !email) return alert("Заповніть контактні дані!");
 
-    if (!selectedCategory || !selectedServiceData) {
-        alert("⚠️ Будь ласка, оберіть категорію та послугу!");
-        return;
-    }
-
-    if (!selectedDate || !selectedTimeSlot) {
-        alert("⚠️ Оберіть дату та час візиту!");
-        return;
-    }
-
-    let lengthSelect = document.getElementById('hairLengthSelect');
-    if (lengthSelect && lengthSelect.offsetParent !== null && !lengthSelect.value) {
-        alert("⚠️ Будь ласка, обов'язково оберіть довжину вашого волосся!");
-        return;
-    }
-
-    let hairPhotoInput = document.getElementById('clientHairPhoto');
-    if (!hairPhotoInput || !hairPhotoInput.files || !hairPhotoInput.files[0]) {
-        alert("⚠️ Будь ласка, обов'язково завантажте фото поточного стану вашого волосся (Пункт 4)!");
-        return;
-    }
-
-    let refPhotoInput = document.getElementById('clientRefPhoto');
-    let hasRefFile = refPhotoInput && refPhotoInput.files && refPhotoInput.files[0];
-    if (!hasRefFile && !selectedHaircutRef) {
-        alert("⚠️ Будь ласка, обов'язково завантажте фото-референс або оберіть варіант із каталогу (Пункт 5)!");
-        return;
-    }
-
-    if (!name || !phone || !email) {
-        alert("⚠️ Заповніть ім'я, телефон та email!");
-        return;
-    }
-
-    let submitBtn = document.querySelector('button[onclick="submitBooking()"]');
-    let originalBtnText = submitBtn ? submitBtn.innerText : '';
-    if (submitBtn) {
-        submitBtn.innerText = "⏳ Обробка та збереження фото...";
-        submitBtn.style.pointerEvents = 'none';
-        submitBtn.style.opacity = '0.7';
-    }
+    let btn = document.querySelector('.btn-main[onclick="submitBooking()"]');
+    let origText = btn.innerText;
+    btn.innerText = "⏳ Оформлення...";
+    btn.style.pointerEvents = 'none';
 
     try {
-        let hairPhotoUrl = await uploadImageToImgBB(hairPhotoInput.files[0]);
-        let refPhotoUrl = '';
+        let hInput = document.getElementById('clientHairPhoto');
+        let rInput = document.getElementById('clientRefPhoto');
+        let photoUrl = await uploadImageToImgBB(rInput?.files[0] || hInput?.files[0]);
+        let refFinal = selectedHaircutRef || photoUrl || 'EMPTY';
 
-        if (hasRefFile) {
-            refPhotoUrl = await uploadImageToImgBB(refPhotoInput.files[0]);
-        } else if (selectedHaircutRef) {
-            refPhotoUrl = selectedHaircutRef;
-        }
+        // 1. Спочатку перевіряємо, чи клієнт постійний
+        let checkRes = await fetch('/api/check-client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone }) });
+        let { isRegular } = await checkRes.json();
 
-        let finalReferenceInfo = `ПОТОЧНИЙ СТАН: ${hairPhotoUrl} ||| РЕФЕРЕНС: ${refPhotoUrl}`;
-
-        let checkRes = await fetch('/api/check-client', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
-        });
-        let checkData = await checkRes.json();
-        let isRegularClient = checkData.isRegular === true;
-
-        let bookingPayload = {
-            name,
-            phone,
-            email,
-            social,
-            service: selectedServiceData.title,
-            price: Number(selectedServiceData.price),
-            durationHours: Number(selectedServiceData.durationHours),
-            date: selectedDate,
-            time: selectedTimeSlot,
-            reference: finalReferenceInfo,
-            isRegular: isRegularClient
-        };
-
+        // 2. Зберігаємо запис
         let bookRes = await fetch('/api/bookings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bookingPayload)
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name, phone, email, social: document.getElementById('clientSocial')?.value.trim(),
+                service: selectedServiceData.title, price: selectedServiceData.price,
+                durationHours: selectedServiceData.durationHours, date: selectedDate, time: selectedTimeSlot, reference: refFinal
+            })
         });
 
-        let responseText = await bookRes.text();
-        let bookData;
-        try {
-            bookData = JSON.parse(responseText);
-        } catch (e) {
-            throw new Error("Відповідь сервера: " + responseText);
-        }
+        if (!bookRes.ok) throw new Error("Помилка збереження запису.");
 
-        if (!bookRes.ok || bookData.success === false) {
-            throw new Error(bookData.error || "Помилка збереження на сервері");
-        }
-
-        let bookingId = (bookData.booking && bookData.booking.id) ? bookData.booking.id : '';
-        let botLinkWithStart = bookingId ? `${TELEGRAM_BOT_URL}?start=${bookingId}` : TELEGRAM_BOT_URL;
-
-        if (isRegularClient) {
-            alert("✨ Раді знову бачити вас! Ваш запис успішно підтверджено без завдатку.");
-            window.location.href = botLinkWithStart;
+        // 3. Маршрутизація (Бот або Оплата)
+        if (isRegular) {
+            alert("✨ Запис підтверджено! Переходимо в Telegram-бот.");
+            window.location.href = TELEGRAM_BOT_URL;
         } else {
-            try {
-                let invoiceRes = await fetch('/api/create-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone, email, date: selectedDate, time: selectedTimeSlot, price: selectedServiceData.price })
-                });
-                let invoiceData = await invoiceRes.json();
-                
-                if (invoiceData && invoiceData.pageUrl) {
-                    window.location.href = invoiceData.pageUrl;
-                    return;
-                }
-            } catch (invErr) {}
-
-            alert("✨ Запис сформовано! Переходимо до оплати завдатку.");
-            window.location.href = botLinkWithStart;
+            let invRes = await fetch('/api/create-invoice', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot })
+            });
+            let invData = await invRes.json();
+            if (invData.pageUrl) {
+                window.location.href = invData.pageUrl;
+            } else {
+                alert("Переходимо у Telegram-бот.");
+                window.location.href = TELEGRAM_BOT_URL;
+            }
         }
     } catch (err) {
-        console.error("Помилка оформлення:", err);
         alert("Помилка: " + err.message);
     } finally {
-        if (submitBtn) {
-            submitBtn.innerText = originalBtnText;
-            submitBtn.style.pointerEvents = 'auto';
-            submitBtn.style.opacity = '1';
-        }
+        btn.innerText = origText;
+        btn.style.pointerEvents = 'auto';
     }
 }
