@@ -1,4 +1,16 @@
 :root {
+    --bg-main: #f4efe9;
+    --card-bg: #fdfaf6;
+    --card-hover: #f5f0ea;
+    --border: #e8ded3;
+    --text-main: #2c2c2c;
+    --text-muted: #857d76;
+    --accent: #b76e7a;
+    --accent-hover: #9c5c67;
+    --accent-invert: #ffffff;
+}
+
+[data-theme="dark"] {
     --bg-main: #0f0f10;
     --card-bg: #18181a;
     --card-hover: #222225;
@@ -8,18 +20,6 @@
     --accent: #d88c9a;
     --accent-hover: #e09ba7;
     --accent-invert: #000000;
-}
-
-[data-theme="light"] {
-    --bg-main: #f5f5f7;
-    --card-bg: #ffffff;
-    --card-hover: #f0f0f2;
-    --border: #e1e1e6;
-    --text-main: #1c1c1e;
-    --text-muted: #8e8e93;
-    --accent: #d88c9a;
-    --accent-hover: #c77b89;
-    --accent-invert: #ffffff;
 }
 
 * {
@@ -36,7 +36,8 @@ body {
     display: flex;
     justify-content: center;
     min-height: 100vh;
-    padding: 12px 8px 60px 8px;
+    /* Збільшений відступ знизу, щоб плаваюча панель не перекривала контент */
+    padding: 12px 8px 100px 8px; 
 }
 
 .mobile-container {
@@ -178,7 +179,7 @@ body {
     margin-bottom: 10px;
 }
 
-/* --- СІТКА ПОСЛУГ З ФОТО ЯК НА СКРІНШОТІ --- */
+/* СІТКА ПОСЛУГ З ФОТО */
 .service-selection-grid {
     display: flex;
     flex-direction: column;
@@ -199,7 +200,7 @@ body {
 
 .service-card-row.selected {
     border-color: var(--accent);
-    background: rgba(216, 140, 154, 0.12);
+    background: rgba(183, 110, 122, 0.12);
 }
 
 .service-img {
@@ -253,7 +254,7 @@ body {
 
 .sub-service-card.selected {
     border-color: var(--accent);
-    background: rgba(216, 140, 154, 0.12);
+    background: rgba(183, 110, 122, 0.12);
 }
 
 /* Сітка референсів стрижок з фото */
@@ -289,10 +290,10 @@ body {
 
 .haircut-grid-item.selected {
     border-color: var(--accent);
-    box-shadow: 0 0 8px rgba(216, 140, 154, 0.4);
+    box-shadow: 0 0 8px rgba(183, 110, 122, 0.4);
 }
 
-/* Галерея "Приклади робіт" (Фікс розтягування) */
+/* Галерея "Приклади робіт" */
 .works-grid-full {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -461,7 +462,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     z-index: 1000;
 }
 
