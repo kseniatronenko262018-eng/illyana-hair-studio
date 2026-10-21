@@ -35,12 +35,12 @@
 
         <main id="paneBook" class="section-pane active">
             
+            <!-- ПУНКТ 1: КАТЕГОРІЯ (БЕЗ ФОТО) -->
             <section class="form-card">
                 <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
                 <div class="service-selection-grid">
                     
                     <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
-                        <img src="hair-v2.jpg" alt="Стрижка" class="service-img"> 
                         <div class="service-info">
                             <div class="s-title" data-i18n="cut_title">Стрижка</div>
                             <div class="s-sub" data-i18n="cut_sub">1000 ₴ • 1.5 год</div>
@@ -49,7 +49,6 @@
                     </div>
 
                     <div class="service-card-row" id="mainCardColor" onclick="selectMainCategory('color')">
-                        <img src="PXL_20241102_164641261.jpg" alt="Фарбування" class="service-img" onerror="this.src='hair-v2.jpg'">
                         <div class="service-info">
                             <div class="s-title" data-i18n="color_title">Фарбування</div>
                             <div class="s-sub" data-i18n="color_sub">Підбір за станом</div>
@@ -58,7 +57,6 @@
                     </div>
 
                     <div class="service-card-row" id="mainCardComplex" onclick="selectMainCategory('complex')">
-                        <img src="PXL_20250216_124053179.jpg" alt="Комплекс" class="service-img" onerror="this.src='hair-v2.jpg'">
                         <div class="service-info">
                             <div class="s-title" data-i18n="complex_title">Стрижка + Фарбування коріння</div>
                             <div class="s-sub" data-i18n="complex_sub">3000 ₴ • 3 год (до 2 см)</div>
@@ -69,34 +67,13 @@
                 </div>
             </section>
 
-            <section class="form-card" id="haircutExamplesSection" style="display: none;">
-                <label class="field-label" data-i18n="haircut_ref_title">✨ Оберіть референс стрижки (необов'язково):</label>
-                <div class="haircut-grid">
-                    <div class="haircut-grid-item" onclick="selectHaircutReference('Кроп / Піксі', this)">
-                        <img src="1_20261005_205818_0000.png" alt="Кроп / Піксі" onerror="this.style.display='none'">
-                        <div class="h-title">Кроп / Піксі</div>
-                    </div>
-                    <div class="haircut-grid-item" onclick="selectHaircutReference('Малет / Шеггі', this)">
-                        <img src="2_20261005_205818_0001.png" alt="Малет / Шеггі" onerror="this.style.display='none'">
-                        <div class="h-title">Малет / Шеггі</div>
-                    </div>
-                    <div class="haircut-grid-item" onclick="selectHaircutReference('Боб / Каре', this)">
-                        <img src="3_20261005_205818_0002.png" alt="Боб / Каре" onerror="this.style.display='none'">
-                        <div class="h-title">Боб / Каре</div>
-                    </div>
-                    <div class="haircut-grid-item" onclick="selectHaircutReference('Каскад / Текстура', this)">
-                        <img src="4_20261005_205818_0003.png" alt="Каскад / Текстура" onerror="this.style.display='none'">
-                        <div class="h-title">Каскад / Текстура</div>
-                    </div>
-                </div>
-                <div id="selectedRefNotice" style="display:none; font-size:10px; color:var(--accent); margin-top:6px; font-weight:700;" data-i18n="ref_selected_notice">✓ Обрано</div>
-            </section>
-
+            <!-- ПУНКТ 2: СТАН ВОЛОССЯ -->
             <section class="form-card" id="categorySubmenu" style="display: none;">
                 <label class="field-label" data-i18n="step2">2. Оберіть ваш поточний стан волосся:</label>
                 <div id="submenuItems" style="display: flex; flex-direction: column; gap: 8px;"></div>
             </section>
 
+            <!-- ПУНКТ 3: ДОВЖИНА -->
             <section class="form-card" id="coloringSubOptions" style="display: none;">
                 <label class="field-label" data-i18n="step3">3. Доступні послуги та довжина:</label>
                 <div id="specificServicesList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
@@ -111,6 +88,7 @@
                 </div>
             </section>
 
+            <!-- ПРАВИЛА -->
             <section class="form-card accordion-card">
                 <div class="accordion-header" onclick="toggleAccordion(this)">
                     <span data-i18n="rules_title">📌 Важливі примітки та правила майстра</span>
@@ -126,6 +104,7 @@
                 </div>
             </section>
 
+            <!-- ФОТО КЛІЄНТА -->
             <section class="form-card" id="photoUploadSection" style="display: none;">
                 <div style="margin-bottom: 12px;">
                     <label class="field-label" data-i18n="photo_current_label">4. Завантажте фото вашого волосся (обов'язково):</label>
@@ -140,6 +119,7 @@
                 </div>
             </section>
 
+            <!-- ДАТА ТА ЧАС -->
             <section class="form-card">
                 <label class="field-label" data-i18n="date_label">Оберіть дату візиту</label>
                 <div class="custom-calendar-scroll" id="customCalendarGrid"></div>
@@ -148,6 +128,7 @@
                 <div class="time-slots-grid" id="timeSlotsGrid"></div>
             </section>
 
+            <!-- КОНТАКТИ -->
             <section class="form-card">
                 <label class="field-label">Контактні дані</label>
                 <input type="text" id="clientName" class="input-box" data-i18n-placeholder="name_placeholder" placeholder="Як до вас звертатися">
@@ -156,6 +137,7 @@
                 <input type="text" id="clientSocial" class="input-box" placeholder="Telegram або Instagram нік" data-i18n-placeholder="social_label">
             </section>
 
+            <!-- КНОПКА ЗАПИСУ -->
             <section class="form-card">
                 <div class="summary-card">
                     <div class="summary-header">
