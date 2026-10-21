@@ -1,7 +1,6 @@
 let currentLang = 'ua';
 let selectedCategory = null;
 let selectedServiceData = null;
-let selectedHaircutRef = null;
 let selectedCondition = null;
 let selectedDate = null;
 let selectedTimeSlot = null;
@@ -50,10 +49,7 @@ function selectMainCategory(category) {
     let elId = category === 'cut' ? 'mainCardCut' : category === 'color' ? 'mainCardColor' : 'mainCardComplex';
     document.getElementById(elId)?.classList.add('selected');
 
-    // Показуємо крок 2
     document.getElementById('step2Card').style.display = 'flex';
-
-    document.getElementById('haircutExamplesSection').style.display = (category === 'cut' || category === 'complex') ? 'block' : 'none';
     document.getElementById('photoUploadSection').style.display = 'block';
 
     let subMenu = document.getElementById('categorySubmenu');
@@ -69,19 +65,10 @@ function selectMainCategory(category) {
         showStep3();
     } else {
         subMenu.style.display = 'none'; coloringOptions.style.display = 'none';
-        selectedServiceData = { title: "Стрижка (будь-яка)", price: 1000, durationHours: 1.5 };
+        selectedServiceData = { title: "Стрижка", price: 1000, durationHours: 1.5 };
         showStep3();
     }
     updateSummaryCard(); renderTimeSlots();
-}
-
-function selectHaircutReference(imgName, element) {
-    document.querySelectorAll('.haircut-grid-item').forEach(i => i.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedHaircutRef = imgName;
-    document.getElementById('selectedRefNotice').style.display = 'block';
-    updateSummaryCard();
-    showStep3();
 }
 
 function renderSubmenuItems() {
@@ -152,17 +139,12 @@ function updateServiceDetails() {
 
 function showStep3() {
     document.getElementById('step3Card').style.display = 'flex';
-    // Плавний скрол до кроку 3
-    setTimeout(() => {
-        document.getElementById('step3Card').scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    setTimeout(() => { document.getElementById('step3Card').scrollIntoView({ behavior: 'smooth' }); }, 100);
 }
 
 function checkPhotoLoaded() {
     let fileInput = document.getElementById('clientHairPhoto');
-    if (fileInput.files[0]) {
-        showStep3();
-    }
+    if (fileInput.files[0]) { showStep3(); }
 }
 
 function updateSummaryCard() {
@@ -171,7 +153,7 @@ function updateSummaryCard() {
     let metaEl = document.getElementById('summaryMeta');
 
     if (selectedServiceData) {
-        titleEl.innerText = selectedServiceData.title + (selectedHaircutRef ? " + Референс" : "");
+        titleEl.innerText = selectedServiceData.title;
         priceBadge.innerText = selectedServiceData.price + " ₴";
         document.getElementById('summaryDuration').innerText = selectedServiceData.durationHours + " год";
         metaEl.style.display = 'flex';
@@ -289,14 +271,13 @@ async function submitBooking() {
     if (!selectedDate || !selectedTimeSlot) return alert("Оберіть дату та час!");
     if (!name || !phone) return alert("Заповніть ім'я та телефон!");
     
-    // Суворе обмеження: перевірка наявності Email та референсу
     if (!email) {
         alert("⚠️ Будь ласка, введіть ваш Email (це обов'язково)!");
         document.getElementById('clientEmail').focus();
         return;
     }
-    if (!hInput.files[0] && !selectedHaircutRef) {
-        alert("⚠️ Будь ласка, завантажте фото вашого волосся або оберіть референс (це обов'язково)!");
+    if (!hInput.files[0]) {
+        alert("⚠️ Будь ласка, завантажте фото вашого волосся або референс (це обов'язково)!");
         hInput.scrollIntoView({ behavior: 'smooth' });
         return;
     }
@@ -307,11 +288,13 @@ async function submitBooking() {
     btn.style.pointerEvents = 'none';
 
     try {
-        let photoUrl = await uploadImageToImgBB(hInput?.files[0]);
-        let refFinal = selectedHaircutRef || photoUrl || 'EMPTY';
+        let photoUrl = await uploadImageToImgBB(hInput.files[0]);
 
         let checkRes = await fetch('/api/check-client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone }) });
         let { isRegular } = await checkRes.json();
+
+        // Генеруємо унікальний код для бота
+        let bookingRef = "REF" + Date.now().toString();
 
         let bookRes = await fetch('/api/bookings', {
             method: 'POST',
@@ -319,26 +302,27 @@ async function submitBooking() {
             body: JSON.stringify({
                 name, phone, email, social: document.getElementById('clientSocial')?.value.trim(),
                 service: selectedServiceData.title, price: selectedServiceData.price,
-                durationHours: selectedServiceData.durationHours, date: selectedDate, time: selectedTimeSlot, reference: refFinal
+                durationHours: selectedServiceData.durationHours, date: selectedDate, time: selectedTimeSlot, reference: photoUrl, isRegular, bookingRef
             })
         });
 
         if (!bookRes.ok) throw new Error("Помилка збереження запису.");
 
+        alert("✨ Запис успішно створено! Переходимо в Telegram-бот для підтвердження.");
+
         if (isRegular) {
-            alert("✨ Запис підтверджено! Переходимо в Telegram-бот.");
-            window.location.href = TELEGRAM_BOT_URL;
+            window.location.href = `${TELEGRAM_BOT_URL}?start=${bookingRef}`;
         } else {
             let invRes = await fetch('/api/create-invoice', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot })
+                body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot, bookingRef })
             });
             let invData = await invRes.json();
             if (invData.pageUrl) {
                 window.location.href = invData.pageUrl;
             } else {
-                window.location.href = TELEGRAM_BOT_URL;
+                window.location.href = `${TELEGRAM_BOT_URL}?start=${bookingRef}`;
             }
         }
     } catch (err) {
