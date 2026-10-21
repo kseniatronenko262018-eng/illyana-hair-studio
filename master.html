@@ -14,12 +14,25 @@
             --tg-border: rgba(255, 255, 255, 0.1); --tg-text: #f5f2ed; --tg-muted: #9e958b;
         }
         body { background-color: var(--tg-bg) !important; color: var(--tg-text) !important; padding-bottom: 50px; min-height: 100vh; }
-        .master-section, .form-card { background: var(--tg-card) !important; border: 1px solid var(--tg-border) !important; border-radius: 20px !important; }
+        
+        /* Виправлення структури карток */
+        .master-section, .form-card { 
+            background: var(--tg-card) !important; 
+            border: 1px solid var(--tg-border) !important; 
+            border-radius: 20px !important; 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+        
         .master-utility-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; margin-bottom: 12px; }
         .korea-nav-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none; }
         .korea-nav-chip { background: var(--tg-card); border: 1px solid var(--tg-border); padding: 10px 14px; border-radius: 14px; font-size: 9px; font-weight: 700; color: var(--tg-muted); text-transform: uppercase; cursor: pointer; white-space: nowrap; }
         .korea-nav-chip.active { background: var(--accent); color: var(--accent-invert); border-color: var(--accent); }
-        .crm-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; }
+        
+        /* Жорстка сітка для календаря, щоб він не розповзався */
+        .crm-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; box-sizing: border-box; }
         .crm-cal-cell { background: var(--tg-card-hover); border: 1px solid var(--tg-border); border-radius: 8px; padding: 8px 2px; text-align: center; font-size: 9px; font-weight: 700; cursor: pointer; }
         .crm-cal-cell.selected { background: var(--accent); color: var(--accent-invert); }
         .crm-cal-cell.blocked { background: rgba(216, 140, 154, 0.15); text-decoration: line-through; }
@@ -36,13 +49,13 @@
             <button class="control-btn" onclick="refreshCrmData()">🔄 Оновити</button>
         </div>
 
-        <div id="masterDashboard" style="display: flex; flex-direction: column; gap: 10px;">
+        <div id="masterDashboard" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
             <div class="korea-nav-bar" id="koreaNavContainer">
                 <div class="korea-nav-chip active" onclick="switchMasterSection('secCalendar', this)">📅 Календар</div>
                 <div class="korea-nav-chip" onclick="switchMasterSection('secClients', this)">👥 Клієнти</div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
                 <div class="form-card master-section" style="padding: 12px; text-align: center;">
                     <div style="font-size: 8px; color: var(--tg-muted);">УСЬОГО ЗАПИСІВ</div>
                     <div id="totalBookingsCountBadge" style="font-size: 15px; font-weight: 700; color: var(--accent);">0</div>
@@ -55,18 +68,19 @@
 
             <!-- КАЛЕНДАР -->
             <div id="secCalendar" class="master-section form-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%;">
                     <button class="control-btn" onclick="changeMonth(-1)">◀</button>
                     <h3 id="calendarTitle" style="font-size: 12px; font-family:'Syne',sans-serif;">Місяць</h3>
                     <button class="control-btn" onclick="changeMonth(1)">▶</button>
                 </div>
+                
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
                 
                 <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; font-weight: 700; color: var(--accent);">🔒 Заблокувати день (вихідний)</button>
                 
-                <div style="margin-top: 10px;">
+                <div style="margin-top: 10px; width: 100%;">
                     <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted);">Записи на обраний день:</label>
-                    <div id="dayBookingsContainer"></div>
+                    <div id="dayBookingsContainer" style="display: flex; flex-direction: column; width: 100%;"></div>
                 </div>
             </div>
 
@@ -78,8 +92,8 @@
         </div>
     </div>
 
-    <!-- Модальне вікно для детальної інформації про запис із можливістю скасування -->
-    <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px;">
+    <!-- Модальне вікно для детальної інформації про запис -->
+    <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing: border-box;">
         <div style="background: var(--tg-card); border: 1.5px solid var(--accent); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
             <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center;">✨ Деталі запису</h3>
             <div id="modalBookingDetails" style="font-size:11px; line-height:1.6; display: flex; flex-direction: column; gap: 6px;"></div>
