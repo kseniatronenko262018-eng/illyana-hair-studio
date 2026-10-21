@@ -11,7 +11,7 @@
 
     <div class="mobile-container">
         
-        <!-- ШАПКА ТА ПРОФІЛЬ МАТРА -->
+        <!-- ШАПКА ТА ПРОФІЛЬ МАЙСТРА -->
         <header class="profile-card">
             <div class="profile-hero-bg" id="profileHeroBg"></div>
             <div class="profile-header-top">
@@ -27,7 +27,6 @@
             <p class="profile-sub" data-i18n="profile_sub">квір хейр стиліст • перукар дніпро</p>
             <p class="profile-bio" data-i18n="profile_bio">не відрощуй волосся — відрощуй індивідуальність</p>
             
-            <!-- НАВІГАЦІЯ -->
             <nav class="quick-nav">
                 <div class="nav-chip active" onclick="switchTab('book', this)" data-i18n="tab_book">Запис</div>
                 <div class="nav-chip" onclick="switchTab('works', this)" data-i18n="tab_works">Приклади робіт</div>
@@ -38,7 +37,6 @@
         <!-- СЕКЦІЯ 1: ОФОРМЛЕННЯ ЗАПИСУ -->
         <main id="paneBook" class="section-pane active">
             
-            <!-- ПУНКТ 1: КАТЕГОРІЯ -->
             <section class="form-card">
                 <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
                 <div class="service-selection-grid">
@@ -65,27 +63,30 @@
                 </div>
             </section>
 
-            <!-- РЕФЕРЕНСИ СТРИЖОК -->
+            <!-- РЕФЕРЕНСИ СТРИЖОК З ФОТОГРАФІЯМИ -->
             <section class="form-card" id="haircutExamplesSection" style="display: none;">
                 <label class="field-label" data-i18n="haircut_ref_title">✨ Оберіть референс стрижки (необов'язково):</label>
                 <div class="haircut-grid">
                     <div class="haircut-grid-item" onclick="selectHaircutReference('Кроп / Піксі', this)">
+                        <img src="https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=400&auto=format&fit=crop&q=80" alt="Кроп / Піксі">
                         <div class="h-title">Кроп / Піксі</div>
                     </div>
                     <div class="haircut-grid-item" onclick="selectHaircutReference('Малет / Шеггі', this)">
+                        <img src="https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&auto=format&fit=crop&q=80" alt="Малет / Шеггі">
                         <div class="h-title">Малет / Шеггі</div>
                     </div>
                     <div class="haircut-grid-item" onclick="selectHaircutReference('Боб / Каре', this)">
+                        <img src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&auto=format&fit=crop&q=80" alt="Боб / Каре">
                         <div class="h-title">Боб / Каре</div>
                     </div>
                     <div class="haircut-grid-item" onclick="selectHaircutReference('Каскад / Текстура', this)">
+                        <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?w=400&auto=format&fit=crop&q=80" alt="Каскад / Текстура">
                         <div class="h-title">Каскад / Текстура</div>
                     </div>
                 </div>
                 <div id="selectedRefNotice" style="display:none; font-size:10px; color:var(--accent); margin-top:6px; font-weight:700;" data-i18n="ref_selected_notice">✓ Обрано</div>
             </section>
 
-            <!-- ПІДМЕНЮ ФАРБУВАННЯ -->
             <section class="form-card" id="categorySubmenu" style="display: none;">
                 <label class="field-label" data-i18n="step2">2. Оберіть ваш поточний стан волосся:</label>
                 <div id="submenuItems" style="display: flex; flex-direction: column; gap: 8px;"></div>
@@ -105,7 +106,6 @@
                 </div>
             </section>
 
-            <!-- ПРАВИЛА МАЙСТРА -->
             <section class="form-card accordion-card">
                 <div class="accordion-header" onclick="toggleAccordion(this)">
                     <span data-i18n="rules_title">📌 Важливі примітки та правила майстра</span>
@@ -121,7 +121,6 @@
                 </div>
             </section>
 
-            <!-- ПУНКТИ 4 ТА 5: ФОТОГРАФІЇ -->
             <section class="form-card" id="photoUploadSection" style="display: none;">
                 <div style="margin-bottom: 12px;">
                     <label class="field-label" data-i18n="photo_current_label">4. Завантажте фото вашого волосся (обов'язково):</label>
@@ -136,7 +135,6 @@
                 </div>
             </section>
 
-            <!-- КАЛЕНДАР ТА СЛОТИ -->
             <section class="form-card">
                 <label class="field-label" data-i18n="date_label">Оберіть дату візиту</label>
                 <div class="custom-calendar-scroll" id="customCalendarGrid"></div>
@@ -145,7 +143,6 @@
                 <div class="time-slots-grid" id="timeSlotsGrid"></div>
             </section>
 
-            <!-- ДАНІ КЛІЄНТА -->
             <section class="form-card">
                 <label class="field-label">Контактні дані</label>
                 <input type="text" id="clientName" class="input-box" data-i18n-placeholder="name_placeholder" placeholder="Як до вас звертатися">
@@ -154,7 +151,6 @@
                 <input type="text" id="clientSocial" class="input-box" placeholder="Telegram або Instagram нік" data-i18n-placeholder="social_label">
             </section>
 
-            <!-- ПІДСУМОК ТА КНОПКА ЗАПИСУ -->
             <section class="form-card">
                 <div class="summary-card">
                     <div class="summary-header">
@@ -200,7 +196,6 @@
 
     </div>
 
-    <!-- ПЛАВАЮЧА ПАНЕЛЬ ЗНИЗУ -->
     <div class="sticky-bottom-bar" id="stickyBottomBar" style="display: none;">
         <div>
             <div id="stickyBarTitle" style="font-size: 10px; font-weight: 700; color: var(--text-main);">Послуга</div>
@@ -209,7 +204,6 @@
         <button class="btn-main" style="width: auto; padding: 8px 16px; font-size: 9px;" onclick="scrollToCalendar()">Обрати час ↓</button>
     </div>
 
-    <!-- МОДАЛЬНЕ ВІКНО ОФЕРТИ -->
     <div id="offerModal" class="booking-modal">
         <div class="booking-modal-body">
             <h3 data-i18n="modal_title">Публічний договір оферти</h3>
@@ -220,7 +214,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНЕ ВІКНО LIGHTBOX -->
     <div id="imageLightboxModal" class="booking-modal" onclick="closeLightbox()">
         <div style="max-width: 90vw; max-height: 90vh;">
             <img id="lightboxImage" src="" style="width: 100%; height: auto; border-radius: 12px; object-fit: contain;">
