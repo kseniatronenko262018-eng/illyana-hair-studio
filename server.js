@@ -8,8 +8,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
-// Новий Telegram Bot Token
 const TG_BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI';
+const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
 
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
@@ -37,7 +37,6 @@ app.post('/api/unblock-day', (req, res) => {
     res.json({ success: true, blockedDays });
 });
 
-// Робота з портфоліо робіт на сайті
 let worksCache = [];
 app.get('/api/works', (req, res) => res.json(worksCache));
 app.post('/api/works', (req, res) => {
@@ -135,7 +134,7 @@ app.post('/api/create-invoice', async (req, res) => {
                 amount: 50000,
                 ccy: 980,
                 merchantPaymInfo: { destination: "Завдаток за послугу (ФОП Явір І.В.)", comment: `Запис клієнта ${req.body.name} на ${req.body.date} о ${req.body.time}` },
-                redirectUrl: `https://t.me/` // Посилання перенаправлення
+                redirectUrl: `https://t.me/${TG_BOT_USERNAME}`
             })
         });
         res.json(await response.json());
