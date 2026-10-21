@@ -3,206 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Явір Ілляна // Studio</title>
+    <title>Явір Ілляна | Editorial Hair Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <div class="bg-texture">
+        <img id="bgImageElement" src="https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg" alt="Background">
+    </div>
+
     <div class="mobile-container">
-        
-        <header class="profile-card">
-            <div class="profile-hero-bg" id="profileHeroBg"></div>
-            <div class="profile-header-top">
-                <button class="lang-btn" id="langToggle" onclick="toggleLang()">UA / EN</button>
-                <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+        <div class="utility-bar">
+            <span>dnipro // studio</span>
+            <div class="controls-group">
+                <button class="control-btn" id="themeToggle" onclick="toggleTheme()">☀️ / 🌙</button>
             </div>
-            
-            <div class="profile-avatar">
-                <img id="profileAvatarImg" src="https://i.ibb.co/M5stSykh/photo-2026-09-30-14-50-24.jpg" alt="Явір Ілляна">
-            </div>
-            
-            <h1 class="profile-title">ЯВІР ІЛЛЯНА</h1>
-            <p class="profile-sub" data-i18n="profile_sub">квір хейр стиліст • перукар дніпро</p>
-            <p class="profile-bio" data-i18n="profile_bio">не відрощуй волосся — відрощуй індивідуальність</p>
-            
-            <nav class="quick-nav">
-                <div class="nav-chip active" onclick="switchTab('book', this)" data-i18n="tab_book">Запис</div>
-                <div class="nav-chip" onclick="switchTab('works', this)" data-i18n="tab_works">Приклади робіт</div>
-                <div class="nav-chip" onclick="switchTab('loc', this)" data-i18n="tab_loc">Локація</div>
-            </nav>
-        </header>
+        </div>
 
-        <main id="paneBook" class="section-pane active">
-            
-            <!-- ПУНКТ 1: КАТЕГОРІЯ (БЕЗ ФОТО) -->
-            <section class="form-card">
-                <label class="field-label" data-i18n="step1">1. Оберіть категорію послуг</label>
-                <div class="service-selection-grid">
-                    
+        <div class="profile-card">
+            <div class="avatar-wrap"><img src="PXL_20241102_164641261.jpg" alt="Явір Ілляна" id="profileAvatarImg"></div>
+            <h1>Явір Ілляна</h1>
+            <p>квір хейр стиліст • перукар дніпро</p>
+            <div class="profile-bio">не відрощуй волосся — відрощуй індивідуальність</div>
+        </div>
+
+        <div class="quick-nav" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="nav-chip active" onclick="switchTab('book', this)">Запис</div>
+            <div class="nav-chip" onclick="switchTab('works', this)">Приклади робіт</div>
+            <div class="nav-chip" onclick="switchTab('loc', this)">Локація</div>
+        </div>
+
+        <!-- ВКЛАДКА: ЗАПИС -->
+        <div id="paneBook" class="section-pane active">
+            <div class="form-card">
+                <label class="field-label">1. Оберіть категорію послуг</label>
+                <div class="services-list">
                     <div class="service-card-row" id="mainCardCut" onclick="selectMainCategory('cut')">
-                        <div class="service-info">
-                            <div class="s-title" data-i18n="cut_title">Стрижка</div>
-                            <div class="s-sub" data-i18n="cut_sub">1000 ₴ • 1.5 год</div>
+                        <img src="PXL_20260528_101624993_exported_4255.jpg" alt="Стрижка">
+                        <div class="service-card-info">
+                            <div class="title">Стрижка</div>
+                            <div class="sub">1000 ₴ • 1.5 год</div>
                         </div>
-                        <div class="selection-circle"></div>
+                        <div class="service-radio-indicator"></div>
                     </div>
-
                     <div class="service-card-row" id="mainCardColor" onclick="selectMainCategory('color')">
-                        <div class="service-info">
-                            <div class="s-title" data-i18n="color_title">Фарбування</div>
-                            <div class="s-sub" data-i18n="color_sub">Підбір за станом</div>
+                        <img src="PXL_20260531_162323458.jpg" alt="Фарбування">
+                        <div class="service-card-info">
+                            <div class="title">Фарбування</div>
+                            <div class="sub">Підбір за станом</div>
                         </div>
-                        <div class="selection-circle"></div>
+                        <div class="service-radio-indicator"></div>
                     </div>
-
                     <div class="service-card-row" id="mainCardComplex" onclick="selectMainCategory('complex')">
-                        <div class="service-info">
-                            <div class="s-title" data-i18n="complex_title">Стрижка + Фарбування коріння</div>
-                            <div class="s-sub" data-i18n="complex_sub">3000 ₴ • 3 год (до 2 см)</div>
+                        <img src="hair-v2.jpg" alt="Стрижка + Фарбування">
+                        <div class="service-card-info">
+                            <div class="title">Стрижка + Фарбування коріння</div>
+                            <div class="sub">3000 ₴ • 3 год (до 2 см)</div>
                         </div>
-                        <div class="selection-circle"></div>
+                        <div class="service-radio-indicator"></div>
                     </div>
-
                 </div>
-            </section>
 
-            <!-- ПУНКТ 2: СТАН ВОЛОССЯ -->
-            <section class="form-card" id="categorySubmenu" style="display: none;">
-                <label class="field-label" data-i18n="step2">2. Оберіть ваш поточний стан волосся:</label>
-                <div id="submenuItems" style="display: flex; flex-direction: column; gap: 8px;"></div>
-            </section>
-
-            <!-- ПУНКТ 3: ДОВЖИНА -->
-            <section class="form-card" id="coloringSubOptions" style="display: none;">
-                <label class="field-label" data-i18n="step3">3. Доступні послуги та довжина:</label>
-                <div id="specificServicesList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
-                
-                <div id="lengthContainer" style="display: none;">
-                    <label class="field-label" data-i18n="length_label">Довжина волосся:</label>
-                    <select id="hairLengthSelect" class="input-box" onchange="updateServiceDetails()">
-                        <option value="shoulders" data-i18n="len_shoulders">До плечей</option>
-                        <option value="shoulder_blades" data-i18n="len_blades">Від плечей до лопаток</option>
-                        <option value="below_blades" data-i18n="len_below">Нижче лопаток</option>
-                    </select>
+                <div id="haircutExamplesSection" style="margin-top: 12px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="field-label" style="margin: 0;">✨ Оберіть референс стрижки:</label>
+                        <span id="selectedRefNotice" style="font-size: 9px; color: var(--accent); font-weight: 700; display: none;">✓ Обрано</span>
+                    </div>
+                    <div class="haircut-grid">
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('1_20261005_205818_0000.png', this)"><img src="1_20261005_205818_0000.png"></div>
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('2_20261005_205818_0001.png', this)"><img src="2_20261005_205818_0001.png"></div>
+                        <div class="haircut-grid-item" onclick="selectHaircutReference('3_20261005_205818_0002.png', this)"><img src="3_20261005_205818_0002.png"></div>
+                    </div>
                 </div>
-            </section>
 
-            <!-- ПРАВИЛА -->
-            <section class="form-card accordion-card">
-                <div class="accordion-header" onclick="toggleAccordion(this)">
-                    <span data-i18n="rules_title">📌 Важливі примітки та правила майстра</span>
-                    <span class="acc-icon">↓</span>
+                <div id="categorySubmenu" style="display: none;">
+                    <label class="field-label" style="margin-top: 10px;">2. Оберіть ваш поточний стан волосся:</label>
+                    <div id="submenuItems" style="display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
-                <div class="accordion-content">
-                    <ul class="rules-list">
-                        <li data-i18n="rule_1">Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною відповідно до довжини.</li>
-                        <li data-i18n="rule_2">Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).</li>
-                        <li data-i18n="rule_3">Я не роблю вихід із чорного або рудого.</li>
-                        <li data-i18n="rule_4">Я не фарбую волосся після біозавивки, ботоксу, кератину.</li>
-                    </ul>
-                </div>
-            </section>
 
-            <!-- ФОТО КЛІЄНТА -->
-            <section class="form-card" id="photoUploadSection" style="display: none;">
-                <div style="margin-bottom: 12px;">
-                    <label class="field-label" data-i18n="photo_current_label">4. Завантажте фото вашого волосся (обов'язково):</label>
-                    <input type="file" id="clientHairPhoto" class="input-box" accept="image/*">
-                    <div id="hairPhotoPreviewContainer"></div>
+                <div id="coloringSubOptions" style="display: none;">
+                    <label class="field-label">3. Доступні послуги та довжина:</label>
+                    <div id="specificServicesList" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;"></div>
+                    <div id="lengthContainer" style="display: none;">
+                        <label class="field-label">Довжина волосся:</label>
+                        <select id="hairLengthSelect" class="input-box" onchange="updateServiceDetails()">
+                            <option value="shoulders">До плечей</option>
+                            <option value="shoulder_blades">Від плечей до лопаток</option>
+                            <option value="below_blades">Нижче лопаток</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="accordion-container" style="margin-top: 10px;">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>📌 Важливі примітки та правила майстра</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <ul class="notice-list">
+                            <li>Якщо ваше коріння більше 2 см, послуга фарбування вважається первинною.</li>
+                            <li>Я не роблю блонд у техніці (AirTouch, балаяж і т. д.).</li>
+                            <li>Я не роблю вихід із чорного або рудого.</li>
+                            <li>Я не фарбую волосся після біозавивки, ботоксу, кератину.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="photoUploadSection" style="display: none;">
+                    <div class="photo-upload-container">
+                        <label class="field-label" style="margin-top: 10px;">4. Завантажте фото вашого волосся:</label>
+                        <input type="file" class="input-box" id="clientHairPhoto" accept="image/*">
+                    </div>
+                    <div class="photo-upload-container" style="margin-top: 8px;">
+                        <label class="field-label">5. Завантажте фото-референс:</label>
+                        <input type="file" class="input-box" id="clientRefPhoto" accept="image/*">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <span class="field-label" style="margin:0;">Обрана послуга та час</span>
+                        <span id="summaryPriceBadge" class="summary-price-badge">0 ₴</span>
+                    </div>
+                    <div id="summaryServiceTitle" class="summary-title">Спочатку оберіть категорію вище</div>
+                    <div id="summaryMeta" class="summary-meta" style="display: none;">
+                        <span>⏱ <span id="summaryDuration">1.5 год</span></span>
+                        <span>📅 <span id="summaryDateTime">Дата не обрана</span></span>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="field-label" data-i18n="photo_ref_label">5. Завантажте фото-референс бажаного результату:</label>
-                    <input type="file" id="clientRefPhoto" class="input-box" accept="image/*">
-                    <div id="refPhotoPreviewContainer"></div>
+                    <label class="field-label">Дата візиту</label>
+                    <div class="custom-calendar-grid" id="customCalendarGrid"></div>
                 </div>
-            </section>
 
-            <!-- ДАТА ТА ЧАС -->
-            <section class="form-card">
-                <label class="field-label" data-i18n="date_label">Оберіть дату візиту</label>
-                <div class="custom-calendar-scroll" id="customCalendarGrid"></div>
-                
-                <label class="field-label" style="margin-top: 14px;" data-i18n="slots_label">Доступні слоти часу</label>
-                <div class="time-slots-grid" id="timeSlotsGrid"></div>
-            </section>
+                <div>
+                    <label class="field-label">Доступні слоти часу (студія працює до 19:00)</label>
+                    <div class="time-grid" id="timeSlotsGrid"></div>
+                </div>
 
-            <!-- КОНТАКТИ -->
-            <section class="form-card">
-                <label class="field-label">Контактні дані</label>
-                <input type="text" id="clientName" class="input-box" data-i18n-placeholder="name_placeholder" placeholder="Як до вас звертатися">
-                <input type="tel" id="clientPhone" class="input-box" placeholder="+380 (__) ___-__-__">
-                <input type="email" id="clientEmail" class="input-box" placeholder="your@email.com" data-i18n-placeholder="email_label">
-                <input type="text" id="clientSocial" class="input-box" placeholder="Telegram або Instagram нік" data-i18n-placeholder="social_label">
-            </section>
-
-            <!-- КНОПКА ЗАПИСУ -->
-            <section class="form-card">
-                <div class="summary-card">
-                    <div class="summary-header">
-                        <span id="summaryServiceTitle" data-i18n="select_service_placeholder">Оберіть послугу вище</span>
-                        <span class="price-badge" id="summaryPriceBadge">0 ₴</span>
+                <div class="form-row">
+                    <div>
+                        <label class="field-label">Ім'я</label>
+                        <input type="text" id="clientName" class="input-box" placeholder="Як звертатись">
                     </div>
-                    <div class="summary-meta" id="summaryMeta" style="display: none;">
-                        <span>⏱ <span id="summaryDuration">1.5 год</span></span>
-                        <span id="summaryDateTime" style="color:var(--accent); font-weight:700;"></span>
+                    <div>
+                        <label class="field-label">Телефон</label>
+                        <input type="tel" id="clientPhone" class="input-box" placeholder="+380...">
                     </div>
                 </div>
 
-                <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;" data-i18n="deposit_notice">
+                <div class="form-row">
+                    <div>
+                        <label class="field-label">Email (обов'язково)</label>
+                        <input type="email" id="clientEmail" class="input-box" placeholder="mail@example.com">
+                    </div>
+                    <div>
+                        <label class="field-label">Нік / соцмережа</label>
+                        <input type="text" id="clientSocial" class="input-box" placeholder="@username">
+                    </div>
+                </div>
+
+                <div class="notice-badge">
                     ⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.
                 </div>
 
-                <button class="btn-main" onclick="submitBooking()" data-i18n="pay_btn">Забронювати візит</button>
+                <div class="policy-highlight-card">
+                    ⚠️ <b>Правила скасування:</b> Зміна або скасування можливі не пізніш ніж за 48 годин.<br>
+                    📄 Оформлюючи запис, ви погоджуєтесь із умовами <a href="#" onclick="openOffer(); return false;" style="color: var(--accent); text-decoration: underline; font-weight: 700;">Публічного договору оферти</a>.
+                </div>
+
+                <button class="btn-main" onclick="submitBooking()">Сплатити завдаток 500 ₴ та забронювати</button>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА: РОБОТИ ТА ЛОКАЦІЯ -->
+        <div id="paneWorks" class="section-pane">
+            <div class="form-card">
+                <label class="field-label" style="text-align: center;">✨ Приклади робіт студії</label>
+                <div class="works-grid-full">
+                    <div class="works-carousel-item" onclick="openLightbox('1_20261005_205818_0000.png')"><img src="1_20261005_205818_0000.png"></div>
+                    <div class="works-carousel-item" onclick="openLightbox('2_20261005_205818_0001.png')"><img src="2_20261005_205818_0001.png"></div>
+                    <div class="works-carousel-item" onclick="openLightbox('3_20261005_205818_0002.png')"><img src="3_20261005_205818_0002.png"></div>
+                    <div class="works-carousel-item" onclick="openLightbox('4_20261005_205818_0003.png')"><img src="4_20261005_205818_0003.png"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="paneLoc" class="section-pane">
+            <div class="info-card">
+                📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>
+                Приватний простір, мінімалізм та фокус на якості.<br>
+                <a href="https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро" target="_blank" class="map-btn">Відкрити в Google Maps</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно оферти -->
+    <div id="offerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center; padding: 16px;">
+        <div class="modal-body" style="background: var(--card-bg); border: 1px solid var(--border); padding: 18px; border-radius: 18px; max-width: 380px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;">
+            <h3 style="font-size: 12px; text-align: center; margin-bottom: 10px;">ПУБЛІЧНИЙ ДОГОВІР ОФЕРТИ</h3>
+            <div style="font-size: 9.5px; line-height: 1.5; overflow-y: auto; color: var(--text-muted); margin-bottom: 12px;">
+                <b>про надання інформаційно-консультаційних та перукарських послуг</b><br><br>
+                Цей договір є офіційною пропозицією (офертою) фізичної особи-підприємця <b>Явір Ілляна Володимирівна</b> (далі - «Виконавець»), адресованою невизначеному колу фізичних осіб (далі - «Замовник/Клієнт»), які звертаються за послугами через сайт студії. Відповідно до ст. 633 Цивільного кодексу України, умови цього Договору є однаковими для всіх Замовників.<br><br>
                 
-                <div style="text-align: center; margin-top: 10px;">
-                    <a href="#" onclick="openOffer(); return false;" style="font-size: 9px; color: var(--text-muted); text-decoration: underline;" data-i18n="modal_title">Публічний договір оферти</a>
-                </div>
-            </section>
-
-        </main>
-
-        <main id="paneWorks" class="section-pane">
-            <div class="form-card">
-                <label class="field-label" data-i18n="tab_works">Приклади робіт майстра</label>
-                <div class="works-grid-full" id="uploadedWorksContainer"></div>
+                <b>1. УМОВИ ЗАПИСУ ТА ЗАВДАТОК</b><br>
+                Для нових клієнтів обов'язковою умовою підтвердження бронювання часу є внесення завдатку у розмірі 500 гривень. Завдаток зараховується в рахунок оплати послуги.<br><br>
+                
+                <b>2. ПРАВИЛА СКАСУВАННЯ ТА ПОВЕРНЕННЯ КОШТІВ</b><br>
+                Замовник має право скасувати або перенести заброньований час не пізніш ніж за 48 годин. У разі скасування менш ніж за 48 годин, завдаток не повертається та утримується як компенсація.<br><br>
+                
+                <b>3. ВІДПОВІДАЛЬНІСТЬ КЛІЄНТА</b><br>
+                Клієнт зобов'язаний правдиво повідомити про історію свого волосся (наявність побутового барвника, хни, кератину тощо).
             </div>
-        </main>
-
-        <main id="paneLoc" class="section-pane">
-            <div class="form-card">
-                <div style="font-size: 11px; color: var(--text-main); line-height: 1.6;" data-i18n="loc_info">
-                    📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>Приватний простір, мінімалізм та фокус на якості.
-                </div>
-                <a href="https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро" target="_blank" class="btn-main" style="text-decoration: none; text-align: center; margin-top: 12px; display: block;" data-i18n="map_btn">Відкрити в Google Maps</a>
-            </div>
-        </main>
-
-    </div>
-
-    <div class="sticky-bottom-bar" id="stickyBottomBar" style="display: none;">
-        <div>
-            <div id="stickyBarTitle" style="font-size: 10px; font-weight: 700; color: var(--text-main);">Послуга</div>
-            <div id="stickyBarPrice" style="font-size: 11px; font-weight: 800; color: var(--accent);">0 ₴</div>
-        </div>
-        <button class="btn-main" style="width: auto; padding: 8px 16px; font-size: 9px;" onclick="scrollToCalendar()">Обрати час ↓</button>
-    </div>
-
-    <div id="offerModal" class="booking-modal">
-        <div class="booking-modal-body">
-            <h3 data-i18n="modal_title">Публічний договір оферти</h3>
-            <div style="font-size: 10px; color: var(--text-muted); max-height: 200px; overflow-y: auto; line-height: 1.5;">
-                Запис на послугу здійснюється після внесення завдатку у розмірі 500 грн. Завдаток є гарантією бронування часу. Скасування чи перенесення візиту без втрати завдатку можливе не пізніше ніж за 48 годин до узгодженого часу.
-            </div>
-            <button class="btn-main" onclick="closeOffer()" data-i18n="modal_btn">Зрозуміло</button>
+            <button class="btn-main" onclick="closeOffer()">Зрозуміло</button>
         </div>
     </div>
 
-    <div id="imageLightboxModal" class="booking-modal" onclick="closeLightbox()">
-        <div style="max-width: 90vw; max-height: 90vh;">
-            <img id="lightboxImage" src="" style="width: 100%; height: auto; border-radius: 12px; object-fit: contain;">
-        </div>
+    <!-- Модальне вікно для фото -->
+    <div id="imageLightboxModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center;" onclick="closeLightbox()">
+        <img id="lightboxImage" src="" style="max-width: 95vw; max-height: 90vh; border-radius: 10px; object-fit: contain;">
     </div>
 
     <script src="app.js"></script>
