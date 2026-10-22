@@ -8,7 +8,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
-const TG_BOT_TOKEN = '8591183866:AAFrBrQrZe_1C1azzBdUmqR4Habuv7LLnQI';
+// Оновлений токен бота
+const TG_BOT_TOKEN = '8591183866:AAGaY0wW1ZRDb50JSf_GOC_dgzvyDeC5hWQ';
 const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
 const MASTER_TG_ID = '684896405'; 
 
@@ -152,7 +153,7 @@ async function pollTelegram() {
                 }
             }
         } else if (!data.ok && data.error_code === 409) {
-            console.error("⚠️ УВАГА: Конфлікт Telegram Polling (409)! Переконайтесь, що bot.js або інший екземпляр сервера не запущені паралельно.");
+            console.error("⚠️ УВАГА: Конфлікт Telegram Polling (409)! Перевірте запущені процеси.");
         }
     } catch (e) {
         // ігноруємо таймаути мережі
@@ -241,7 +242,7 @@ app.post('/api/bookings', async (req, res) => {
 
         let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${escapeHtml(name)}\n📞 <b>Телефон:</b> ${escapeHtml(phone)}\n💬 <b>Соцмережі:</b> ${escapeHtml(social || '—')}\n\n` + clientMessage;
 
-        // Відправляємо майстру
+        // Надсилаємо майстру
         await sendTelegramNotification(MASTER_TG_ID, masterMessage);
         
         // Зберігаємо для клієнта
