@@ -43,7 +43,6 @@ window.addEventListener('scroll', () => {
     
     let btnRect = bookBtn ? bookBtn.getBoundingClientRect() : null;
     
-    // Показуємо кнопку, якщо проскролили вниз, але не доскролили до основної кнопки
     if (window.scrollY > 350 && (!btnRect || btnRect.top > window.innerHeight)) {
         cta.classList.add('visible');
     } else {
@@ -103,18 +102,15 @@ function switchTab(tabName, element) {
     let targetPane = document.getElementById(tabName === 'book' ? 'paneBook' : tabName === 'works' ? 'paneWorks' : 'paneLoc');
     if (targetPane) {
         targetPane.classList.add('active');
-        // Робимо видимими всі анімаційні блоки всередині вкладки
         targetPane.querySelectorAll('.fade-in-section').forEach(el => el.classList.add('is-visible'));
     }
     
     if (element) element.classList.add('active');
     
-    // Якщо відкрили роботи — перезавантажуємо актуальні фото
     if (tabName === 'works' && typeof loadPublicWorks === 'function') {
         loadPublicWorks();
     }
     
-    // Ховаємо плаваючу кнопку, якщо пішли з вкладки запису
     if(tabName !== 'book') {
         let cta = document.getElementById('stickyCta');
         if(cta) cta.classList.remove('visible');
@@ -390,6 +386,7 @@ async function uploadImageToImgBB(file) {
     });
 }
 
+// ОСНОВНА ФУНКЦІЯ ЗАПИСУ
 async function submitBooking() {
     let name = document.getElementById('clientName').value.trim();
     let phone = document.getElementById('clientPhone').value.trim();
@@ -413,45 +410,60 @@ async function submitBooking() {
 
     let btn = document.getElementById('mainBookBtn');
     let origHtml = btn.innerHTML;
-    btn.innerText = currentLang === 'ua' ? "⏳ Оформлення..." : "⏳ Processing...";
+    btn.innerText = currentLang === 'ua' ? "⏳ Перевірка статусу..." : "⏳ Checking...";
     btn.style.pointerEvents = 'none';
 
     try {
         let photoUrl = await uploadImageToImgBB(hInput.files[0]);
 
+        // 1. Перевіряємо, чи клієнт постійний
         let checkRes = await fetch('/api/check-client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone }) });
         let { isRegular } = await checkRes.json();
 
         let bookingRef = "REF" + Date.now().toString();
 
-        let bookRes = await fetch('/api/bookings', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                name, phone, email, social: document.getElementById('clientSocial')?.value.trim(),
-                service: selectedServiceData.title.ua,
-                price: selectedServiceData.price,
-                durationHours: selectedServiceData.durationHours, date: selectedDate, time: selectedTimeSlot, reference: photoUrl, isRegular, bookingRef
-            })
-        });
-
-        if (!bookRes.ok) throw new Error("Server error.");
-
-        alert(currentLang === 'ua' ? "✨ Запис успішно створено! Переходимо в Telegram." : "✨ Booking successful! Redirecting to Telegram.");
+        let bookingPayload = {
+            name, phone, email, 
+            social: document.getElementById('clientSocial')?.value.trim(),
+            service: selectedServiceData.title.ua,
+            price: selectedServiceData.price,
+            durationHours: selectedServiceData.durationHours, 
+            date: selectedDate, 
+            time: selectedTimeSlot, 
+            reference: photoUrl, 
+            isRegular, 
+            bookingRef
+        };
 
         if (isRegular) {
+            // ВАРІАНТ А: ПОСТІЙНИЙ КЛІЄНТ (Бронюємо відразу без передплати)
+            btn.innerText = currentLang === 'ua' ? "⏳ Бронювання..." : "⏳ Booking...";
+            let bookRes = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(bookingPayload)
+            });
+
+            if (!bookRes.ok) throw new Error("Server error.");
+
+            alert(currentLang === 'ua' ? "✨ Ви постійний клієнт! Запис оформлено без передплати. Переходимо в Telegram." : "✨ Regular client! Booked without deposit. Redirecting to Telegram.");
             window.location.href = `${TELEGRAM_BOT_URL}?start=${bookingRef}`;
         } else {
+            // ВАРІАНТ Б: НОВИЙ КЛІЄНТ (НЕ записуємо в базу, спочатку оплата 500 грн)
+            btn.innerText = currentLang === 'ua' ? "⏳ Перехід до оплати..." : "⏳ Redirecting to payment...";
+            
             let invRes = await fetch('/api/create-invoice', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ name, date: selectedDate, time: selectedTimeSlot, bookingRef })
+                body: JSON.stringify(bookingPayload)
             });
             let invData = await invRes.json();
+            
             if (invData.pageUrl) {
+                // Перенаправляємо на сторінку оплати Monobank
                 window.location.href = invData.pageUrl;
             } else {
-                window.location.href = `${TELEGRAM_BOT_URL}?start=${bookingRef}`;
+                throw new Error(invData.error || "Не вдалося створити платіж для передоплати.");
             }
         }
     } catch (err) {
