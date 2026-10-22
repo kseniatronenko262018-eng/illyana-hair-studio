@@ -22,6 +22,15 @@ const supabaseHeaders = {
     "Prefer": "return=representation"
 };
 
+// Екранування спецсимволів для безпечного HTML у Telegram
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'master.html')));
 
@@ -43,7 +52,10 @@ app.get('/api/works', async (req, res) => {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
         const data = await response.json();
         res.json(Array.isArray(data) ? data : []);
-    } catch (error) { res.status(500).json([]); }
+    } catch (error) { 
+        console.error("Помилка отримання робіт:", error);
+        res.status(500).json([]); 
+    }
 });
 
 app.post('/api/works', async (req, res) => {
@@ -56,10 +68,15 @@ app.post('/api/works', async (req, res) => {
         });
         
         if (!response.ok) {
+            const errBody = await response.text();
+            console.error("Supabase помилка збереження роботи:", errBody);
             return res.status(400).json({ success: false, error: "Database rejected the file" });
         }
         res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false }); }
+    } catch (error) { 
+        console.error("Помилка api/works:", error);
+        res.status(500).json({ success: false }); 
+    }
 });
 
 app.post('/api/delete-work', async (req, res) => {
@@ -75,7 +92,7 @@ app.post('/api/delete-work', async (req, res) => {
 
 async function sendTelegramNotification(chatId, text) {
     try {
-        await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+        let res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -85,7 +102,15 @@ async function sendTelegramNotification(chatId, text) {
                 disable_web_page_preview: true 
             })
         });
-    } catch (e) { console.error("Telegram error:", e); }
+        let data = await res.json();
+        if (!data.ok) {
+            console.error(`❌ Помилка надсилання в Telegram (chat_id: ${chatId}):`, data.description);
+        } else {
+            console.log(`✅ Telegram сповіщення успішно надіслано (chat_id: ${chatId})`);
+        }
+    } catch (e) { 
+        console.error("Telegram fetch error:", e); 
+    }
 }
 
 let lastClientMessagePerChat = {};
@@ -126,8 +151,12 @@ async function pollTelegram() {
                     }
                 }
             }
+        } else if (!data.ok && data.error_code === 409) {
+            console.error("⚠️ УВАГА: Конфлікт Telegram Polling (409)! Переконайтесь, що bot.js або інший екземпляр сервера не запущені паралельно.");
         }
-    } catch (e) {}
+    } catch (e) {
+        // ігноруємо таймаути мережі
+    }
     setTimeout(pollTelegram, 2000);
 }
 pollTelegram();
@@ -144,9 +173,9 @@ async function getLastClientBookingMessage() {
             let depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (враховано)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
 
             return `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
-                   `📅 <b>ДАТА:</b> ${b.date}\n` +
-                   `⏰ <b>ЧАС:</b> ${b.time}\n` +
-                   `✂️ <b>ПОСЛУГА:</b> ${b.service}\n` +
+                   `📅 <b>ДАТА:</b> ${escapeHtml(b.date)}\n` +
+                   `⏰ <b>ЧАС:</b> ${escapeHtml(b.time)}\n` +
+                   `✂️ <b>ПОСЛУГА:</b> ${escapeHtml(b.service)}\n` +
                    `💰 <b>ЗАГАЛЬНА ВАРТІСТЬ:</b> ${priceNum} ₴\n` +
                    `${depositInfo}\n\n` +
                    `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
@@ -201,25 +230,30 @@ app.post('/api/bookings', async (req, res) => {
         }
 
         let clientMessage = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
-                          `📅 <b>ДАТА:</b> ${date}\n` +
-                          `⏰ <b>ЧАС:</b> ${time}\n` +
-                          `✂️ <b>ПОСЛУГА:</b> ${service}\n` +
+                          `📅 <b>ДАТА:</b> ${escapeHtml(date)}\n` +
+                          `⏰ <b>ЧАС:</b> ${escapeHtml(time)}\n` +
+                          `✂️ <b>ПОСЛУГА:</b> ${escapeHtml(service)}\n` +
                           `💰 <b>ЗАГАЛЬНА ВАРТІСТЬ:</b> ${priceNum} ₴\n` +
                           `${depositInfo}\n\n` +
                           `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
                           `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
                           `💬 <b>Для скасування чи зміни часу напишіть у Директ майстру:</b>\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=`;
 
-        let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${name}\n📞 <b>Телефон:</b> ${phone}\n💬 <b>Соцмережі:</b> ${social || '—'}\n\n` + clientMessage;
+        let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${escapeHtml(name)}\n📞 <b>Телефон:</b> ${escapeHtml(phone)}\n💬 <b>Соцмережі:</b> ${escapeHtml(social || '—')}\n\n` + clientMessage;
 
+        // Відправляємо майстру
         await sendTelegramNotification(MASTER_TG_ID, masterMessage);
         
+        // Зберігаємо для клієнта
         if (bookingRef) {
             pendingClientMessages[bookingRef] = clientMessage;
         }
 
         res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
+    } catch (error) { 
+        console.error("Booking error:", error);
+        res.status(500).json({ success: false, error: error.message }); 
+    }
 });
 
 app.post('/api/cancel-booking', async (req, res) => {
