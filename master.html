@@ -85,6 +85,7 @@
                 </div>
             </div>
 
+            <!-- РОЗДІЛ: КАЛЕНДАР -->
             <div id="secCalendar" class="master-section form-card" style="padding: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%;">
                     <button class="control-btn" style="background: var(--tg-card-hover); color: white; border: none; padding: 6px 12px; border-radius: 8px;" onclick="changeMonth(-1)">◀</button>
@@ -99,35 +100,60 @@
                 </div>
             </div>
 
+            <!-- РОЗДІЛ: ФІНАНСИ ТА АНАЛІТИКА -->
             <div id="secFinances" class="master-section form-card" style="display: none; padding: 16px;">
-                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; margin-bottom: 12px;">Фінанси та аналітика</h3>
+                <!-- Перемикач місяців для аналітики -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--tg-card-hover); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--tg-border);">
+                    <button class="control-btn" style="background: none; border: none; color: white; font-size: 14px; cursor: pointer;" onclick="changeFinanceMonth(-1)">◀</button>
+                    <h3 id="financeMonthTitle" style="font-size: 11px; font-family:'Syne',sans-serif; text-transform:uppercase; margin: 0; color: var(--accent);">Жовтень 2026</h3>
+                    <button class="control-btn" style="background: none; border: none; color: white; font-size: 14px; cursor: pointer;" onclick="changeFinanceMonth(1)">▶</button>
+                </div>
+
+                <!-- Статистика за обраний місяць -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center;">
-                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px;">
-                        <div style="font-size:8px; color:var(--tg-muted);">ДОХОДИ</div>
-                        <div id="statCompleted" style="font-size:11px; font-weight:700;">0 ₴</div>
+                    <div style="background:var(--tg-card-hover); padding:8px 4px; border-radius:10px;">
+                        <div style="font-size:7.5px; color:var(--tg-muted); text-transform: uppercase;">ДОХІД</div>
+                        <div id="statCompleted" style="font-size:11px; font-weight:700; margin-top: 2px;">0 ₴</div>
                     </div>
-                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px;">
-                        <div style="font-size:8px; color:var(--tg-muted);">ВИТРАТИ</div>
-                        <div id="statExpenses" style="font-size:11px; font-weight:700; color:var(--accent);">0 ₴</div>
+                    <div style="background:var(--tg-card-hover); padding:8px 4px; border-radius:10px;">
+                        <div style="font-size:7.5px; color:var(--tg-muted); text-transform: uppercase;">ВИТРАТИ</div>
+                        <div id="statExpenses" style="font-size:11px; font-weight:700; color:var(--accent); margin-top: 2px;">0 ₴</div>
                     </div>
-                    <div style="background:var(--tg-card-hover); padding:8px; border-radius:10px;">
-                        <div style="font-size:8px; color:var(--tg-muted);">ПРИБУТОК</div>
-                        <div id="statNetProfit" style="font-size:11px; font-weight:700; color:#4ade80;">0 ₴</div>
+                    <div style="background:var(--tg-card-hover); padding:8px 4px; border-radius:10px;">
+                        <div style="font-size:7.5px; color:var(--tg-muted); text-transform: uppercase;">ПРИБУТОК</div>
+                        <div id="statNetProfit" style="font-size:11px; font-weight:700; color:#4ade80; margin-top: 2px;">0 ₴</div>
                     </div>
                 </div>
 
-                <div style="margin-top: 12px;">
-                    <label class="field-label" style="color:var(--tg-muted); font-size: 9px; display: block; margin-bottom: 6px;">Додати витрату (розхідники):</label>
-                    <div style="display: flex; gap: 6px;">
-                        <input type="text" id="expenseNameInput" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Назва">
-                        <input type="number" id="expenseAmountInput" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Сума ₴">
-                        <button style="padding: 10px 14px; border-radius: 8px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="addExpense()">+</button>
-                    </div>
-                    <div id="expensesListContainer" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 120px; overflow-y: auto;"></div>
+                <div style="margin-top: 8px; text-align: center; font-size: 9px; color: var(--tg-muted);">
+                    Записів за цей місяць: <b id="statMonthBookingsCount" style="color: var(--tg-text);">0</b>
                 </div>
-                <button style="margin-top: 12px; width: 100%; padding: 12px; border-radius: 12px; background: #217346; color: white; border: none; font-weight: bold; cursor: pointer;" onclick="exportToExcel()">📥 Експортувати в Excel</button>
+
+                <!-- Додати витрату -->
+                <div style="margin-top: 14px; border-top: 1px solid var(--tg-border); padding-top: 12px;">
+                    <label class="field-label" style="color:var(--tg-muted); font-size: 9px; display: block; margin-bottom: 6px;">Додати витрату (розхідники):</label>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="expenseNameInput" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Назва (напр. Фарба, Окисник)">
+                            <input type="number" id="expenseAmountInput" style="width: 85px; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Сума ₴">
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="date" id="expenseDateInput" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;">
+                            <button style="padding: 10px 16px; border-radius: 8px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="addExpense()">+ Додати</button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 10px; font-size: 9px; color: var(--tg-muted);">Витрати за обраний місяць:</div>
+                    <div id="expensesListContainer" style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 130px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Експорт у Excel -->
+                <button style="margin-top: 14px; width: 100%; padding: 12px; border-radius: 12px; background: #217346; color: white; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="exportToExcel()">
+                    <span>📥 Експортувати звіт за місяць в Excel</span>
+                </button>
             </div>
 
+            <!-- РОЗДІЛ: БАЗА КЛІЄНТІВ -->
             <div id="secClients" class="master-section form-card" style="display: none; padding: 16px;">
                 <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; margin-bottom: 12px;">База клієнтів</h3>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -139,6 +165,7 @@
                 <div id="regularClientsContainer" style="display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto; margin-top: 12px;"></div>
             </div>
 
+            <!-- РОЗДІЛ: РОБОТИ (ПОРТФОЛІО) -->
             <div id="secWorks" class="master-section form-card" style="display: none; padding: 16px;">
                 <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; margin-bottom: 12px;">Завантажити роботи</h3>
                 <div style="margin-bottom: 8px;">
@@ -155,6 +182,7 @@
         </div>
     </div>
 
+    <!-- Модальне вікно деталей запису -->
     <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing: border-box;">
         <div style="background: var(--tg-card); border: 1.5px solid var(--accent); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
             <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center; margin: 0;">✨ Деталі запису</h3>
@@ -165,14 +193,19 @@
 
     <script>
         let currentMasterDate = new Date();
+        let currentFinanceDate = new Date(); // Окремий стан для аналітики по місяцях
         let selectedCrmDate = new Date().toISOString().split('T')[0];
         let allBookingsCache = [];
         let blockedDaysCache = [];
 
+        const monthsUa = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
+
         window.addEventListener('DOMContentLoaded', () => {
+            // За замовчуванням ставимо сьогоднішню дату в поле додавання витрати
+            document.getElementById('expenseDateInput').value = new Date().toISOString().split('T')[0];
+            
             refreshCrmData();
             loadMasterWorks();
-            updateFinancesAndExpenses();
             renderRegularClientsList();
         });
 
@@ -198,11 +231,21 @@
             document.getElementById(sectionId).style.display = 'flex';
             document.querySelectorAll('.korea-nav-chip').forEach(i => i.classList.remove('active'));
             if(el) el.classList.add('active');
+
+            if (sectionId === 'secFinances') {
+                updateFinancesAndExpenses();
+            }
         }
 
         function changeMonth(dir) {
             currentMasterDate.setMonth(currentMasterDate.getMonth() + dir);
             renderCrmCalendar();
+        }
+
+        // Перемикання місяця у фінансах
+        function changeFinanceMonth(dir) {
+            currentFinanceDate.setMonth(currentFinanceDate.getMonth() + dir);
+            updateFinancesAndExpenses();
         }
 
         function renderCrmCalendar() {
@@ -212,7 +255,6 @@
 
             let year = currentMasterDate.getFullYear();
             let month = currentMasterDate.getMonth();
-            const monthsUa = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
             document.getElementById('calendarTitle').innerText = `${monthsUa[month]} ${year}`;
 
             let firstDayIndex = new Date(year, month, 1).getDay();
@@ -327,51 +369,148 @@
             else { btn.innerText = "🔒 Заблокувати день (вихідний)"; btn.style.borderColor = "var(--tg-border)"; }
         }
 
-        function updateFinancesAndExpenses() {
-            let totalIncome = allBookingsCache.reduce((sum, b) => sum + Number(b.price || 1000), 0);
-            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
-            let totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-            let net = totalIncome - totalExpenses;
+        // --- ЛОГІКА ФІНАНСІВ ПО МІСЯЦЯХ ---
+        function getFilteredExpenses() {
+            let raw = JSON.parse(localStorage.getItem('illiana_studio_expenses_v2') || '[]');
+            // Міграція зі старого формату (якщо не було дати)
+            return raw.map(e => ({
+                id: e.id || Date.now() + Math.random(),
+                name: e.name,
+                amount: Number(e.amount),
+                date: e.date || new Date().toISOString().split('T')[0]
+            }));
+        }
 
+        function updateFinancesAndExpenses() {
+            let year = currentFinanceDate.getFullYear();
+            let month = currentFinanceDate.getMonth();
+            let monthKey = `${year}-${String(month + 1).padStart(2, '0')}`; // Формат YYYY-MM
+
+            // Оновлюємо заголовок обраного місяця
+            document.getElementById('financeMonthTitle').innerText = `${monthsUa[month]} ${year}`;
+
+            // 1. Фільтруємо записи клієнтів за цей місяць
+            let monthBookings = allBookingsCache.filter(b => (b.date || '').startsWith(monthKey));
+            let totalIncome = monthBookings.reduce((sum, b) => sum + Number(b.price || 0), 0);
+
+            // 2. Фільтруємо витрати за цей місяць
+            let allExpenses = getFilteredExpenses();
+            let monthExpenses = allExpenses.filter(e => (e.date || '').startsWith(monthKey));
+            let totalExpenses = monthExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+            // 3. Чистий прибуток
+            let netProfit = totalIncome - totalExpenses;
+
+            // Відображаємо показники
             document.getElementById('statCompleted').innerText = totalIncome + " ₴";
             document.getElementById('statExpenses').innerText = totalExpenses + " ₴";
-            document.getElementById('statNetProfit').innerText = net + " ₴";
+            document.getElementById('statNetProfit').innerText = netProfit + " ₴";
+            document.getElementById('statMonthBookingsCount').innerText = monthBookings.length;
 
-            document.getElementById('expensesListContainer').innerHTML = expenses.map((e, idx) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:8px 12px; border-radius:8px; font-size:10px; border: 1px solid var(--tg-border);">
-                    <span>${e.name} — <b style="color: var(--accent);">${e.amount} ₴</b></span>
-                    <button onclick="removeExpense(${idx})" style="background:none; border:none; color:var(--tg-muted); font-size: 14px; cursor:pointer;">✕</button>
-                </div>
-            `).join('');
+            // Відображаємо список витрат за цей місяць
+            let container = document.getElementById('expensesListContainer');
+            if (monthExpenses.length === 0) {
+                container.innerHTML = `<div style="font-size:9px; color:var(--tg-muted); text-align:center; padding:6px;">Немає витрат за цей місяць</div>`;
+            } else {
+                container.innerHTML = monthExpenses.map(e => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--tg-card-hover); padding:8px 12px; border-radius:8px; font-size:10px; border: 1px solid var(--tg-border);">
+                        <div>
+                            <span>${e.name} — <b style="color: var(--accent);">${e.amount} ₴</b></span>
+                            <div style="font-size:7.5px; color:var(--tg-muted);">${e.date}</div>
+                        </div>
+                        <button onclick="removeExpense('${e.id}')" style="background:none; border:none; color:var(--tg-muted); font-size: 14px; cursor:pointer;">✕</button>
+                    </div>
+                `).join('');
+            }
         }
 
         function addExpense() {
             let name = document.getElementById('expenseNameInput').value.trim();
             let amount = document.getElementById('expenseAmountInput').value.trim();
-            if (!name || !amount) return alert("Введіть назву та суму!");
-            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
-            expenses.push({ name, amount });
-            localStorage.setItem('illiana_studio_expenses', JSON.stringify(expenses));
+            let date = document.getElementById('expenseDateInput').value;
+            
+            if (!name || !amount) return alert("Введіть назву та суму витрати!");
+            if (!date) date = new Date().toISOString().split('T')[0];
+
+            let allExpenses = getFilteredExpenses();
+            allExpenses.push({
+                id: 'exp_' + Date.now(),
+                name,
+                amount: Number(amount),
+                date
+            });
+            localStorage.setItem('illiana_studio_expenses_v2', JSON.stringify(allExpenses));
+            
             document.getElementById('expenseNameInput').value = '';
             document.getElementById('expenseAmountInput').value = '';
+            
             updateFinancesAndExpenses();
         }
 
-        function removeExpense(idx) {
-            let expenses = JSON.parse(localStorage.getItem('illiana_studio_expenses') || '[]');
-            expenses.splice(idx, 1);
-            localStorage.setItem('illiana_studio_expenses', JSON.stringify(expenses));
+        function removeExpense(id) {
+            let allExpenses = getFilteredExpenses();
+            allExpenses = allExpenses.filter(e => e.id !== id);
+            localStorage.setItem('illiana_studio_expenses_v2', JSON.stringify(allExpenses));
             updateFinancesAndExpenses();
         }
 
+        // ЕКСПОРТ У EXCEL ЗА ОБРАНИЙ МІСЯЦЬ
         function exportToExcel() {
-            if (allBookingsCache.length === 0) return alert("Немає записів!");
-            let ws = XLSX.utils.json_to_sheet(allBookingsCache);
+            let year = currentFinanceDate.getFullYear();
+            let month = currentFinanceDate.getMonth();
+            let monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+            let monthName = monthsUa[month];
+
+            let monthBookings = allBookingsCache.filter(b => (b.date || '').startsWith(monthKey));
+            let allExpenses = getFilteredExpenses();
+            let monthExpenses = allExpenses.filter(e => (e.date || '').startsWith(monthKey));
+
+            let totalIncome = monthBookings.reduce((sum, b) => sum + Number(b.price || 0), 0);
+            let totalExpenses = monthExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+            let netProfit = totalIncome - totalExpenses;
+
             let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Записи");
-            XLSX.writeFile(wb, "Illiana_Studio_Bookings.xlsx");
+
+            // 1. Вкладка "Підсумок"
+            let summaryData = [
+                { "Показник": "Місяць та рік", "Значення": `${monthName} ${year}` },
+                { "Показник": "Загальний дохід (₴)", "Значення": totalIncome },
+                { "Показник": "Загальні витрати (₴)", "Значення": totalExpenses },
+                { "Показник": "Чистий прибуток (₴)", "Значення": netProfit },
+                { "Показник": "Кількість записів", "Значення": monthBookings.length }
+            ];
+            let wsSummary = XLSX.utils.json_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, wsSummary, "Підсумок місяця");
+
+            // 2. Вкладка "Записи клієнтів"
+            let bookingsTable = monthBookings.map(b => ({
+                "Дата": b.date,
+                "Час": b.time,
+                "Клієнт": b.name,
+                "Телефон": b.phone,
+                "Послуга": b.service,
+                "Сума (₴)": Number(b.price || 0),
+                "Email": b.email || '—',
+                "Соцмережі": b.social || '—'
+            }));
+            let wsBookings = XLSX.utils.json_to_sheet(bookingsTable.length > 0 ? bookingsTable : [{ "Повідомлення": "Немає записів за цей місяць" }]);
+            XLSX.utils.book_append_sheet(wb, wsBookings, "Записи клієнтів");
+
+            // 3. Вкладка "Витрати"
+            let expensesTable = monthExpenses.map(e => ({
+                "Дата": e.date,
+                "Назва витрати": e.name,
+                "Сума (₴)": e.amount
+            }));
+            let wsExpenses = XLSX.utils.json_to_sheet(expensesTable.length > 0 ? expensesTable : [{ "Повідомлення": "Немає витрат за цей місяць" }]);
+            XLSX.utils.book_append_sheet(wb, wsExpenses, "Витрати");
+
+            // Збереження файлу
+            let fileName = `Finansy_${monthKey}_${monthName}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
 
+        // --- БАЗА КЛІЄНТІВ ---
         function renderRegularClientsList() {
             let clients = JSON.parse(localStorage.getItem('illiana_regular_clients') || '[]');
             document.getElementById('totalClientsCountBadge').innerText = clients.length;
@@ -404,6 +543,7 @@
             renderRegularClientsList();
         }
 
+        // --- РОБОТИ (ПОРТФОЛІО) ---
         async function loadMasterWorks() {
             try {
                 let res = await fetch('/api/works');
@@ -420,7 +560,6 @@
             } catch(e) {}
         }
 
-        // ОНОВЛЕНА ФУНКЦІЯ: НАДВИСОКА ЯКІСТЬ ТА ДЕТАЛІЗАЦІЯ
         async function uploadWorkToMainSite() {
             let title = document.getElementById('newWorkTitleInput').value.trim();
             let fileInput = document.getElementById('newWorkImageFile');
@@ -452,22 +591,16 @@
                 img.onload = async () => {
                     try {
                         let canvas = document.createElement('canvas');
-                        
-                        // Full HD роздільна здатність (1800 px)
                         let MAX_WIDTH = 1800; 
                         let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
                         canvas.width = Math.round(img.width * scale);
                         canvas.height = Math.round(img.height * scale);
                         
                         let ctx = canvas.getContext('2d');
-                        
-                        // Максимальне згладжування деталей
                         ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
-                        
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         
-                        // 90% якості (0.90) - максимальна чіткість без розмиття
                         let compressedImage = canvas.toDataURL('image/jpeg', 0.90); 
 
                         btn.innerText = "⏳ Завантаження на сайт...";
