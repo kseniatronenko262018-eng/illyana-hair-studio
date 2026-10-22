@@ -8,7 +8,6 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
-// Оновлений токен Telegram бота
 const TG_BOT_TOKEN = '8591183866:AAGaY0wW1ZRDb50JSf_GOC_dgzvyDeC5hWQ';
 const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
 const MASTER_TG_ID = '684896405'; 
@@ -48,13 +47,13 @@ app.post('/api/unblock-day', (req, res) => {
     res.json({ success: true, blockedDays });
 });
 
+// РОБОТИ (ПОРТФОЛІО)
 app.get('/api/works', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
         const data = await response.json();
         res.json(Array.isArray(data) ? data : []);
     } catch (error) { 
-        console.error("Помилка отримання робіт:", error);
         res.status(500).json([]); 
     }
 });
@@ -70,13 +69,10 @@ app.post('/api/works', async (req, res) => {
         
         if (!response.ok) {
             const errBody = await response.text();
-            console.error("Supabase помилка збереження роботи:", errBody);
-            // Повертаємо точну причину з бази
             return res.status(400).json({ success: false, error: errBody });
         }
         res.json({ success: true });
     } catch (error) { 
-        console.error("Помилка api/works:", error);
         res.status(500).json({ success: false, error: error.message }); 
     }
 });
@@ -92,6 +88,7 @@ app.post('/api/delete-work', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// TELEGRAM ВІДПРАВКА
 async function sendTelegramNotification(chatId, text) {
     try {
         let res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
@@ -106,19 +103,96 @@ async function sendTelegramNotification(chatId, text) {
         });
         let data = await res.json();
         if (!data.ok) {
-            console.error(`❌ Помилка надсилання в Telegram (chat_id: ${chatId}):`, data.description);
+            console.error(`❌ Помилка Telegram (chat_id: ${chatId}):`, data.description);
         } else {
-            console.log(`✅ Telegram сповіщення успішно надіслано (chat_id: ${chatId})`);
+            console.log(`✅ Telegram сповіщення надіслано (chat_id: ${chatId})`);
         }
     } catch (e) { 
         console.error("Telegram fetch error:", e); 
     }
 }
 
+// ПАМ'ЯТЬ ДЛЯ НЕОПЛАЧЕНИХ ЗАПИСІВ
+let pendingBookings = {}; 
 let lastClientMessagePerChat = {};
 let pendingClientMessages = {};
 let lastUpdateId = 0;
 
+// ГОЛОВНА ФУНКЦІЯ ФІНАЛІЗАЦІЇ ЗАПИСУ (Зберігає в базі та шле повідомлення)
+async function finalizeBooking(bookingData) {
+    const { name, phone, email, social, service, price, durationHours, date, time, reference, isRegular, bookingRef } = bookingData;
+
+    // 1. Збереження в Supabase bookings
+    const payloadToInsert = { 
+        name, phone, email: email || '', social: social || '', 
+        service, price, durationHours, date, time, 
+        reference: reference || '' 
+    };
+
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
+            method: 'POST',
+            headers: supabaseHeaders,
+            body: JSON.stringify(payloadToInsert)
+        });
+        console.log(`✅ Запис збережено в базі: ${name} (${date} ${time})`);
+    } catch (err) {
+        console.error("Помилка збереження в Supabase:", err);
+    }
+
+    // 2. Додавання в базу клієнтів
+    try {
+        const cleanPhone = (phone || '').replace(/\D/g, '').slice(-9);
+        const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
+        const clientsList = await checkClient.json();
+        const exists = Array.isArray(clientsList) && clientsList.some(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
+
+        if (!exists) {
+            await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+                method: 'POST',
+                headers: supabaseHeaders,
+                body: JSON.stringify({ name, phone, email: email || '', social: social || '' })
+            });
+        }
+    } catch (err) {
+        console.error("Помилка додавання клієнта:", err);
+    }
+
+    // 3. Формування повідомлення
+    let priceNum = Number(price) || 0;
+    let depositInfo = "";
+    
+    if (isRegular) {
+        depositInfo = `💎 <b>Статус:</b> Постійний клієнт\n💰 <b>До сплати:</b> ${priceNum} ₴ (без передоплати)`;
+    } else {
+        let remainder = priceNum > 500 ? priceNum - 500 : 0;
+        depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (сплачено через Monobank ✅)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
+    }
+
+    let clientMessage = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
+                      `📅 <b>ДАТА:</b> ${escapeHtml(date)}\n` +
+                      `⏰ <b>ЧАС:</b> ${escapeHtml(time)}\n` +
+                      `✂️ <b>ПОСЛУГА:</b> ${escapeHtml(service)}\n` +
+                      `💰 <b>ЗАГАЛЬНА ВАРТІСТЬ:</b> ${priceNum} ₴\n` +
+                      `${depositInfo}\n\n` +
+                      `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
+                      `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
+                      `💬 <b>Для скасування чи зміни часу напишіть у Директ майстру:</b>\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=`;
+
+    let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${escapeHtml(name)}\n📞 <b>Телефон:</b> ${escapeHtml(phone)}\n💬 <b>Соцмережі:</b> ${escapeHtml(social || '—')}\n\n` + clientMessage;
+
+    // Надсилаємо майстру
+    await sendTelegramNotification(MASTER_TG_ID, masterMessage);
+    
+    // Зберігаємо повідомлення для клієнта
+    if (bookingRef) {
+        pendingClientMessages[bookingRef] = clientMessage;
+    }
+
+    return clientMessage;
+}
+
+// TELEGRAM POLLING
 async function pollTelegram() {
     try {
         let res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=20`);
@@ -132,6 +206,31 @@ async function pollTelegram() {
                     
                     if (parts.length > 1) {
                         let ref = parts[1];
+
+                        // Перевіряємо, чи це клієнт після оплати
+                        if (pendingBookings[ref]) {
+                            let pending = pendingBookings[ref];
+                            try {
+                                // Пряма перевірка статусу рахунку в Monobank
+                                let checkMono = await fetch(`https://api.monobank.ua/api/merchant/invoice/status?invoiceId=${pending.invoiceId}`, {
+                                    headers: { "X-Token": MONO_TOKEN }
+                                });
+                                let monoData = await checkMono.json();
+                                if (monoData.status === 'success') {
+                                    let cMsg = await finalizeBooking(pending);
+                                    delete pendingBookings[ref];
+                                    if (pending.invoiceId) delete pendingBookings[pending.invoiceId];
+                                    await sendTelegramNotification(chatId, cMsg);
+                                    continue;
+                                } else {
+                                    await sendTelegramNotification(chatId, "⚠️ Оплата завдатку 500 ₴ ще не підтверджена банком.\nЯкщо ви щойно оплатили, зачекайте 1 хвилину та напишіть /start знову.");
+                                    continue;
+                                }
+                            } catch (e) {
+                                console.error("Помилка перевірки Mono:", e);
+                            }
+                        }
+
                         if (pendingClientMessages[ref]) {
                             lastClientMessagePerChat[chatId] = pendingClientMessages[ref];
                             await sendTelegramNotification(chatId, pendingClientMessages[ref]);
@@ -153,12 +252,8 @@ async function pollTelegram() {
                     }
                 }
             }
-        } else if (!data.ok && data.error_code === 409) {
-            console.error("⚠️ УВАГА: Конфлікт Telegram Polling (409)! Перевірте запущені процеси.");
         }
-    } catch (e) {
-        // ігноруємо таймаути мережі
-    }
+    } catch (e) {}
     setTimeout(pollTelegram, 2000);
 }
 pollTelegram();
@@ -171,7 +266,6 @@ async function getLastClientBookingMessage() {
             const b = data[0];
             let priceNum = Number(b.price) || 0;
             let remainder = priceNum > 500 ? priceNum - 500 : 0;
-            
             let depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (враховано)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
 
             return `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
@@ -188,6 +282,7 @@ async function getLastClientBookingMessage() {
     return null;
 }
 
+// ОТРИМАННЯ ВСІХ ПІДТВЕРДЖЕНИХ ЗАПИСІВ ДЛЯ КАЛЕНДАРЯ
 app.get('/api/bookings', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
@@ -196,65 +291,82 @@ app.get('/api/bookings', async (req, res) => {
     } catch (error) { res.status(500).json([]); }
 });
 
+// ПРЯМИЙ ЗАПИС (Використовується ТІЛЬКИ для ПОСТІЙНИХ клієнтів)
 app.post('/api/bookings', async (req, res) => {
     try {
-        const { name, phone, email, social, service, price, durationHours, date, time, reference, isRegular, bookingRef } = req.body;
-
-        const payloadToInsert = { name, phone, email: email || '', social: social || '', service, price, durationHours, date, time, reference: reference || '' };
-
-        await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
-            method: 'POST',
-            headers: supabaseHeaders,
-            body: JSON.stringify(payloadToInsert)
-        });
-
-        const cleanPhone = (phone || '').replace(/\D/g, '').slice(-9);
-        const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
-        const clientsList = await checkClient.json();
-        const exists = Array.isArray(clientsList) && clientsList.some(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
-
-        if (!exists) {
-            await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
-                method: 'POST',
-                headers: supabaseHeaders,
-                body: JSON.stringify({ name, phone, email: email || '', social: social || '' })
-            });
-        }
-
-        let priceNum = Number(price) || 0;
-        let depositInfo = "";
-        
-        if (isRegular) {
-            depositInfo = `💎 <b>Статус:</b> Постійний клієнт\n💰 <b>До сплати:</b> ${priceNum} ₴ (без передоплати)`;
-        } else {
-            let remainder = priceNum > 500 ? priceNum - 500 : 0;
-            depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (сплачено)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
-        }
-
-        let clientMessage = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
-                          `📅 <b>ДАТА:</b> ${escapeHtml(date)}\n` +
-                          `⏰ <b>ЧАС:</b> ${escapeHtml(time)}\n` +
-                          `✂️ <b>ПОСЛУГА:</b> ${escapeHtml(service)}\n` +
-                          `💰 <b>ЗАГАЛЬНА ВАРТІСТЬ:</b> ${priceNum} ₴\n` +
-                          `${depositInfo}\n\n` +
-                          `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
-                          `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
-                          `💬 <b>Для скасування чи зміни часу напишіть у Директ майстру:</b>\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=`;
-
-        let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${escapeHtml(name)}\n📞 <b>Телефон:</b> ${escapeHtml(phone)}\n💬 <b>Соцмережі:</b> ${escapeHtml(social || '—')}\n\n` + clientMessage;
-
-        // Надсилаємо майстру
-        await sendTelegramNotification(MASTER_TG_ID, masterMessage);
-        
-        // Зберігаємо для клієнта
-        if (bookingRef) {
-            pendingClientMessages[bookingRef] = clientMessage;
-        }
-
+        await finalizeBooking(req.body);
         res.json({ success: true });
     } catch (error) { 
         console.error("Booking error:", error);
         res.status(500).json({ success: false, error: error.message }); 
+    }
+});
+
+// СТВОРЕННЯ ПЛАТЕЖУ (Використовується для НОВИХ клієнтів)
+app.post('/api/create-invoice', async (req, res) => {
+    try {
+        const bookingData = req.body;
+        const { name, date, time, bookingRef } = bookingData;
+        
+        const host = req.get('host');
+        const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+        const baseUrl = `${protocol}://${host}`;
+
+        const response = await fetch("https://api.monobank.ua/api/merchant/invoice/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Token": MONO_TOKEN },
+            body: JSON.stringify({
+                amount: 50000, // 500 грн у копійках
+                ccy: 980,
+                merchantPaymInfo: { 
+                    destination: "Завдаток за послугу (ФОП Явір І.В.)", 
+                    comment: `Запис: ${name} на ${date} о ${time}`,
+                    reference: bookingRef 
+                },
+                redirectUrl: `https://t.me/${TG_BOT_USERNAME}?start=${bookingRef}`,
+                webHookUrl: `${baseUrl}/api/monobank-webhook`
+            })
+        });
+        
+        const invData = await response.json();
+        
+        if (invData.invoiceId && invData.pageUrl) {
+            // Тимчасово зберігаємо дані в очікуванні оплати (в базі запису ще НЕМАЄ)
+            pendingBookings[bookingRef] = {
+                ...bookingData,
+                invoiceId: invData.invoiceId
+            };
+            pendingBookings[invData.invoiceId] = bookingRef;
+            
+            res.json({ pageUrl: invData.pageUrl });
+        } else {
+            console.error("Помилка створення Monobank:", invData);
+            res.status(400).json({ error: invData.errText || "Помилка платіжної системи" });
+        }
+    } catch (error) { 
+        console.error("Invoice error:", error);
+        res.status(500).json({ error: "Не вдалося створити платіж" }); 
+    }
+});
+
+// ВЕБХУК ВІД MONOBANK (Спрацьовує в момент списання 500 грн)
+app.post('/api/monobank-webhook', async (req, res) => {
+    try {
+        const { invoiceId, status } = req.body;
+        console.log(`💳 Webhook Monobank: invoiceId=${invoiceId}, status=${status}`);
+
+        if (status === 'success') {
+            let ref = pendingBookings[invoiceId];
+            if (ref && pendingBookings[ref]) {
+                await finalizeBooking(pendingBookings[ref]);
+                delete pendingBookings[ref];
+                delete pendingBookings[invoiceId];
+            }
+        }
+        res.status(200).send('OK');
+    } catch (err) {
+        console.error("Webhook processing error:", err);
+        res.status(200).send('OK');
     }
 });
 
@@ -275,22 +387,6 @@ app.post('/api/check-client', async (req, res) => {
         const found = Array.isArray(clients) && clients.find(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
         res.json({ isRegular: !!found });
     } catch (error) { res.status(500).json({ isRegular: false }); }
-});
-
-app.post('/api/create-invoice', async (req, res) => {
-    try {
-        const response = await fetch("https://api.monobank.ua/api/merchant/invoice/create", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Token": MONO_TOKEN },
-            body: JSON.stringify({
-                amount: 50000,
-                ccy: 980,
-                merchantPaymInfo: { destination: "Завдаток за послугу (ФОП Явір І.В.)", comment: `Запис на ${req.body.date} о ${req.body.time}` },
-                redirectUrl: `https://t.me/${TG_BOT_USERNAME}?start=${req.body.bookingRef}`
-            })
-        });
-        res.json(await response.json());
-    } catch (error) { res.status(500).json({ error: "Не вдалося створити платіж" }); }
 });
 
 app.listen(process.env.PORT || 3000, () => console.log('Сервер запущено!'));
