@@ -5,19 +5,17 @@ let selectedCondition = null;
 let selectedDate = null;
 let selectedTimeSlot = null;
 let bookedSlotsCache = {};
+let blockedDaysCache = [];
 let observer;
 
 const TELEGRAM_BOT_URL = 'https://t.me/illyana_hair_studio_bot';
 
 window.addEventListener('DOMContentLoaded', () => {
-    initCustomCalendar();
-    fetchBookingsData();
-    
-    // Встановлюємо ТЕМНУ тему за замовчуванням
     let savedTheme = localStorage.getItem('illiana_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
 
-    // Ініціалізація анімацій появи
+    fetchBookingsData();
+
     observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -31,7 +29,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Логіка плаваючої кнопки
 window.addEventListener('scroll', () => {
     let cta = document.getElementById('stickyCta');
     let bookBtn = document.getElementById('mainBookBtn');
@@ -43,7 +40,6 @@ window.addEventListener('scroll', () => {
     }
     
     let btnRect = bookBtn ? bookBtn.getBoundingClientRect() : null;
-    
     if (window.scrollY > 350 && (!btnRect || btnRect.top > window.innerHeight)) {
         cta.classList.add('visible');
     } else {
@@ -74,15 +70,53 @@ function toggleLang() {
     initCustomCalendar(); 
 }
 
+// Визначення реальної тривалості запису
+function getBookingDuration(b) {
+    if (b.durationHours && Number(b.durationHours) > 0) return Number(b.durationHours);
+    let s = (b.service || '').toLowerCase();
+    if (s.includes('блонд') || s.includes('blonde')) {
+        let p = Number(b.price || 0);
+        if (p >= 7000) return 7;
+        if (p >= 5500) return 6;
+        return 3;
+    }
+    if (s.includes('стрижка + фарбування') || s.includes('complex')) return 3;
+    if (s.includes('коріння') || s.includes('root')) return 2.5;
+    if (s.includes('тонування') || s.includes('tone')) {
+        let p = Number(b.price || 0);
+        if (p >= 4500) return 3;
+        if (p >= 3500) return 2.5;
+        return 2;
+    }
+    return 1.5; // Стрижка
+}
+
 async function fetchBookingsData() {
     try {
+        // Отримуємо записи
         let res = await fetch('/api/bookings');
         let data = await res.json();
         bookedSlotsCache = {};
-        data.forEach(b => {
-            if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
-            bookedSlotsCache[b.date].push({ time: b.time, duration: Number(b.durationHours || 1.5) });
-        });
+        if (Array.isArray(data)) {
+            data.forEach(b => {
+                if (!bookedSlotsCache[b.date]) bookedSlotsCache[b.date] = [];
+                bookedSlotsCache[b.date].push({ 
+                    time: b.time, 
+                    duration: getBookingDuration(b),
+                    service: b.service
+                });
+            });
+        }
+
+        // Отримуємо вихідні дні майстра
+        try {
+            let resBlock = await fetch('/api/blocked-days');
+            blockedDaysCache = await resBlock.json() || [];
+        } catch(e) {
+            blockedDaysCache = [];
+        }
+
+        initCustomCalendar();
         renderTimeSlots();
     } catch(e) {}
 }
@@ -273,6 +307,7 @@ function updateSummaryCard() {
     }
 }
 
+// Календар із блокуванням вихідних майстра
 function initCustomCalendar() {
     let grid = document.getElementById('customCalendarGrid');
     if (!grid) return;
@@ -282,36 +317,74 @@ function initCustomCalendar() {
     const daysEN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     
     let today = new Date();
+    let firstSelectableDate = null;
+
     for (let i = 0; i < 30; i++) {
         let d = new Date(); d.setDate(today.getDate() + i);
         let iso = d.toISOString().split('T')[0];
+        let isBlocked = blockedDaysCache.includes(iso);
+
+        if (!isBlocked && !firstSelectableDate) {
+            firstSelectableDate = iso;
+        }
+
         let cell = document.createElement('div');
-        cell.className = 'calendar-day-cell' + (selectedDate === iso || (i === 0 && !selectedDate) ? ' selected' : '');
-        if (i === 0 && !selectedDate) selectedDate = iso;
+        let isSelected = (selectedDate === iso) || (!selectedDate && iso === firstSelectableDate);
+        cell.className = 'calendar-day-cell' + (isSelected ? ' selected' : '') + (isBlocked ? ' blocked' : '');
         
         let dName = currentLang === 'ua' ? daysUA[d.getDay()] : daysEN[d.getDay()];
+        cell.innerHTML = `<span class="day-name">${dName}</span><span class="day-num">${d.getDate()}</span>` + (isBlocked ? `<span style="font-size:6px; color:#e63946;">вихідний</span>` : '');
         
-        cell.innerHTML = `<span class="day-name">${dName}</span><span class="day-num">${d.getDate()}</span>`;
-        cell.onclick = () => {
-            document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
-            cell.classList.add('selected');
-            selectedDate = iso;
-            renderTimeSlots(); updateSummaryCard();
-        };
+        if (isBlocked) {
+            cell.onclick = () => {
+                alert(currentLang === 'ua' ? "Цей день заблоковано майстром (вихідний)!" : "This day is unavailable (day off)!");
+            };
+        } else {
+            cell.onclick = () => {
+                document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
+                cell.classList.add('selected');
+                selectedDate = iso;
+                renderTimeSlots(); 
+                updateSummaryCard();
+            };
+        }
         grid.appendChild(cell);
     }
-    renderTimeSlots();
+
+    if (!selectedDate && firstSelectableDate) {
+        selectedDate = firstSelectableDate;
+    }
 }
 
+// Генерація слотів кожні 30 хвилин з урахуванням правил
 function renderTimeSlots() {
     let grid = document.getElementById('timeSlotsGrid');
     if (!grid) return;
     grid.innerHTML = '';
+    
     if (!selectedDate) return;
+
+    // Якщо день заблокований майстром
+    if (blockedDaysCache.includes(selectedDate)) {
+        grid.innerHTML = `<div style="font-size:10px; color:var(--accent); padding:10px; text-align:center; width:100%;">🔒 Майстер вихідний у цей день. Оберіть іншу дату.</div>`;
+        return;
+    }
 
     let booked = bookedSlotsCache[selectedDate] || [];
     let dur = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
-    let slots = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
+    
+    // Перевірка, чи це стрижка
+    let isCut = (selectedCategory === 'cut') || (selectedServiceData && selectedServiceData.title && (selectedServiceData.title.ua === 'Стрижка' || selectedServiceData.title === 'Стрижка'));
+
+    // Слоти з кроком у 30 хвилин
+    let slots = [
+        "10:00", "10:30", "11:00", "11:30", 
+        "12:00", "12:30", "13:00", "13:30", 
+        "14:00", "14:30", "15:00", "15:30", 
+        "16:00", "16:30", "17:00", "17:30", 
+        "18:00", "18:30", "19:00"
+    ];
+
     let now = new Date();
     let isToday = (selectedDate === now.toISOString().split('T')[0]);
 
@@ -325,25 +398,35 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
-        if (dur >= 7 && slotStart > 10.5) {
-            isDisabled = true;
+        // ПРАВИЛО 1: Час закінчення
+        if (isCut) {
+            // Для стрижки дозволено запис на 19:00 (навіть якщо триває 1.5 год)
+            if (slotStart > 19.001) {
+                isDisabled = true;
+            }
+        } else {
+            // Всі інші послуги обов'язково мають закінчитись не пізніше 20:00
+            if (slotEnd > 20.001) {
+                isDisabled = true;
+            }
         }
 
-        if (slotEnd > 19.0 && dur <= 1.5 && timeStr !== "19:00") {
-            isDisabled = true; 
-        } else if (slotEnd > 19.0 && dur > 1.5) {
-            isDisabled = true;
-        }
-
+        // ПРАВИЛО 2: День-у-день мінімум за 3 години від поточного часу
         if (isToday) {
-            let slotTime = new Date(); slotTime.setHours(h, m, 0, 0);
-            if ((slotTime - now) / 3600000 < 3) isDisabled = true;
+            let slotTime = new Date(); 
+            slotTime.setHours(h, m, 0, 0);
+            let diffHours = (slotTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+            if (diffHours < 3) {
+                isDisabled = true;
+            }
         }
 
+        // ПРАВИЛО 3: Жодного накладання (якщо процедура триває 6 годин - блокується весь час)
         booked.forEach(b => {
             let [bh, bm] = b.time.split(':').map(Number);
             let bStart = bh + (bm / 60);
             let bEnd = bStart + b.duration;
+            // Перетин проміжків: [slotStart, slotEnd) перетинає [bStart, bEnd)
             if (slotStart < bEnd && slotEnd > bStart) {
                 isDisabled = true;
             }
@@ -374,12 +457,12 @@ async function uploadImageToImgBB(file) {
             img.src = e.target.result;
             img.onload = () => {
                 let canvas = document.createElement('canvas');
-                let MAX_WIDTH = 600;
+                let MAX_WIDTH = 800;
                 let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
-                canvas.width = img.width * scale;
-                canvas.height = img.height * scale;
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
                 canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL('image/jpeg', 0.6));
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
             };
             img.onerror = () => resolve('');
         };
@@ -387,7 +470,6 @@ async function uploadImageToImgBB(file) {
     });
 }
 
-// ОСНОВНА ФУНКЦІЯ ЗАПИСУ
 async function submitBooking() {
     let name = document.getElementById('clientName').value.trim();
     let phone = document.getElementById('clientPhone').value.trim();
@@ -417,7 +499,6 @@ async function submitBooking() {
     try {
         let photoUrl = await uploadImageToImgBB(hInput.files[0]);
 
-        // 1. Перевіряємо, чи клієнт постійний
         let checkRes = await fetch('/api/check-client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone }) });
         let { isRegular } = await checkRes.json();
 
@@ -437,7 +518,6 @@ async function submitBooking() {
         };
 
         if (isRegular) {
-            // ВАРІАНТ А: ПОСТІЙНИЙ КЛІЄНТ (Бронюємо відразу без передплати)
             btn.innerText = currentLang === 'ua' ? "⏳ Бронювання..." : "⏳ Booking...";
             let bookRes = await fetch('/api/bookings', {
                 method: 'POST',
@@ -450,7 +530,6 @@ async function submitBooking() {
             alert(currentLang === 'ua' ? "✨ Ви постійний клієнт! Запис оформлено без передплати. Переходимо в Telegram." : "✨ Regular client! Booked without deposit. Redirecting to Telegram.");
             window.location.href = `${TELEGRAM_BOT_URL}?start=${bookingRef}`;
         } else {
-            // ВАРІАНТ Б: НОВИЙ КЛІЄНТ (НЕ записуємо в базу, спочатку оплата 500 грн)
             btn.innerText = currentLang === 'ua' ? "⏳ Перехід до оплати..." : "⏳ Redirecting to payment...";
             
             let invRes = await fetch('/api/create-invoice', {
@@ -461,7 +540,6 @@ async function submitBooking() {
             let invData = await invRes.json();
             
             if (invData.pageUrl) {
-                // Перенаправляємо на сторінку оплати Monobank
                 window.location.href = invData.pageUrl;
             } else {
                 throw new Error(invData.error || "Не вдалося створити платіж для передоплати.");
