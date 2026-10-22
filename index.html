@@ -307,17 +307,13 @@
                     let grid = document.getElementById('publicWorksGrid');
                     if (grid) {
                         grid.innerHTML = works.map(w => `
-                            <div class="works-carousel-item fade-in-section" onclick="openLightbox('${w.image}')">
+                            <div class="works-carousel-item" onclick="openLightbox('${w.image}')">
                                 <img src="${w.image}" alt="${w.title}">
                             </div>
-                        `).join('') + grid.innerHTML;
-                        
-                        setTimeout(() => {
-                            document.querySelectorAll('.works-carousel-item.fade-in-section').forEach(el => observer.observe(el));
-                        }, 100);
+                        `).join('');
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.error("Помилка завантаження робіт:", e); }
         });
     </script>
 </body>
