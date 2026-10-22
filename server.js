@@ -8,7 +8,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname)));
 
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
-// Оновлений токен бота
+// Оновлений токен Telegram бота
 const TG_BOT_TOKEN = '8591183866:AAGaY0wW1ZRDb50JSf_GOC_dgzvyDeC5hWQ';
 const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
 const MASTER_TG_ID = '684896405'; 
@@ -71,12 +71,13 @@ app.post('/api/works', async (req, res) => {
         if (!response.ok) {
             const errBody = await response.text();
             console.error("Supabase помилка збереження роботи:", errBody);
-            return res.status(400).json({ success: false, error: "Database rejected the file" });
+            // Повертаємо точну причину з бази
+            return res.status(400).json({ success: false, error: errBody });
         }
         res.json({ success: true });
     } catch (error) { 
         console.error("Помилка api/works:", error);
-        res.status(500).json({ success: false }); 
+        res.status(500).json({ success: false, error: error.message }); 
     }
 });
 
