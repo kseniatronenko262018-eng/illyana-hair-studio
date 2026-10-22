@@ -10,7 +10,9 @@ app.use(express.static(path.join(__dirname)));
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 const TG_BOT_TOKEN = '8591183866:AAGaY0wW1ZRDb50JSf_GOC_dgzvyDeC5hWQ';
 const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
-const MASTER_TG_ID = '684896405'; 
+
+// ОНОВЛЕНИЙ TELEGRAM ID МАЙСТРА
+const MASTER_TG_ID = '1078916846'; 
 
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyaHplbHB2eGRjdGhoZXZwbGhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjEzNzI4MSwiZXhwIjoyMTA3NzEzMjgxfQ.on7872D5eD3i95BGJVNiVdiMywjs9uMUvBwg5wdbfA8';
@@ -87,7 +89,7 @@ app.post('/api/delete-work', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// TELEGRAM ВІДПРАВКА
+// TELEGRAM ВІДПРАВКА СПОВІЩЕНЬ
 async function sendTelegramNotification(chatId, text) {
     try {
         let res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
@@ -174,6 +176,7 @@ async function finalizeBooking(bookingData) {
 
     let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${escapeHtml(name)}\n📞 <b>Телефон:</b> ${escapeHtml(phone)}\n💬 <b>Соцмережі:</b> ${escapeHtml(social || '—')}\n\n` + clientMessage;
 
+    // Відправляємо майстру на новий Telegram ID
     await sendTelegramNotification(MASTER_TG_ID, masterMessage);
     
     if (bookingRef) {
@@ -361,7 +364,6 @@ app.post('/api/cancel-booking', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// ПЕРЕВІРКА КЛІЄНТА НА СТАТУС "ПОСТІЙНИЙ"
 app.post('/api/check-client', async (req, res) => {
     try {
         const cleanPhone = (req.body.phone || '').replace(/\D/g, '').slice(-9);
@@ -372,7 +374,7 @@ app.post('/api/check-client', async (req, res) => {
     } catch (error) { res.status(500).json({ isRegular: false }); }
 });
 
-// --- РОБОТА З БАЗОЮ ПОСТІЙНИХ КЛІЄНТІВ (SUPABASE) ---
+// БАЗА ПОСТІЙНИХ КЛІЄНТІВ (SUPABASE)
 app.get('/api/clients', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
@@ -390,7 +392,6 @@ app.post('/api/clients', async (req, res) => {
 
         const cleanPhone = phone.replace(/\D/g, '').slice(-9);
 
-        // Перевіряємо чи вже є такий клієнт
         const check = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
         const list = await check.json();
         const exists = Array.isArray(list) && list.some(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
