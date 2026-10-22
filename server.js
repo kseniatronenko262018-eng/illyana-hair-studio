@@ -22,7 +22,6 @@ const supabaseHeaders = {
     "Prefer": "return=representation"
 };
 
-// Екранування спецсимволів для безпечного HTML у Telegram
 function escapeHtml(text) {
     if (!text) return '';
     return String(text)
@@ -112,17 +111,14 @@ async function sendTelegramNotification(chatId, text) {
     }
 }
 
-// ПАМ'ЯТЬ ДЛЯ НЕОПЛАЧЕНИХ ЗАПИСІВ
 let pendingBookings = {}; 
 let lastClientMessagePerChat = {};
 let pendingClientMessages = {};
 let lastUpdateId = 0;
 
-// ГОЛОВНА ФУНКЦІЯ ФІНАЛІЗАЦІЇ ЗАПИСУ (Зберігає в базі та шле повідомлення)
 async function finalizeBooking(bookingData) {
     const { name, phone, email, social, service, price, durationHours, date, time, reference, isRegular, bookingRef } = bookingData;
 
-    // 1. Збереження в Supabase bookings
     const payloadToInsert = { 
         name, phone, email: email || '', social: social || '', 
         service, price, durationHours, date, time, 
@@ -135,12 +131,10 @@ async function finalizeBooking(bookingData) {
             headers: supabaseHeaders,
             body: JSON.stringify(payloadToInsert)
         });
-        console.log(`✅ Запис збережено в базі: ${name} (${date} ${time})`);
     } catch (err) {
         console.error("Помилка збереження в Supabase:", err);
     }
 
-    // 2. Додавання в базу клієнтів
     try {
         const cleanPhone = (phone || '').replace(/\D/g, '').slice(-9);
         const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
@@ -158,7 +152,6 @@ async function finalizeBooking(bookingData) {
         console.error("Помилка додавання клієнта:", err);
     }
 
-    // 3. Формування повідомлення
     let priceNum = Number(price) || 0;
     let depositInfo = "";
     
@@ -181,10 +174,8 @@ async function finalizeBooking(bookingData) {
 
     let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${escapeHtml(name)}\n📞 <b>Телефон:</b> ${escapeHtml(phone)}\n💬 <b>Соцмережі:</b> ${escapeHtml(social || '—')}\n\n` + clientMessage;
 
-    // Надсилаємо майстру
     await sendTelegramNotification(MASTER_TG_ID, masterMessage);
     
-    // Зберігаємо повідомлення для клієнта
     if (bookingRef) {
         pendingClientMessages[bookingRef] = clientMessage;
     }
@@ -207,11 +198,9 @@ async function pollTelegram() {
                     if (parts.length > 1) {
                         let ref = parts[1];
 
-                        // Перевіряємо, чи це клієнт після оплати
                         if (pendingBookings[ref]) {
                             let pending = pendingBookings[ref];
                             try {
-                                // Пряма перевірка статусу рахунку в Monobank
                                 let checkMono = await fetch(`https://api.monobank.ua/api/merchant/invoice/status?invoiceId=${pending.invoiceId}`, {
                                     headers: { "X-Token": MONO_TOKEN }
                                 });
@@ -282,7 +271,6 @@ async function getLastClientBookingMessage() {
     return null;
 }
 
-// ОТРИМАННЯ ВСІХ ПІДТВЕРДЖЕНИХ ЗАПИСІВ ДЛЯ КАЛЕНДАРЯ
 app.get('/api/bookings', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
@@ -291,7 +279,6 @@ app.get('/api/bookings', async (req, res) => {
     } catch (error) { res.status(500).json([]); }
 });
 
-// ПРЯМИЙ ЗАПИС (Використовується ТІЛЬКИ для ПОСТІЙНИХ клієнтів)
 app.post('/api/bookings', async (req, res) => {
     try {
         await finalizeBooking(req.body);
@@ -302,7 +289,6 @@ app.post('/api/bookings', async (req, res) => {
     }
 });
 
-// СТВОРЕННЯ ПЛАТЕЖУ (Використовується для НОВИХ клієнтів)
 app.post('/api/create-invoice', async (req, res) => {
     try {
         const bookingData = req.body;
@@ -316,7 +302,7 @@ app.post('/api/create-invoice', async (req, res) => {
             method: "POST",
             headers: { "Content-Type": "application/json", "X-Token": MONO_TOKEN },
             body: JSON.stringify({
-                amount: 50000, // 500 грн у копійках
+                amount: 50000,
                 ccy: 980,
                 merchantPaymInfo: { 
                     destination: "Завдаток за послугу (ФОП Явір І.В.)", 
@@ -331,7 +317,6 @@ app.post('/api/create-invoice', async (req, res) => {
         const invData = await response.json();
         
         if (invData.invoiceId && invData.pageUrl) {
-            // Тимчасово зберігаємо дані в очікуванні оплати (в базі запису ще НЕМАЄ)
             pendingBookings[bookingRef] = {
                 ...bookingData,
                 invoiceId: invData.invoiceId
@@ -349,12 +334,9 @@ app.post('/api/create-invoice', async (req, res) => {
     }
 });
 
-// ВЕБХУК ВІД MONOBANK (Спрацьовує в момент списання 500 грн)
 app.post('/api/monobank-webhook', async (req, res) => {
     try {
         const { invoiceId, status } = req.body;
-        console.log(`💳 Webhook Monobank: invoiceId=${invoiceId}, status=${status}`);
-
         if (status === 'success') {
             let ref = pendingBookings[invoiceId];
             if (ref && pendingBookings[ref]) {
@@ -379,6 +361,7 @@ app.post('/api/cancel-booking', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+// ПЕРЕВІРКА КЛІЄНТА НА СТАТУС "ПОСТІЙНИЙ"
 app.post('/api/check-client', async (req, res) => {
     try {
         const cleanPhone = (req.body.phone || '').replace(/\D/g, '').slice(-9);
@@ -387,6 +370,62 @@ app.post('/api/check-client', async (req, res) => {
         const found = Array.isArray(clients) && clients.find(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
         res.json({ isRegular: !!found });
     } catch (error) { res.status(500).json({ isRegular: false }); }
+});
+
+// --- РОБОТА З БАЗОЮ ПОСТІЙНИХ КЛІЄНТІВ (SUPABASE) ---
+app.get('/api/clients', async (req, res) => {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
+        const data = await response.json();
+        res.json(Array.isArray(data) ? data : []);
+    } catch (error) {
+        res.status(500).json([]);
+    }
+});
+
+app.post('/api/clients', async (req, res) => {
+    try {
+        const { name, phone, social } = req.body;
+        if (!name || !phone) return res.status(400).json({ error: "Введіть ім'я та телефон" });
+
+        const cleanPhone = phone.replace(/\D/g, '').slice(-9);
+
+        // Перевіряємо чи вже є такий клієнт
+        const check = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
+        const list = await check.json();
+        const exists = Array.isArray(list) && list.some(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
+
+        if (exists) {
+            return res.status(400).json({ error: "Клієнт з таким номером вже є в базі постійних!" });
+        }
+
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+            method: 'POST',
+            headers: supabaseHeaders,
+            body: JSON.stringify({ name, phone, social: social || '', email: '' })
+        });
+
+        if (!response.ok) {
+            const err = await response.text();
+            return res.status(400).json({ error: err });
+        }
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: "Помилка сервера" });
+    }
+});
+
+app.post('/api/delete-client', async (req, res) => {
+    try {
+        const { id } = req.body;
+        await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${id}`, {
+            method: 'DELETE',
+            headers: supabaseHeaders
+        });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
 });
 
 app.listen(process.env.PORT || 3000, () => console.log('Сервер запущено!'));
