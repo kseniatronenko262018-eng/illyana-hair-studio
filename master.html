@@ -439,7 +439,7 @@
                 img.src = e.target.result;
                 img.onload = async () => {
                     let canvas = document.createElement('canvas');
-                    let MAX_WIDTH = 600; // Посилено стиснення
+                    let MAX_WIDTH = 500; // Зменшено для надійності
                     let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
                     canvas.width = img.width * scale;
                     canvas.height = img.height * scale;
@@ -447,7 +447,8 @@
                     let ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    let compressedImage = canvas.toDataURL('image/jpeg', 0.6); // Посилено стиснення
+                    // Формат WebP робить фото у 5 разів легшим за JPEG
+                    let compressedImage = canvas.toDataURL('image/webp', 0.4); 
 
                     try {
                         let res = await fetch('/api/works', {
@@ -464,7 +465,7 @@
                             fileInput.value = '';
                             loadMasterWorks();
                         } else {
-                            alert("❌ Сталася помилка. Фото все ще занадто велике для бази даних або сервер відхилив запит.");
+                            alert("❌ Помилка бази даних: " + (data.error || "Сервер відхилив запит."));
                         }
                     } catch (err) {
                         alert("❌ Помилка з'єднання з сервером.");
