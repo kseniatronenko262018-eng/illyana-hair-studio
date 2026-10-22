@@ -420,84 +420,100 @@
             } catch(e) {}
         }
 
-       async function uploadWorkToMainSite() {
-    let title = document.getElementById('newWorkTitleInput').value.trim();
-    let fileInput = document.getElementById('newWorkImageFile');
-    if (!fileInput.files[0]) return alert("Оберіть фотографію!");
-    
-    let btn = document.getElementById('uploadWorkBtn');
-    let origText = btn.innerText;
-    btn.innerText = "⏳ Обробка фото...";
-    btn.style.pointerEvents = 'none';
-    btn.style.opacity = '0.7';
+        // ОНОВЛЕНА ФУНКЦІЯ: НАДВИСОКА ЯКІСТЬ ТА ДЕТАЛІЗАЦІЯ
+        async function uploadWorkToMainSite() {
+            let title = document.getElementById('newWorkTitleInput').value.trim();
+            let fileInput = document.getElementById('newWorkImageFile');
+            if (!fileInput.files[0]) return alert("Оберіть фотографію!");
+            
+            let btn = document.getElementById('uploadWorkBtn');
+            let origText = btn.innerText;
+            btn.innerText = "⏳ Обробка в HD якості...";
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
 
-    let reader = new FileReader();
-    reader.readAsDataURL(fileInput.files[0]);
-    
-    reader.onerror = () => {
-        alert("❌ Не вдалося прочитати файл");
-        resetBtn();
-    };
-
-    reader.onload = (e) => {
-        let img = new Image();
-        img.src = e.target.result;
-
-        img.onerror = () => {
-            alert("❌ Непідтримуваний формат фото. Будь ласка, оберіть фото у JPG або PNG.");
-            resetBtn();
-        };
-
-        img.onload = async () => {
-            try {
-                let canvas = document.createElement('canvas');
-                
-                // 1. Збільшуємо роздільну здатність до 1200px (ідеально для чіткості на смартфонах)
-                let MAX_WIDTH = 1200; 
-                let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
-                canvas.width = img.width * scale;
-                canvas.height = img.height * scale;
-                
-                let ctx = canvas.getContext('2d');
-                
-                // 2. Вмикаємо високоякісне згладжування, щоб дрібні деталі волосся не розмивалися
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                // 3. Підвищуємо якість до 0.82 (82% замість 40%)
-                let compressedImage = canvas.toDataURL('image/jpeg', 0.82); 
-
-                btn.innerText = "⏳ Відправка на сайт...";
-
-                let res = await fetch('/api/works', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ title, image: compressedImage })
-                });
-                
-                let data = await res.json();
-                
-                if (data.success) {
-                    alert("✅ Роботу успішно додано до портфоліо!");
-                    document.getElementById('newWorkTitleInput').value = '';
-                    fileInput.value = '';
-                    loadMasterWorks();
-                } else {
-                    alert("❌ Помилка бази даних: " + (data.error || "Сервер відхилив запит."));
-                }
-            } catch (err) {
-                alert("❌ Помилка зв'язку з сервером: " + err.message);
-            } finally {
+            let reader = new FileReader();
+            reader.readAsDataURL(fileInput.files[0]);
+            
+            reader.onerror = () => {
+                alert("❌ Не вдалося прочитати файл");
                 resetBtn();
-            }
-        };
-    };
+            };
 
-    function resetBtn() {
-        btn.innerText = origText;
-        btn.style.pointerEvents = 'auto';
-        btn.style.opacity = '1';
-    }
-}
+            reader.onload = (e) => {
+                let img = new Image();
+                img.src = e.target.result;
+
+                img.onerror = () => {
+                    alert("❌ Непідтримуваний формат фото. Будь ласка, збережіть у JPG або PNG.");
+                    resetBtn();
+                };
+
+                img.onload = async () => {
+                    try {
+                        let canvas = document.createElement('canvas');
+                        
+                        // Full HD роздільна здатність (1800 px)
+                        let MAX_WIDTH = 1800; 
+                        let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
+                        canvas.width = Math.round(img.width * scale);
+                        canvas.height = Math.round(img.height * scale);
+                        
+                        let ctx = canvas.getContext('2d');
+                        
+                        // Максимальне згладжування деталей
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // 90% якості (0.90) - максимальна чіткість без розмиття
+                        let compressedImage = canvas.toDataURL('image/jpeg', 0.90); 
+
+                        btn.innerText = "⏳ Завантаження на сайт...";
+
+                        let res = await fetch('/api/works', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ title, image: compressedImage })
+                        });
+                        
+                        let data = await res.json();
+                        
+                        if (data.success) {
+                            alert("✅ Роботу успішно додано до портфоліо у високій якості!");
+                            document.getElementById('newWorkTitleInput').value = '';
+                            fileInput.value = '';
+                            loadMasterWorks();
+                        } else {
+                            alert("❌ Помилка бази даних: " + (data.error || "Сервер відхилив запит."));
+                        }
+                    } catch (err) {
+                        alert("❌ Помилка зв'язку з сервером: " + err.message);
+                    } finally {
+                        resetBtn();
+                    }
+                };
+            };
+
+            function resetBtn() {
+                btn.innerText = origText;
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            }
+        }
+
+        async function deleteWork(id) {
+            if (!confirm("Видалити роботу?")) return;
+            await fetch('/api/delete-work', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id })
+            });
+            loadMasterWorks();
+        }
+
+        function closeBookingModal() { document.getElementById('masterDetailPopupModal').style.display = 'none'; }
+    </script>
+</body>
+</html>
