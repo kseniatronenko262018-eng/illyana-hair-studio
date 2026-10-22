@@ -149,7 +149,7 @@
                     <label class="field-label" style="font-size: 9px; color: var(--tg-muted); margin-bottom: 6px; display: block;">Фотографія роботи:</label>
                     <input type="file" id="newWorkImageFile" accept="image/*" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;">
                 </div>
-                <button style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
+                <button id="uploadWorkBtn" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer; transition: 0.2s;" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
                 <div id="masterWorksList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; max-height: 300px; overflow-y: auto;"></div>
             </div>
         </div>
@@ -316,7 +316,7 @@
         async function toggleBlockSelectedDate() {
             let isBlocked = blockedDaysCache.includes(selectedCrmDate);
             let endpoint = isBlocked ? '/api/unblock-day' : '/api/block-day';
-            let res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: selectedCrmDate, password: '1988' }) });
+            let res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: selectedCrmDate, password: '1414' }) });
             let data = await res.json();
             if (data.success) { blockedDaysCache = data.blockedDays; renderCrmCalendar(); }
         }
@@ -425,19 +425,54 @@
             let fileInput = document.getElementById('newWorkImageFile');
             if (!fileInput.files[0]) return alert("Оберіть фотографію!");
             
+            let btn = document.getElementById('uploadWorkBtn');
+            let origText = btn.innerText;
+            btn.innerText = "⏳ Завантаження...";
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+
             let reader = new FileReader();
-            reader.onload = async (e) => {
-                await fetch('/api/works', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ title, image: e.target.result })
-                });
-                alert("Роботу успішно додано до портфоліо!");
-                document.getElementById('newWorkTitleInput').value = '';
-                fileInput.value = '';
-                loadMasterWorks();
-            };
             reader.readAsDataURL(fileInput.files[0]);
+            
+            reader.onload = (e) => {
+                let img = new Image();
+                img.src = e.target.result;
+                img.onload = async () => {
+                    let canvas = document.createElement('canvas');
+                    let MAX_WIDTH = 1000;
+                    let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    
+                    let ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    let compressedImage = canvas.toDataURL('image/jpeg', 0.8);
+
+                    try {
+                        let res = await fetch('/api/works', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ title, image: compressedImage })
+                        });
+                        
+                        if (res.ok) {
+                            alert("✅ Роботу успішно додано до портфоліо!");
+                            document.getElementById('newWorkTitleInput').value = '';
+                            fileInput.value = '';
+                            loadMasterWorks();
+                        } else {
+                            alert("❌ Сталася помилка. Фото занадто велике.");
+                        }
+                    } catch (err) {
+                        alert("❌ Помилка з'єднання з сервером.");
+                    } finally {
+                        btn.innerText = origText;
+                        btn.style.pointerEvents = 'auto';
+                        btn.style.opacity = '1';
+                    }
+                };
+            };
         }
 
         async function deleteWork(id) {
