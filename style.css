@@ -140,3 +140,14 @@ option { background: var(--bg-dark); color: var(--text-main); }
 /* СТИЛІ STICKY CTA */
 .sticky-cta { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); width: 90%; max-width: 380px; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 9999; pointer-events: none; }
 .sticky-cta.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+/* Стиль для заблокованого дня (вихідного) на сайті клієнта */
+.calendar-day-cell.blocked {
+    opacity: 0.45;
+    background: rgba(230, 57, 70, 0.12) !important;
+    border-color: rgba(230, 57, 70, 0.3) !important;
+    cursor: not-allowed !important;
+}
+.calendar-day-cell.blocked .day-num {
+    text-decoration: line-through;
+    color: #e63946 !important;
+}
