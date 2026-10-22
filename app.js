@@ -13,7 +13,8 @@ window.addEventListener('DOMContentLoaded', () => {
     initCustomCalendar();
     fetchBookingsData();
     
-    let savedTheme = localStorage.getItem('illiana_theme') || 'light';
+    // Встановлюємо ТЕМНУ тему за замовчуванням
+    let savedTheme = localStorage.getItem('illiana_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
 
     // Ініціалізація анімацій появи
