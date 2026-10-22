@@ -439,7 +439,7 @@
                 img.src = e.target.result;
                 img.onload = async () => {
                     let canvas = document.createElement('canvas');
-                    let MAX_WIDTH = 1000;
+                    let MAX_WIDTH = 600; // Посилено стиснення
                     let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
                     canvas.width = img.width * scale;
                     canvas.height = img.height * scale;
@@ -447,7 +447,7 @@
                     let ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    let compressedImage = canvas.toDataURL('image/jpeg', 0.8);
+                    let compressedImage = canvas.toDataURL('image/jpeg', 0.6); // Посилено стиснення
 
                     try {
                         let res = await fetch('/api/works', {
@@ -456,13 +456,15 @@
                             body: JSON.stringify({ title, image: compressedImage })
                         });
                         
-                        if (res.ok) {
+                        let data = await res.json();
+                        
+                        if (data.success) {
                             alert("✅ Роботу успішно додано до портфоліо!");
                             document.getElementById('newWorkTitleInput').value = '';
                             fileInput.value = '';
                             loadMasterWorks();
                         } else {
-                            alert("❌ Сталася помилка. Фото занадто велике.");
+                            alert("❌ Сталася помилка. Фото все ще занадто велике для бази даних або сервер відхилив запит.");
                         }
                     } catch (err) {
                         alert("❌ Помилка з'єднання з сервером.");
