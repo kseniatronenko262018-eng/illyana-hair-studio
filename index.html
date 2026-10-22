@@ -299,21 +299,38 @@
 
     <script src="app.js"></script>
     <script>
-        window.addEventListener('DOMContentLoaded', async () => {
+        let publicWorksCache = [];
+
+        async function loadPublicWorks() {
             try {
                 let res = await fetch('/api/works');
-                let works = await res.json();
-                if (Array.isArray(works) && works.length > 0) {
-                    let grid = document.getElementById('publicWorksGrid');
-                    if (grid) {
-                        grid.innerHTML = works.map(w => `
-                            <div class="works-carousel-item" onclick="openLightbox('${w.image}')">
-                                <img src="${w.image}" alt="${w.title}">
-                            </div>
-                        `).join('');
+                publicWorksCache = await res.json();
+                let grid = document.getElementById('publicWorksGrid');
+                if (grid && Array.isArray(publicWorksCache)) {
+                    if (publicWorksCache.length === 0) {
+                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; font-size: 10px; color: var(--text-muted); padding: 20px;">Роботи ще не завантажені</div>';
+                        return;
                     }
+                    grid.innerHTML = publicWorksCache.map((w, index) => `
+                        <div class="works-carousel-item" onclick="openLightboxByIndex(${index})">
+                            <img src="${w.image}" alt="${w.title || 'Робота'}">
+                        </div>
+                    `).join('');
                 }
-            } catch(e) { console.error("Помилка завантаження робіт:", e); }
+            } catch(e) { 
+                console.error("Помилка завантаження робіт:", e); 
+            }
+        }
+
+        function openLightboxByIndex(index) {
+            let work = publicWorksCache[index];
+            if (work && work.image) {
+                openLightbox(work.image);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPublicWorks();
         });
     </script>
 </body>
