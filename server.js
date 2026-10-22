@@ -49,11 +49,15 @@ app.get('/api/works', async (req, res) => {
 app.post('/api/works', async (req, res) => {
     try {
         const { title, image } = req.body;
-        await fetch(`${SUPABASE_URL}/rest/v1/works`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/works`, {
             method: 'POST',
             headers: supabaseHeaders,
             body: JSON.stringify({ title: title || 'Робота студії', image })
         });
+        
+        if (!response.ok) {
+            return res.status(400).json({ success: false, error: "Database rejected the file" });
+        }
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
