@@ -99,8 +99,20 @@ function closeLightbox() { document.getElementById('imageLightboxModal').style.d
 function switchTab(tabName, element) {
     document.querySelectorAll('.section-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-chip').forEach(c => c.classList.remove('active'));
-    document.getElementById(tabName === 'book' ? 'paneBook' : tabName === 'works' ? 'paneWorks' : 'paneLoc').classList.add('active');
+    
+    let targetPane = document.getElementById(tabName === 'book' ? 'paneBook' : tabName === 'works' ? 'paneWorks' : 'paneLoc');
+    if (targetPane) {
+        targetPane.classList.add('active');
+        // Робимо видимими всі анімаційні блоки всередині вкладки
+        targetPane.querySelectorAll('.fade-in-section').forEach(el => el.classList.add('is-visible'));
+    }
+    
     if (element) element.classList.add('active');
+    
+    // Якщо відкрили роботи — перезавантажуємо актуальні фото
+    if (tabName === 'works' && typeof loadPublicWorks === 'function') {
+        loadPublicWorks();
+    }
     
     // Ховаємо плаваючу кнопку, якщо пішли з вкладки запису
     if(tabName !== 'book') {
@@ -365,12 +377,12 @@ async function uploadImageToImgBB(file) {
             img.src = e.target.result;
             img.onload = () => {
                 let canvas = document.createElement('canvas');
-                let MAX_WIDTH = 800;
+                let MAX_WIDTH = 600;
                 let scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
                 canvas.width = img.width * scale;
                 canvas.height = img.height * scale;
                 canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
+                resolve(canvas.toDataURL('image/jpeg', 0.6));
             };
             img.onerror = () => resolve('');
         };
@@ -399,7 +411,7 @@ async function submitBooking() {
         return;
     }
 
-    let btn = document.querySelector('.btn-main[onclick="submitBooking()"]');
+    let btn = document.getElementById('mainBookBtn');
     let origHtml = btn.innerHTML;
     btn.innerText = currentLang === 'ua' ? "⏳ Оформлення..." : "⏳ Processing...";
     btn.style.pointerEvents = 'none';
