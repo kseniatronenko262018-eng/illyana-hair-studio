@@ -178,9 +178,32 @@
                     </div>
                 </div>
 
-                <div class="notice-badge">
-                    <span class="ua">⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис.</span>
-                    <span class="en">⚡ <b>Booking policy:</b> Deposit <b>500 UAH</b> confirms booking.</span>
+                <!-- БЛОК ВИБОРУ СТАТУСУ КЛІЄНТА -->
+                <div style="margin-top: 6px;">
+                    <label class="field-label">
+                        <span class="ua">Оберіть ваш статус:</span>
+                        <span class="en">Choose your status:</span>
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div class="sub-service-card selected" id="clientTypeNew" onclick="selectClientType('new')">
+                            <div style="text-align: center; width: 100%;">
+                                <div class="s-title"><span class="ua">✨ Новий клієнт</span><span class="en">✨ New client</span></div>
+                                <div class="s-sub"><span class="ua">Завдаток 500 ₴</span><span class="en">Deposit 500 UAH</span></div>
+                            </div>
+                        </div>
+                        <div class="sub-service-card" id="clientTypeRegular" onclick="selectClientType('regular')">
+                            <div style="text-align: center; width: 100%;">
+                                <div class="s-title"><span class="ua">💎 Постійний клієнт</span><span class="en">💎 Regular client</span></div>
+                                <div class="s-sub"><span class="ua">Без передплати</span><span class="en">No deposit</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ДИНАМІЧНЕ ПОВІДОМЛЕННЯ ПРО УМОВИ -->
+                <div class="notice-badge" id="clientTypeNotice">
+                    <span class="ua">⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис (оплата через Monobank).</span>
+                    <span class="en">⚡ <b>Booking policy:</b> Deposit <b>500 UAH</b> confirms booking (Monobank payment).</span>
                 </div>
 
                 <div class="policy-highlight-card">
@@ -258,80 +281,3 @@
                     <b>7. РЕКВІЗИТИ ВИКОНАВЦЯ</b><br>
                     ФОП Явір Ілляна Володимирівна<br>
                     ІПН (РНОКПП): 3600209601<br>
-                    Р/Р (IBAN): UA92322001000002600532008420<br>
-                    Банк: АТ "УНІВЕРСАЛ БАНК" (Monobank)<br>
-                    Адреса: м. Дніпро, вул. Володимира Вернадського, 35-Б
-                </div>
-                <div class="en">
-                    <b>1. GENERAL PROVISIONS</b><br>
-                    1.1. This document constitutes a formal public offer by Sole Proprietor Yavir Illiana Volodymyrivna (hereinafter referred to as the "Contractor") addressed to any legally capable individual (hereinafter referred to as the "Client") for the provision of hairdressing services.<br>
-                    1.2. The act of booking via the website and/or paying a deposit constitutes full acceptance of this Offer by the Client.<br><br>
-                    
-                    <b>2. SUBJECT OF THE AGREEMENT</b><br>
-                    2.1. The Contractor agrees to provide beauty services, and the Client agrees to accept and pay for these services.<br><br>
-                    
-                    <b>3. BOOKING AND PAYMENT PROCEDURE</b><br>
-                    3.1. To confirm an appointment, the Client must pay a deposit of 500.00 UAH.<br>
-                    3.2. The deposit is deducted from the total cost of services at final checkout.<br><br>
-                    
-                    <b>4. CANCELLATION POLICY AND LIABILITY</b><br>
-                    4.1. The Client may cancel or reschedule the appointment without losing the deposit provided notice is given at least <b>48 hours</b> prior to the scheduled time.<br>
-                    4.2. If the Client cancels with less than 48 hours' notice, fails to appear, or arrives more than 20 minutes late, the deposit is completely non-refundable and serves as liquidated damages for the Contractor's reserved time.<br><br>
-
-                    <b>5. CONTRACTOR DETAILS</b><br>
-                    Sole Proprietor Yavir Illiana Volodymyrivna<br>
-                    Tax ID (RNKPP): 3600209601<br>
-                    IBAN: UA92322001000002600532008420<br>
-                    Bank: Universal Bank JSC (Monobank)<br>
-                    Address: Dnipro, Volodymyra Vernadskoho st., 35-B
-                </div>
-            </div>
-            <button class="btn-main" onclick="closeOffer()" style="padding: 16px; font-size: 11px;">
-                <span class="ua">Я ознайомлений(а) та погоджуюсь з умовами</span>
-                <span class="en">I have read and agree to the terms</span>
-            </button>
-        </div>
-    </div>
-
-    <div id="imageLightboxModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center;" onclick="closeLightbox()">
-        <img id="lightboxImage" src="" style="max-width: 95vw; max-height: 90vh; border-radius: 10px; object-fit: contain;">
-    </div>
-
-    <script src="app.js"></script>
-    <script>
-        let publicWorksCache = [];
-
-        async function loadPublicWorks() {
-            try {
-                let res = await fetch('/api/works');
-                publicWorksCache = await res.json();
-                let grid = document.getElementById('publicWorksGrid');
-                if (grid && Array.isArray(publicWorksCache)) {
-                    if (publicWorksCache.length === 0) {
-                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; font-size: 10px; color: var(--text-muted); padding: 20px;">Роботи ще не завантажені</div>';
-                        return;
-                    }
-                    grid.innerHTML = publicWorksCache.map((w, index) => `
-                        <div class="works-carousel-item" onclick="openLightboxByIndex(${index})">
-                            <img src="${w.image}" alt="${w.title || 'Робота'}">
-                        </div>
-                    `).join('');
-                }
-            } catch(e) { 
-                console.error("Помилка завантаження робіт:", e); 
-            }
-        }
-
-        function openLightboxByIndex(index) {
-            let work = publicWorksCache[index];
-            if (work && work.image) {
-                openLightbox(work.image);
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            loadPublicWorks();
-        });
-    </script>
-</body>
-</html>
