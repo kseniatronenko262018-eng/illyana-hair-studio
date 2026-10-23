@@ -4,6 +4,7 @@ let selectedServiceData = null;
 let selectedCondition = null;
 let selectedDate = null;
 let selectedTimeSlot = null;
+let selectedClientType = 'new'; // За замовчуванням 'new', або 'regular'
 let bookedSlotsCache = {};
 let blockedDaysCache = [];
 let observer;
@@ -67,10 +68,39 @@ function toggleLang() {
     });
 
     updateSummaryCard();
-    initCustomCalendar(); 
+    initCustomCalendar();
+    selectClientType(selectedClientType);
 }
 
-// Визначення реальної тривалості запису
+// ПЕРЕМИКАННЯ СТАТУСУ: НОВИЙ / ПОСТІЙНИЙ КЛІЄНТ
+function selectClientType(type) {
+    selectedClientType = type;
+    let cardNew = document.getElementById('clientTypeNew');
+    let cardReg = document.getElementById('clientTypeRegular');
+    let notice = document.getElementById('clientTypeNotice');
+    let btn = document.getElementById('mainBookBtn');
+
+    if (type === 'new') {
+        cardNew.classList.add('selected');
+        cardReg.classList.remove('selected');
+        notice.innerHTML = currentLang === 'ua' 
+            ? `⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис (оплата через Monobank).`
+            : `⚡ <b>Booking policy:</b> Deposit <b>500 UAH</b> confirms booking (Monobank payment).`;
+        btn.innerHTML = currentLang === 'ua'
+            ? `<span class="ua">Сплатити завдаток 500 ₴ та забронювати</span>`
+            : `<span class="en">Pay 500 ₴ deposit and book</span>`;
+    } else {
+        cardReg.classList.add('selected');
+        cardNew.classList.remove('selected');
+        notice.innerHTML = currentLang === 'ua'
+            ? `💎 <b>Для постійних клієнтів:</b> Запис оформлюється <b>без передплати</b>.`
+            : `💎 <b>For regular clients:</b> Booking confirmed <b>without deposit</b>.`;
+        btn.innerHTML = currentLang === 'ua'
+            ? `<span class="ua">Забронювати час без передплати ⚡</span>`
+            : `<span class="en">Book appointment without deposit ⚡</span>`;
+    }
+}
+
 function getBookingDuration(b) {
     if (b.durationHours && Number(b.durationHours) > 0) return Number(b.durationHours);
     let s = (b.service || '').toLowerCase();
@@ -88,13 +118,12 @@ function getBookingDuration(b) {
         if (p >= 3500) return 2.5;
         return 2;
     }
-    return 1.5; // Стрижка
+    return 1.5;
 }
 
 async function fetchBookingsData() {
     try {
-        // Отримуємо записи
-        let res = await fetch('/api/bookings');
+        let res = await fetch('/api/bookings?t=' + Date.now());
         let data = await res.json();
         bookedSlotsCache = {};
         if (Array.isArray(data)) {
@@ -108,9 +137,8 @@ async function fetchBookingsData() {
             });
         }
 
-        // Отримуємо вихідні дні майстра
         try {
-            let resBlock = await fetch('/api/blocked-days');
+            let resBlock = await fetch('/api/blocked-days?t=' + Date.now());
             blockedDaysCache = await resBlock.json() || [];
         } catch(e) {
             blockedDaysCache = [];
@@ -307,7 +335,6 @@ function updateSummaryCard() {
     }
 }
 
-// Календар із блокуванням вихідних майстра
 function initCustomCalendar() {
     let grid = document.getElementById('customCalendarGrid');
     if (!grid) return;
@@ -356,7 +383,6 @@ function initCustomCalendar() {
     }
 }
 
-// Генерація слотів кожні 30 хвилин з урахуванням правил
 function renderTimeSlots() {
     let grid = document.getElementById('timeSlotsGrid');
     if (!grid) return;
@@ -364,7 +390,6 @@ function renderTimeSlots() {
     
     if (!selectedDate) return;
 
-    // Якщо день заблокований майстром
     if (blockedDaysCache.includes(selectedDate)) {
         grid.innerHTML = `<div style="font-size:10px; color:var(--accent); padding:10px; text-align:center; width:100%;">🔒 Майстер вихідний у цей день. Оберіть іншу дату.</div>`;
         return;
@@ -372,11 +397,8 @@ function renderTimeSlots() {
 
     let booked = bookedSlotsCache[selectedDate] || [];
     let dur = selectedServiceData ? Number(selectedServiceData.durationHours) : 1.5;
-    
-    // Перевірка, чи це стрижка
     let isCut = (selectedCategory === 'cut') || (selectedServiceData && selectedServiceData.title && (selectedServiceData.title.ua === 'Стрижка' || selectedServiceData.title === 'Стрижка'));
 
-    // Слоти з кроком у 30 хвилин
     let slots = [
         "10:00", "10:30", "11:00", "11:30", 
         "12:00", "12:30", "13:00", "13:30", 
@@ -398,35 +420,26 @@ function renderTimeSlots() {
 
         let isDisabled = false;
 
-        // ПРАВИЛО 1: Час закінчення
+        // ПРАВИЛО 1: Час закінчення (стрижка до 19:00, решта до 20:00)
         if (isCut) {
-            // Для стрижки дозволено запис на 19:00 (навіть якщо триває 1.5 год)
-            if (slotStart > 19.001) {
-                isDisabled = true;
-            }
+            if (slotStart > 19.001) isDisabled = true;
         } else {
-            // Всі інші послуги обов'язково мають закінчитись не пізніше 20:00
-            if (slotEnd > 20.001) {
-                isDisabled = true;
-            }
+            if (slotEnd > 20.001) isDisabled = true;
         }
 
-        // ПРАВИЛО 2: День-у-день мінімум за 3 години від поточного часу
+        // ПРАВИЛО 2: День-у-день мінімум за 3 години
         if (isToday) {
             let slotTime = new Date(); 
             slotTime.setHours(h, m, 0, 0);
             let diffHours = (slotTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-            if (diffHours < 3) {
-                isDisabled = true;
-            }
+            if (diffHours < 3) isDisabled = true;
         }
 
-        // ПРАВИЛО 3: Жодного накладання (якщо процедура триває 6 годин - блокується весь час)
+        // ПРАВИЛО 3: Перетин інтервалів
         booked.forEach(b => {
             let [bh, bm] = b.time.split(':').map(Number);
             let bStart = bh + (bm / 60);
             let bEnd = bStart + b.duration;
-            // Перетин проміжків: [slotStart, slotEnd) перетинає [bStart, bEnd)
             if (slotStart < bEnd && slotEnd > bStart) {
                 isDisabled = true;
             }
@@ -470,6 +483,7 @@ async function uploadImageToImgBB(file) {
     });
 }
 
+// ОСНОВНА ФУНКЦІЯ ОФОРМЛЕННЯ ЗАПИСУ
 async function submitBooking() {
     let name = document.getElementById('clientName').value.trim();
     let phone = document.getElementById('clientPhone').value.trim();
@@ -491,17 +505,14 @@ async function submitBooking() {
         return;
     }
 
+    let isRegular = (selectedClientType === 'regular');
     let btn = document.getElementById('mainBookBtn');
     let origHtml = btn.innerHTML;
-    btn.innerText = currentLang === 'ua' ? "⏳ Перевірка статусу..." : "⏳ Checking...";
+    btn.innerText = currentLang === 'ua' ? "⏳ Оформлення..." : "⏳ Processing...";
     btn.style.pointerEvents = 'none';
 
     try {
         let photoUrl = await uploadImageToImgBB(hInput.files[0]);
-
-        let checkRes = await fetch('/api/check-client', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone }) });
-        let { isRegular } = await checkRes.json();
-
         let bookingRef = "REF" + Date.now().toString();
 
         let bookingPayload = {
@@ -518,7 +529,8 @@ async function submitBooking() {
         };
 
         if (isRegular) {
-            btn.innerText = currentLang === 'ua' ? "⏳ Бронювання..." : "⏳ Booking...";
+            // ВАРІАНТ 1: ПОСТІЙНИЙ КЛІЄНТ (Бронюємо ОДРАЗУ без передплати)
+            btn.innerText = currentLang === 'ua' ? "⏳ Записуємо..." : "⏳ Booking...";
             let bookRes = await fetch('/api/bookings', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -527,9 +539,10 @@ async function submitBooking() {
 
             if (!bookRes.ok) throw new Error("Server error.");
 
-            alert(currentLang === 'ua' ? "✨ Ви постійний клієнт! Запис оформлено без передплати. Переходимо в Telegram." : "✨ Regular client! Booked without deposit. Redirecting to Telegram.");
+            alert(currentLang === 'ua' ? "✨ Запис успішно створено без передплати! Переходимо в Telegram." : "✨ Booking confirmed without deposit! Redirecting to Telegram.");
             window.location.href = `${TELEGRAM_BOT_URL}?start=${bookingRef}`;
         } else {
+            // ВАРІАНТ 2: НОВИЙ КЛІЄНТ (Ведемо на оплату 500 грн у Monobank)
             btn.innerText = currentLang === 'ua' ? "⏳ Перехід до оплати..." : "⏳ Redirecting to payment...";
             
             let invRes = await fetch('/api/create-invoice', {
