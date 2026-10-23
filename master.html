@@ -31,7 +31,7 @@
         .korea-nav-chip.active { background: var(--accent); color: var(--accent-invert); border-color: var(--accent); }
         
         .crm-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; box-sizing: border-box; }
-        .crm-cal-cell { background: var(--tg-card-hover); border: 1px solid var(--tg-border); border-radius: 8px; padding: 8px 2px; text-align: center; font-size: 9px; font-weight: 700; cursor: pointer; }
+        .crm-cal-cell { background: var(--tg-card-hover); border: 1px solid var(--tg-border); border-radius: 8px; padding: 8px 2px; text-align: center; font-size: 9px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .crm-cal-cell.selected { background: var(--accent); color: var(--accent-invert); }
         .crm-cal-cell.blocked { background: rgba(216, 140, 154, 0.15); text-decoration: line-through; }
         .booking-card-item { background: var(--tg-card-hover); border: 1px solid var(--tg-border); border-radius: 12px; padding: 10px; font-size: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 6px; }
@@ -88,13 +88,19 @@
             <!-- РОЗДІЛ: КАЛЕНДАР -->
             <div id="secCalendar" class="master-section form-card" style="padding: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%;">
-                    <button class="control-btn" style="background: var(--tg-card-hover); color: white; border: none; padding: 6px 12px; border-radius: 8px;" onclick="changeMonth(-1)">◀</button>
+                    <button type="button" class="control-btn" style="background: var(--tg-card-hover); color: white; border: none; padding: 6px 12px; border-radius: 8px;" onclick="changeMonth(-1)">◀</button>
                     <h3 id="calendarTitle" style="font-size: 12px; font-family:'Syne',sans-serif;">Місяць</h3>
-                    <button class="control-btn" style="background: var(--tg-card-hover); color: white; border: none; padding: 6px 12px; border-radius: 8px;" onclick="changeMonth(1)">▶</button>
+                    <button type="button" class="control-btn" style="background: var(--tg-card-hover); color: white; border: none; padding: 6px 12px; border-radius: 8px;" onclick="changeMonth(1)">▶</button>
                 </div>
+                
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
-                <button class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px; font-weight: 700; color: var(--accent); background: var(--tg-card-hover); border: 1px solid var(--tg-border);">🔒 Заблокувати день (вихідний)</button>
-                <div style="margin-top: 10px; width: 100%;">
+                
+                <!-- ОНОВЛЕНА КНОПКА БЛОКУВАННЯ -->
+                <button type="button" class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="width: 100%; margin-top: 12px; padding: 14px; border-radius: 12px; font-weight: 700; color: var(--accent); background: var(--tg-card-hover); border: 1.5px solid var(--tg-border); cursor: pointer; text-align: center;">
+                    🔒 Заблокувати день (вихідний)
+                </button>
+
+                <div style="margin-top: 12px; width: 100%;">
                     <label class="field-label" id="selectedDateLabel" style="color:var(--tg-muted); font-size: 9px; display: block; margin-bottom: 6px;">Записи на обраний день:</label>
                     <div id="dayBookingsContainer" style="display: flex; flex-direction: column; width: 100%;"></div>
                 </div>
@@ -103,9 +109,9 @@
             <!-- РОЗДІЛ: ФІНАНСИ -->
             <div id="secFinances" class="master-section form-card" style="display: none; padding: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--tg-card-hover); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--tg-border);">
-                    <button class="control-btn" style="background: none; border: none; color: white; font-size: 14px; cursor: pointer;" onclick="changeFinanceMonth(-1)">◀</button>
+                    <button type="button" class="control-btn" style="background: none; border: none; color: white; font-size: 14px; cursor: pointer;" onclick="changeFinanceMonth(-1)">◀</button>
                     <h3 id="financeMonthTitle" style="font-size: 11px; font-family:'Syne',sans-serif; text-transform:uppercase; margin: 0; color: var(--accent);">Жовтень 2026</h3>
-                    <button class="control-btn" style="background: none; border: none; color: white; font-size: 14px; cursor: pointer;" onclick="changeFinanceMonth(1)">▶</button>
+                    <button type="button" class="control-btn" style="background: none; border: none; color: white; font-size: 14px; cursor: pointer;" onclick="changeFinanceMonth(1)">▶</button>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center;">
@@ -136,7 +142,7 @@
                         </div>
                         <div style="display: flex; gap: 6px;">
                             <input type="date" id="expenseDateInput" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;">
-                            <button style="padding: 10px 16px; border-radius: 8px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="addExpense()">+ Додати</button>
+                            <button type="button" style="padding: 10px 16px; border-radius: 8px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="addExpense()">+ Додати</button>
                         </div>
                     </div>
                     
@@ -144,12 +150,12 @@
                     <div id="expensesListContainer" style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 130px; overflow-y: auto;"></div>
                 </div>
 
-                <button style="margin-top: 14px; width: 100%; padding: 12px; border-radius: 12px; background: #217346; color: white; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="exportToExcel()">
+                <button type="button" style="margin-top: 14px; width: 100%; padding: 12px; border-radius: 12px; background: #217346; color: white; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="exportToExcel()">
                     <span>📥 Експортувати звіт за місяць в Excel</span>
                 </button>
             </div>
 
-            <!-- РОЗДІЛ: БАЗА КЛІЄНТІВ (ХМАРНЕ ЗБЕРЕЖЕННЯ) -->
+            <!-- РОЗДІЛ: БАЗА КЛІЄНТІВ -->
             <div id="secClients" class="master-section form-card" style="display: none; padding: 16px;">
                 <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; margin-bottom: 12px;">База постійних клієнтів</h3>
                 <div style="font-size: 9px; color: var(--tg-muted); margin-bottom: 8px;">Клієнти з цього списку записуються <b>без передоплати 500 грн</b>.</div>
@@ -158,7 +164,7 @@
                     <input type="text" id="regClientName" style="padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Ім'я клієнта">
                     <input type="tel" id="regClientPhone" style="padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Телефон (+380...)">
                     <input type="text" id="regClientSocial" style="padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;" placeholder="Нікнейм (Instagram / Telegram)">
-                    <button id="addClientBtn" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="addRegularClientManual()">+ Додати постійного клієнта</button>
+                    <button type="button" id="addClientBtn" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="addRegularClientManual()">+ Додати постійного клієнта</button>
                 </div>
 
                 <div style="margin-top: 14px; font-size: 9px; color: var(--tg-muted);">Збережені постійні клієнти:</div>
@@ -176,17 +182,18 @@
                     <label class="field-label" style="font-size: 9px; color: var(--tg-muted); margin-bottom: 6px; display: block;">Фотографія роботи:</label>
                     <input type="file" id="newWorkImageFile" accept="image/*" style="width: 100%; box-sizing: border-box; padding: 6px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 10px;">
                 </div>
-                <button id="uploadWorkBtn" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer; transition: 0.2s;" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
+                <button type="button" id="uploadWorkBtn" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer; transition: 0.2s;" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
                 <div id="masterWorksList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; max-height: 300px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
 
+    <!-- Модалка деталей запису -->
     <div id="masterDetailPopupModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999999; justify-content:center; align-items:center; padding:16px; box-sizing: border-box;">
         <div style="background: var(--tg-card); border: 1.5px solid var(--accent); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
             <h3 style="font-family:'Syne',sans-serif; font-size:14px; color:var(--accent); text-transform:uppercase; text-align:center; margin: 0;">✨ Деталі запису</h3>
             <div id="modalBookingDetails" style="font-size:11px; line-height:1.6; display: flex; flex-direction: column; gap: 6px;"></div>
-            <button style="width: 100%; padding: 12px; border-radius: 12px; background: var(--tg-card-hover); border: 1px solid var(--tg-border); color: white; font-weight: bold; cursor: pointer; margin-top: 10px;" onclick="closeBookingModal()">Закрити</button>
+            <button type="button" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--tg-card-hover); border: 1px solid var(--tg-border); color: white; font-weight: bold; cursor: pointer; margin-top: 10px;" onclick="closeBookingModal()">Закрити</button>
         </div>
     </div>
 
@@ -207,12 +214,13 @@
             renderRegularClientsList();
         });
 
+        // Захист від кешування на мобільних (?t=Date.now())
         async function refreshCrmData() {
             try {
-                let resB = await fetch('/api/bookings');
+                let resB = await fetch('/api/bookings?t=' + Date.now());
                 allBookingsCache = await resB.json() || [];
 
-                let resD = await fetch('/api/blocked-days');
+                let resD = await fetch('/api/blocked-days?t=' + Date.now());
                 blockedDaysCache = await resD.json() || [];
 
                 document.getElementById('totalBookingsCountBadge').innerText = allBookingsCache.length;
@@ -280,7 +288,8 @@
                 let hasBookings = allBookingsCache.some(b => b.date === dStr);
                 cell.innerHTML = `<div>${day}</div>` + (hasBookings ? `<div style="font-size:6px; color:var(--accent);">● запис</div>` : '');
 
-                cell.onclick = () => {
+                cell.onclick = (e) => {
+                    e.stopPropagation();
                     selectedCrmDate = dStr;
                     renderCrmCalendar();
                     renderSelectedDayBookings();
@@ -333,7 +342,7 @@
                 <div><b>Email:</b> ${booking.email}</div>
                 <div><b>Референс / фото:</b>${refHtml}</div>
                 <hr style="border-top:1px solid var(--tg-border); margin: 12px 0;">
-                <button onclick="cancelClientBooking(${booking.id})" style="width: 100%; background: #e63946; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer;">🗑 Видалити запис</button>
+                <button type="button" onclick="cancelClientBooking(${booking.id})" style="width: 100%; background: #e63946; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer;">🗑 Видалити запис</button>
             `;
             document.getElementById('masterDetailPopupModal').style.display = 'flex';
         }
@@ -349,23 +358,61 @@
                 let data = await res.json();
                 if (data.success) {
                     alert("✅ Запис успішно видалено!");
-                    closeBookingModal(); refreshCrmData();
+                    closeBookingModal(); 
+                    refreshCrmData();
                 } else { alert("Помилка відміни!"); }
             } catch (e) { alert("Помилка сервера."); }
         }
 
+        // ОНОВЛЕНЕ БЛОКУВАННЯ ДНЯ З ПОВНИМ ВІЗУАЛОМ ДЛЯ СМАРТФОНІВ
         async function toggleBlockSelectedDate() {
+            if (!selectedCrmDate) return alert("Оберіть день у календарі!");
+            
+            let btn = document.getElementById('blockDayBtn');
+            let origText = btn.innerText;
+            btn.innerText = "⏳ Збереження...";
+            btn.style.pointerEvents = 'none';
+
             let isBlocked = blockedDaysCache.includes(selectedCrmDate);
             let endpoint = isBlocked ? '/api/unblock-day' : '/api/block-day';
-            let res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: selectedCrmDate, password: '1414' }) });
-            let data = await res.json();
-            if (data.success) { blockedDaysCache = data.blockedDays; renderCrmCalendar(); }
+
+            try {
+                let res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: selectedCrmDate, password: '1414' })
+                });
+                let data = await res.json();
+                
+                if (data.success) {
+                    blockedDaysCache = data.blockedDays || [];
+                    renderCrmCalendar();
+                    updateBlockButtonState();
+                    alert(isBlocked ? `🔓 День ${selectedCrmDate} успішно розблоковано!` : `🔒 День ${selectedCrmDate} успішно заблоковано (вихідний)!`);
+                } else {
+                    alert("❌ Помилка: " + (data.error || "Не вдалося змінити статус"));
+                }
+            } catch (e) {
+                alert("❌ Помилка з'єднання: " + e.message);
+            } finally {
+                btn.style.pointerEvents = 'auto';
+                updateBlockButtonState();
+            }
         }
 
         function updateBlockButtonState() {
             let btn = document.getElementById('blockDayBtn');
-            if (blockedDaysCache.includes(selectedCrmDate)) { btn.innerText = "🔓 Розблокувати день"; btn.style.borderColor = "var(--accent)"; } 
-            else { btn.innerText = "🔒 Заблокувати день (вихідний)"; btn.style.borderColor = "var(--tg-border)"; }
+            if (!btn) return;
+            let isBlocked = blockedDaysCache.includes(selectedCrmDate);
+            if (isBlocked) {
+                btn.innerText = `🔓 Розблокувати ${selectedCrmDate}`;
+                btn.style.borderColor = "var(--accent)";
+                btn.style.color = "var(--accent)";
+            } else {
+                btn.innerText = `🔒 Заблокувати ${selectedCrmDate} (вихідний)`;
+                btn.style.borderColor = "var(--tg-border)";
+                btn.style.color = "var(--tg-text)";
+            }
         }
 
         // --- ФІНАНСИ ---
@@ -410,7 +457,7 @@
                             <span>${e.name} — <b style="color: var(--accent);">${e.amount} ₴</b></span>
                             <div style="font-size:7.5px; color:var(--tg-muted);">${e.date}</div>
                         </div>
-                        <button onclick="removeExpense('${e.id}')" style="background:none; border:none; color:var(--tg-muted); font-size: 14px; cursor:pointer;">✕</button>
+                        <button type="button" onclick="removeExpense('${e.id}')" style="background:none; border:none; color:var(--tg-muted); font-size: 14px; cursor:pointer;">✕</button>
                     </div>
                 `).join('');
             }
@@ -497,10 +544,10 @@
             XLSX.writeFile(wb, fileName);
         }
 
-        // --- БАЗА ПОСТІЙНИХ КЛІЄНТІВ (SUPABASE) ---
+        // --- БАЗА ПОСТІЙНИХ КЛІЄНТІВ (ХМАРА) ---
         async function renderRegularClientsList() {
             try {
-                let res = await fetch('/api/clients');
+                let res = await fetch('/api/clients?t=' + Date.now());
                 allClientsCache = await res.json() || [];
                 document.getElementById('totalClientsCountBadge').innerText = allClientsCache.length;
                 
@@ -516,12 +563,10 @@
                             <b>${c.name}</b> (${c.phone})<br>
                             <span style="color:var(--accent); font-size: 9px;">${c.social || '—'}</span>
                         </div>
-                        <button onclick="removeRegularClient('${c.id}')" style="background:none; border:none; color:var(--tg-muted); font-size: 14px; cursor:pointer;" title="Видалити з постійних">✕</button>
+                        <button type="button" onclick="removeRegularClient('${c.id}')" style="background:none; border:none; color:var(--tg-muted); font-size: 14px; cursor:pointer;" title="Видалити з постійних">✕</button>
                     </div>
                 `).join('');
-            } catch(e) {
-                console.error("Помилка завантаження клієнтів:", e);
-            }
+            } catch(e) {}
         }
 
         async function addRegularClientManual() {
@@ -560,7 +605,7 @@
         }
 
         async function removeRegularClient(id) {
-            if (!confirm("Видалити клієнта з бази постійних? Після цього система вимагатиме з нього передоплату 500 грн.")) return;
+            if (!confirm("Видалити клієнта з бази постійних?")) return;
             try {
                 let res = await fetch('/api/delete-client', {
                     method: 'POST',
@@ -578,17 +623,17 @@
             }
         }
 
-        // --- РОБОТИ (ПОРТФОЛІО) ---
+        // --- РОБОТИ ---
         async function loadMasterWorks() {
             try {
-                let res = await fetch('/api/works');
+                let res = await fetch('/api/works?t=' + Date.now());
                 let works = await res.json();
                 let container = document.getElementById('masterWorksList');
                 if (container) {
                     container.innerHTML = works.map(w => `
                         <div style="position:relative; height: 120px; border-radius: 12px; overflow: hidden; border: 1px solid var(--tg-border);">
                             <img src="${w.image}" style="width:100%; height:100%; object-fit:cover;">
-                            <button onclick="deleteWork('${w.id}')" style="position:absolute; top:6px; right:6px; background:rgba(255,77,77,0.85); color:white; border:none; border-radius:6px; padding:4px 8px; font-size:10px; cursor:pointer;">🗑</button>
+                            <button type="button" onclick="deleteWork('${w.id}')" style="position:absolute; top:6px; right:6px; background:rgba(255,77,77,0.85); color:white; border:none; border-radius:6px; padding:4px 8px; font-size:10px; cursor:pointer;">🗑</button>
                         </div>
                     `).join('');
                 }
