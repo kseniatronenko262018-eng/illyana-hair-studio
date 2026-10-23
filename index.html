@@ -6,6 +6,13 @@
     <title>Явір Ілляна | Editorial Hair Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Гарантуємо видимість верхньої частини за будь-яких умов */
+        .utility-bar, .profile-card, .quick-nav, #step1Card {
+            opacity: 1 !important;
+            transform: none !important;
+        }
+    </style>
 </head>
 <body data-lang="ua">
 
@@ -14,7 +21,7 @@
     </div>
 
     <div class="mobile-container">
-        <div class="utility-bar fade-in-section">
+        <div class="utility-bar">
             <span>dnipro // studio</span>
             <div class="controls-group">
                 <button class="control-btn" id="langToggle" onclick="toggleLang()">UA / EN 🌓</button>
@@ -22,7 +29,7 @@
             </div>
         </div>
 
-        <div class="profile-card fade-in-section">
+        <div class="profile-card">
             <div class="avatar-wrap"><img src="PXL_20241102_164641261.jpg" alt="Явір Ілляна" id="profileAvatarImg"></div>
             <h1>Явір Ілляна</h1>
             <p>
@@ -35,7 +42,7 @@
             </div>
         </div>
 
-        <div class="quick-nav fade-in-section" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="quick-nav" style="grid-template-columns: repeat(3, 1fr);">
             <div class="nav-chip active" id="navBook" onclick="switchTab('book', this)">
                 <span class="ua">Запис</span><span class="en">Book</span>
             </div>
@@ -48,7 +55,8 @@
         </div>
 
         <div id="paneBook" class="section-pane active">
-            <div class="form-card fade-in-section" id="step1Card">
+            <!-- КРОК 1: ВИБІР ПОСЛУГИ -->
+            <div class="form-card" id="step1Card">
                 <label class="field-label">
                     <span class="ua">Крок 1. Оберіть категорію послуг</span>
                     <span class="en">Step 1. Choose a service category</span>
@@ -78,7 +86,8 @@
                 </div>
             </div>
 
-            <div class="form-card fade-in-section" id="step2Card" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+            <!-- КРОК 2: ДЕТАЛІ ПОСЛУГИ ТА ФОТО -->
+            <div class="form-card" id="step2Card" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
                 <div id="categorySubmenu" style="display: none;">
                     <label class="field-label"><span class="ua">Крок 2А. Оберіть стан волосся:</span><span class="en">Step 2A. Hair condition:</span></label>
                     <div id="submenuItems" style="display: flex; flex-direction: column; gap: 6px;"></div>
@@ -133,7 +142,8 @@
                 </div>
             </div>
 
-            <div class="form-card fade-in-section" id="step3Card" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+            <!-- КРОК 3: ДАТА, ЧАС ТА ОФОРМЛЕННЯ -->
+            <div class="form-card" id="step3Card" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
                 <div class="summary-card">
                     <div class="summary-header">
                         <span class="field-label" style="margin:0;"><span class="ua">Обрана послуга</span><span class="en">Selected service</span></span>
@@ -200,7 +210,6 @@
                     </div>
                 </div>
 
-                <!-- ДИНАМІЧНЕ ПОВІДОМЛЕННЯ ПРО УМОВИ -->
                 <div class="notice-badge" id="clientTypeNotice">
                     <span class="ua">⚡ <b>Умова броні:</b> Завдаток <b>500 грн</b> підтверджує запис (оплата через Monobank).</span>
                     <span class="en">⚡ <b>Booking policy:</b> Deposit <b>500 UAH</b> confirms booking (Monobank payment).</span>
@@ -224,15 +233,17 @@
             </div>
         </div>
 
+        <!-- ВКЛАДКА РОБІТ -->
         <div id="paneWorks" class="section-pane">
-            <div class="form-card fade-in-section">
+            <div class="form-card">
                 <label class="field-label" style="text-align: center;"><span class="ua">✨ Приклади робіт студії</span><span class="en">✨ Studio Portfolio</span></label>
                 <div class="works-grid-full" id="publicWorksGrid"></div>
             </div>
         </div>
 
+        <!-- ВКЛАДКА ЛОКАЦІЇ -->
         <div id="paneLoc" class="section-pane">
-            <div class="info-card fade-in-section">
+            <div class="info-card">
                 <span class="ua">📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б.<br><br>Приватний простір, мінімалізм та фокус на якості.<br></span>
                 <span class="en">📍 <b>Location:</b> Dnipro, Volodymyra Vernadskoho st., 35-B.<br><br>Private space, minimalism, and focus on quality.<br></span>
                 <a href="https://maps.google.com/?q=вулиця+Володимира+Вернадського+35Б,+Дніпро" target="_blank" class="map-btn"><span class="ua">Відкрити в Google Maps</span><span class="en">Open in Google Maps</span></a>
@@ -246,7 +257,7 @@
         </div>
     </div>
 
-    <!-- МАКСИМАЛЬНО ЮРИДИЧНИЙ ДОГОВІР ОФЕРТИ -->
+    <!-- ДОГОВІР ОФЕРТИ -->
     <div id="offerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center; padding: 16px;">
         <div class="modal-body" style="background: var(--card-bg); border: 1px solid var(--border); padding: 22px 18px; border-radius: 18px; max-width: 420px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;">
             <h3 style="font-size: 13px; text-align: center; margin-bottom: 12px; font-weight: 800; letter-spacing: 0.5px;">
@@ -258,26 +269,93 @@
                     <b>1. ЗАГАЛЬНІ ПОЛОЖЕННЯ</b><br>
                     1.1. Цей документ відповідно до ст. 633, 641 Цивільного кодексу України є офіційною пропозицією (публічною офертою) Фізичної особи-підприємця Явір Ілляни Володимирівни (надалі – «Виконавець»), що адресована будь-якій дієздатній фізичній особі (надалі – «Замовник»), укласти договір про надання перукарських та консультаційних послуг.<br>
                     1.2. Факт здійснення запису через сайт та/або внесення завдатку (оплати) є повним та безумовним акцептом цієї Оферти Замовником (ст. 642 ЦКУ).<br><br>
-                    
                     <b>2. ПРЕДМЕТ ДОГОВОРУ</b><br>
                     2.1. Виконавець зобов'язується надати Замовнику послуги у сфері краси (стрижка, фарбування, догляд за волоссям), а Замовник зобов'язується прийняти та своєчасно оплатити ці послуги відповідно до умов даного Договору.<br><br>
-                    
                     <b>3. ПОРЯДОК БРОНЮВАННЯ ТА ОПЛАТИ</b><br>
                     3.1. Для підтвердження бронювання часу надання послуг Замовник зобов'язаний внести завдаток у розмірі 500,00 (п'ятсот) гривень через інтегровану платіжну систему.<br>
                     3.2. Сума завдатку входить у загальну вартість послуг. Остаточний розрахунок здійснюється Замовником безпосередньо після надання послуг із вирахуванням внесеної суми завдатку.<br><br>
-                    
                     <b>4. ПРАВА ТА ОБОВ'ЯЗКИ СТОРІН</b><br>
-                    4.1. <b>Виконавець зобов'язаний:</b> надати послуги належної якості у визначений час; попередити Замовника про можливі ризики процедур (наприклад, хімічний вплив на волосся).<br>
-                    4.2. <b>Замовник зобов'язаний:</b> прибути у визначений час без запізнень; надати достовірну інформацію про попередні втручання та стан здоров'я волосся/шкіри голови.<br><br>
-                    
+                    4.1. <b>Виконавець зобов'язаний:</b> надати послуги належної якості у визначений час; попередити Замовника про можливі ризики процедур.<br>
+                    4.2. <b>Замовник зобов'язаний:</b> прибути у визначений час без запізнень; надати достовірну інформацію про попередні втручання.<br><br>
                     <b>5. ВІДПОВІДАЛЬНІСТЬ СТОРІН ТА СКАСУВАННЯ ЗАПИСУ</b><br>
-                    5.1. Замовник має право скасувати або перенести запис із збереженням завдатку виключно за умови повідомлення Виконавця не пізніше ніж за <b>48 (сорок вісім) годин</b> до призначеного часу візиту.<br>
-                    5.2. У разі скасування запису Замовником менш ніж за 48 годин, неявки або запізнення більше ніж на 20 хвилин, внесений завдаток не повертається та переходить у власність Виконавця як штраф, що компенсує втрачений робочий час (згідно зі ст. 571 ЦКУ).<br>
-                    5.3. Виконавець не несе відповідальності за непередбачувані алергічні реакції, якщо Замовник не попередив про наявність алергії до початку процедури.<br><br>
-                    
+                    5.1. Замовник має право скасувати або перенести запис із збереженням завдатку виключно за умови повідомлення Виконавця не пізніше ніж за <b>48 (сорок вісім) годин</b> до візиту.<br>
+                    5.2. У разі скасування запису менш ніж за 48 годин або неявки, завдаток не повертається.<br><br>
                     <b>6. ФОРС-МАЖОР</b><br>
-                    6.1. Сторони звільняються від відповідальності за невиконання зобов'язань, якщо це сталося внаслідок обставин непереборної сили (повітряні тривоги, відключення електроенергії понад графік, бойові дії, стихійні лиха).<br><br>
-
+                    6.1. Сторони звільняються від відповідальності у разі настання форс-мажорних обставин (тривоги, відключення електроенергії тощо).<br><br>
                     <b>7. РЕКВІЗИТИ ВИКОНАВЦЯ</b><br>
                     ФОП Явір Ілляна Володимирівна<br>
                     ІПН (РНОКПП): 3600209601<br>
+                    Р/Р (IBAN): UA92322001000002600532008420<br>
+                    Банк: АТ "УНІВЕРСАЛ БАНК" (Monobank)<br>
+                    Адреса: м. Дніпро, вул. Володимира Вернадського, 35-Б
+                </div>
+                <div class="en">
+                    <b>1. GENERAL PROVISIONS</b><br>
+                    1.1. This document constitutes a formal public offer by Sole Proprietor Yavir Illiana Volodymyrivna.<br>
+                    1.2. The act of booking via the website constitutes full acceptance of this Offer.<br><br>
+                    <b>2. SUBJECT OF THE AGREEMENT</b><br>
+                    2.1. The Contractor agrees to provide beauty services, and the Client agrees to pay for them.<br><br>
+                    <b>3. BOOKING PROCEDURE</b><br>
+                    3.1. A deposit of 500.00 UAH confirms booking.<br>
+                    3.2. Deposit is deducted from the final checkout.<br><br>
+                    <b>4. CANCELLATION POLICY</b><br>
+                    4.1. Notice must be given at least 48 hours prior.<br>
+                    4.2. Deposit is non-refundable if cancelled less than 48 hours before.<br><br>
+                    <b>5. CONTRACTOR DETAILS</b><br>
+                    Sole Proprietor Yavir Illiana Volodymyrivna<br>
+                    Tax ID (RNKPP): 3600209601<br>
+                    IBAN: UA92322001000002600532008420<br>
+                    Bank: Universal Bank JSC (Monobank)<br>
+                    Address: Dnipro, Volodymyra Vernadskoho st., 35-B
+                </div>
+            </div>
+            <button class="btn-main" onclick="closeOffer()" style="padding: 16px; font-size: 11px;">
+                <span class="ua">Я ознайомлений(а) та погоджуюсь з умовами</span>
+                <span class="en">I have read and agree to the terms</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ЛАЙТБОКС ФОТО -->
+    <div id="imageLightboxModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 99999; justify-content: center; align-items: center;" onclick="closeLightbox()">
+        <img id="lightboxImage" src="" style="max-width: 95vw; max-height: 90vh; border-radius: 10px; object-fit: contain;">
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        let publicWorksCache = [];
+
+        async function loadPublicWorks() {
+            try {
+                let res = await fetch('/api/works?t=' + Date.now());
+                publicWorksCache = await res.json();
+                let grid = document.getElementById('publicWorksGrid');
+                if (grid && Array.isArray(publicWorksCache)) {
+                    if (publicWorksCache.length === 0) {
+                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; font-size: 10px; color: var(--text-muted); padding: 20px;">Роботи ще не завантажені</div>';
+                        return;
+                    }
+                    grid.innerHTML = publicWorksCache.map((w, index) => `
+                        <div class="works-carousel-item" onclick="openLightboxByIndex(${index})">
+                            <img src="${w.image}" alt="${w.title || 'Робота'}">
+                        </div>
+                    `).join('');
+                }
+            } catch(e) { 
+                console.error("Помилка завантаження робіт:", e); 
+            }
+        }
+
+        function openLightboxByIndex(index) {
+            let work = publicWorksCache[index];
+            if (work && work.image) {
+                openLightbox(work.image);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPublicWorks();
+        });
+    </script>
+</body>
+</html>
