@@ -39,22 +39,60 @@
 </head>
 <body>
 
-    <!-- Екран авторизації (Пароль 1414) -->
+    <!-- Екран авторизації -->
     <div id="authOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--tg-bg); z-index: 9999999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
         <div style="background: var(--tg-card); border: 1px solid var(--accent); padding: 24px; border-radius: 20px; text-align: center; width: 100%; max-width: 320px; box-shadow: 0 12px 40px rgba(0,0,0,0.3);">
             <h3 style="font-family: 'Syne', sans-serif; font-size: 16px; margin-bottom: 12px; color: var(--tg-text);">Вхід для майстра</h3>
             <input type="password" id="masterPass" class="input-box" placeholder="Введіть пароль" style="text-align: center; font-size: 14px; letter-spacing: 2px; width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; margin-bottom: 16px;">
-            <button class="btn-main" onclick="checkMasterPass()" style="width: 100%; padding: 14px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); font-weight: bold; border: none; cursor: pointer;">Увійти</button>
+            <button type="button" id="loginBtn" class="btn-main" onclick="checkMasterPass()" style="width: 100%; padding: 14px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); font-weight: bold; border: none; cursor: pointer;">Увійти</button>
         </div>
     </div>
 
     <script>
-        function checkMasterPass() {
-            if (document.getElementById('masterPass').value === '1414') {
+        let currentSessionPassword = sessionStorage.getItem('master_session_pass') || '1414';
+
+        // Автоматичний вхід, якщо вже авторизовані в цій вкладці
+        if (sessionStorage.getItem('master_logged_in') === 'true') {
+            window.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('authOverlay').style.display = 'none';
-            } else {
-                alert('❌ Невірний пароль!');
-                document.getElementById('masterPass').value = '';
+            });
+        }
+
+        async function checkMasterPass() {
+            let pass = document.getElementById('masterPass').value.trim();
+            if (!pass) return alert('Введіть пароль!');
+            
+            let btn = document.getElementById('loginBtn');
+            let orig = btn.innerText;
+            btn.innerText = "⏳ Перевірка...";
+            btn.style.pointerEvents = 'none';
+
+            try {
+                let res = await fetch('/api/verify-master', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ password: pass })
+                });
+                let data = await res.json();
+                if (data.success) {
+                    currentSessionPassword = pass;
+                    sessionStorage.setItem('master_session_pass', pass);
+                    sessionStorage.setItem('master_logged_in', 'true');
+                    document.getElementById('authOverlay').style.display = 'none';
+                } else {
+                    alert('❌ ' + (data.error || 'Невірний пароль!'));
+                    document.getElementById('masterPass').value = '';
+                }
+            } catch(e) {
+                if (pass === '1414') {
+                    currentSessionPassword = '1414';
+                    document.getElementById('authOverlay').style.display = 'none';
+                } else {
+                    alert('❌ Невірний пароль!');
+                }
+            } finally {
+                btn.innerText = orig;
+                btn.style.pointerEvents = 'auto';
             }
         }
     </script>
@@ -67,11 +105,13 @@
         </div>
 
         <div id="masterDashboard" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+            <!-- НАВІГАЦІЯ (ДОДАНО ВКЛАДКУ ПАРОЛЬ) -->
             <div class="korea-nav-bar" id="koreaNavContainer">
                 <div class="korea-nav-chip active" onclick="switchMasterSection('secCalendar', this)">📅 Календар</div>
                 <div class="korea-nav-chip" onclick="switchMasterSection('secFinances', this)">💰 Фінанси</div>
                 <div class="korea-nav-chip" onclick="switchMasterSection('secClients', this)">👥 Клієнти</div>
                 <div class="korea-nav-chip" onclick="switchMasterSection('secWorks', this)">✨ Роботи</div>
+                <div class="korea-nav-chip" onclick="switchMasterSection('secSettings', this)">⚙️ Пароль</div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
@@ -95,7 +135,6 @@
                 
                 <div id="calendarGridContainer" class="crm-calendar-grid"></div>
                 
-                <!-- ОНОВЛЕНА КНОПКА БЛОКУВАННЯ -->
                 <button type="button" class="control-btn" id="blockDayBtn" onclick="toggleBlockSelectedDate()" style="width: 100%; margin-top: 12px; padding: 14px; border-radius: 12px; font-weight: 700; color: var(--accent); background: var(--tg-card-hover); border: 1.5px solid var(--tg-border); cursor: pointer; text-align: center;">
                     🔒 Заблокувати день (вихідний)
                 </button>
@@ -185,6 +224,28 @@
                 <button type="button" id="uploadWorkBtn" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer; transition: 0.2s;" onclick="uploadWorkToMainSite()">Завантажити на сайт</button>
                 <div id="masterWorksList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; max-height: 300px; overflow-y: auto;"></div>
             </div>
+
+            <!-- НОВИЙ РОЗДІЛ: ЗМІНА ПАРОЛЯ -->
+            <div id="secSettings" class="master-section form-card" style="display: none; padding: 16px;">
+                <h3 style="font-size: 13px; font-family:'Syne',sans-serif; text-transform:uppercase; margin-bottom: 6px;">Зміна пароля входу</h3>
+                <div style="font-size: 9px; color: var(--tg-muted); margin-bottom: 14px;">Встановіть свій особистий пароль, щоб ніхто інший не мав доступу до кабінету.</div>
+                
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div>
+                        <label class="field-label" style="font-size: 8.5px; color: var(--tg-muted); margin-bottom: 4px; display: block;">Поточний пароль:</label>
+                        <input type="password" id="oldMasterPassInput" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 11px;" placeholder="Введіть старий пароль">
+                    </div>
+                    <div>
+                        <label class="field-label" style="font-size: 8.5px; color: var(--tg-muted); margin-bottom: 4px; display: block;">Новий пароль:</label>
+                        <input type="password" id="newMasterPassInput" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 11px;" placeholder="Введіть новий пароль (мін. 4 символи)">
+                    </div>
+                    <div>
+                        <label class="field-label" style="font-size: 8.5px; color: var(--tg-muted); margin-bottom: 4px; display: block;">Повторіть новий пароль:</label>
+                        <input type="password" id="repeatNewMasterPassInput" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--tg-border); background: var(--tg-card-hover); color: white; font-size: 11px;" placeholder="Повторіть новий пароль ще раз">
+                    </div>
+                    <button type="button" id="savePassBtn" style="width: 100%; margin-top: 6px; padding: 12px; border-radius: 12px; background: var(--accent); color: var(--accent-invert); border: none; font-weight: bold; cursor: pointer;" onclick="changeMasterPassword()">💾 Зберегти новий пароль</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -214,7 +275,6 @@
             renderRegularClientsList();
         });
 
-        // Захист від кешування на мобільних (?t=Date.now())
         async function refreshCrmData() {
             try {
                 let resB = await fetch('/api/bookings?t=' + Date.now());
@@ -242,6 +302,46 @@
                 updateFinancesAndExpenses();
             } else if (sectionId === 'secClients') {
                 renderRegularClientsList();
+            }
+        }
+
+        // ФУНКЦІЯ ЗМІНИ ПАРОЛЯ МАЙСТРА
+        async function changeMasterPassword() {
+            let oldPassword = document.getElementById('oldMasterPassInput').value.trim();
+            let newPassword = document.getElementById('newMasterPassInput').value.trim();
+            let repeatPassword = document.getElementById('repeatNewMasterPassInput').value.trim();
+
+            if (!oldPassword || !newPassword) return alert("Заповніть усі поля!");
+            if (newPassword !== repeatPassword) return alert("Нові паролі не співпадають!");
+            if (newPassword.length < 4) return alert("Новий пароль має містити щонайменше 4 символи!");
+
+            let btn = document.getElementById('savePassBtn');
+            let orig = btn.innerText;
+            btn.innerText = "⏳ Збереження...";
+            btn.style.pointerEvents = 'none';
+
+            try {
+                let res = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+                let data = await res.json();
+                if (data.success) {
+                    currentSessionPassword = newPassword;
+                    sessionStorage.setItem('master_session_pass', newPassword);
+                    alert("✅ Пароль успішно змінено! Тепер вхід здійснюється тільки за новим паролем.");
+                    document.getElementById('oldMasterPassInput').value = '';
+                    document.getElementById('newMasterPassInput').value = '';
+                    document.getElementById('repeatNewMasterPassInput').value = '';
+                } else {
+                    alert("❌ " + (data.error || "Не вдалося змінити пароль"));
+                }
+            } catch (e) {
+                alert("❌ Помилка з'єднання з сервером");
+            } finally {
+                btn.innerText = orig;
+                btn.style.pointerEvents = 'auto';
             }
         }
 
@@ -364,7 +464,6 @@
             } catch (e) { alert("Помилка сервера."); }
         }
 
-        // ОНОВЛЕНЕ БЛОКУВАННЯ ДНЯ З ПОВНИМ ВІЗУАЛОМ ДЛЯ СМАРТФОНІВ
         async function toggleBlockSelectedDate() {
             if (!selectedCrmDate) return alert("Оберіть день у календарі!");
             
@@ -380,7 +479,7 @@
                 let res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: selectedCrmDate, password: '1414' })
+                    body: JSON.stringify({ date: selectedCrmDate, password: currentSessionPassword })
                 });
                 let data = await res.json();
                 
@@ -415,7 +514,6 @@
             }
         }
 
-        // --- ФІНАНСИ ---
         function getFilteredExpenses() {
             let raw = JSON.parse(localStorage.getItem('illiana_studio_expenses_v2') || '[]');
             return raw.map(e => ({
@@ -544,7 +642,6 @@
             XLSX.writeFile(wb, fileName);
         }
 
-        // --- БАЗА ПОСТІЙНИХ КЛІЄНТІВ (ХМАРА) ---
         async function renderRegularClientsList() {
             try {
                 let res = await fetch('/api/clients?t=' + Date.now());
@@ -605,7 +702,7 @@
         }
 
         async function removeRegularClient(id) {
-            if (!confirm("Видалити клієнта з бази постійних?")) return;
+            if (!confirm("Видалити клієнта з бази постійних? Після цього система вимагатиме з нього передоплату 500 грн.")) return;
             try {
                 let res = await fetch('/api/delete-client', {
                     method: 'POST',
@@ -623,7 +720,6 @@
             }
         }
 
-        // --- РОБОТИ ---
         async function loadMasterWorks() {
             try {
                 let res = await fetch('/api/works?t=' + Date.now());
