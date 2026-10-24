@@ -10,8 +10,6 @@ app.use(express.static(path.join(__dirname)));
 const MONO_TOKEN = 'mF4VYm_rjXjOAAAF1FJJ5yw';
 const TG_BOT_TOKEN = '8591183866:AAGaY0wW1ZRDb50JSf_GOC_dgzvyDeC5hWQ';
 const TG_BOT_USERNAME = 'illyana_hair_studio_bot';
-
-// ОНОВЛЕНИЙ TELEGRAM ID МАЙСТРА
 const MASTER_TG_ID = '1078916846'; 
 
 const SUPABASE_URL = 'https://crhzelpvxdcthhevplho.supabase.co';
@@ -89,7 +87,7 @@ app.post('/api/delete-work', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// TELEGRAM ВІДПРАВКА СПОВІЩЕНЬ
+// TELEGRAM ВІДПРАВКА
 async function sendTelegramNotification(chatId, text) {
     try {
         let res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
@@ -116,11 +114,14 @@ async function sendTelegramNotification(chatId, text) {
 let pendingBookings = {}; 
 let lastClientMessagePerChat = {};
 let pendingClientMessages = {};
+let lastGlobalClientBookingMessage = null; // Останній актуальний текст запису для клієнта
 let lastUpdateId = 0;
 
+// ГОЛОВНА ФУНКЦІЯ ФІНАЛІЗАЦІЇ ЗАПИСУ
 async function finalizeBooking(bookingData) {
     const { name, phone, email, social, service, price, durationHours, date, time, reference, isRegular, bookingRef } = bookingData;
 
+    // 1. Збереження в базі bookings
     const payloadToInsert = { 
         name, phone, email: email || '', social: social || '', 
         service, price, durationHours, date, time, 
@@ -134,36 +135,21 @@ async function finalizeBooking(bookingData) {
             body: JSON.stringify(payloadToInsert)
         });
     } catch (err) {
-        console.error("Помилка збереження в Supabase:", err);
+        console.error("Помилка Supabase:", err);
     }
 
-    try {
-        const cleanPhone = (phone || '').replace(/\D/g, '').slice(-9);
-        const checkClient = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
-        const clientsList = await checkClient.json();
-        const exists = Array.isArray(clientsList) && clientsList.some(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
-
-        if (!exists) {
-            await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
-                method: 'POST',
-                headers: supabaseHeaders,
-                body: JSON.stringify({ name, phone, email: email || '', social: social || '' })
-            });
-        }
-    } catch (err) {
-        console.error("Помилка додавання клієнта:", err);
-    }
-
+    // 2. Формування правильного блоку оплати
     let priceNum = Number(price) || 0;
     let depositInfo = "";
     
     if (isRegular) {
-        depositInfo = `💎 <b>Статус:</b> Постійний клієнт\n💰 <b>До сплати:</b> ${priceNum} ₴ (без передоплати)`;
+        depositInfo = `💎 <b>СТАТУС:</b> Постійний клієнт\n💵 <b>ДО СПЛАТИ:</b> ${priceNum} ₴ (без передплати)`;
     } else {
         let remainder = priceNum > 500 ? priceNum - 500 : 0;
         depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (сплачено через Monobank ✅)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
     }
 
+    // Текст для клієнта
     let clientMessage = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
                       `📅 <b>ДАТА:</b> ${escapeHtml(date)}\n` +
                       `⏰ <b>ЧАС:</b> ${escapeHtml(time)}\n` +
@@ -174,11 +160,14 @@ async function finalizeBooking(bookingData) {
                       `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
                       `💬 <b>Для скасування чи зміни часу напишіть у Директ майстру:</b>\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=`;
 
+    // Текст для майстра
     let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${escapeHtml(name)}\n📞 <b>Телефон:</b> ${escapeHtml(phone)}\n💬 <b>Соцмережі:</b> ${escapeHtml(social || '—')}\n\n` + clientMessage;
 
-    // Відправляємо майстру на новий Telegram ID
+    // Відправляємо майстру
     await sendTelegramNotification(MASTER_TG_ID, masterMessage);
     
+    // Запам'ятовуємо актуальний текст для клієнта
+    lastGlobalClientBookingMessage = clientMessage;
     if (bookingRef) {
         pendingClientMessages[bookingRef] = clientMessage;
     }
@@ -198,6 +187,7 @@ async function pollTelegram() {
                     let chatId = update.message.chat.id;
                     let parts = update.message.text.split(' ');
                     
+                    // Варіант А: Прийшов з кодом ?start=REF...
                     if (parts.length > 1) {
                         let ref = parts[1];
 
@@ -213,35 +203,49 @@ async function pollTelegram() {
                                     delete pendingBookings[ref];
                                     if (pending.invoiceId) delete pendingBookings[pending.invoiceId];
                                     await sendTelegramNotification(chatId, cMsg);
+                                    lastClientMessagePerChat[chatId] = cMsg;
                                     continue;
                                 } else {
                                     await sendTelegramNotification(chatId, "⚠️ Оплата завдатку 500 ₴ ще не підтверджена банком.\nЯкщо ви щойно оплатили, зачекайте 1 хвилину та напишіть /start знову.");
                                     continue;
                                 }
                             } catch (e) {
-                                console.error("Помилка перевірки Mono:", e);
+                                console.error("Помилка Mono:", e);
                             }
                         }
 
                         if (pendingClientMessages[ref]) {
-                            lastClientMessagePerChat[chatId] = pendingClientMessages[ref];
-                            await sendTelegramNotification(chatId, pendingClientMessages[ref]);
+                            let msg = pendingClientMessages[ref];
+                            lastClientMessagePerChat[chatId] = msg;
+                            await sendTelegramNotification(chatId, msg);
                             delete pendingClientMessages[ref]; 
-                        } else {
-                            let foundMsg = await getLastClientBookingMessage();
-                            if (foundMsg) {
-                                await sendTelegramNotification(chatId, foundMsg);
-                            } else {
-                                await sendTelegramNotification(chatId, "✨ Ваш запис оформлено.\n\n💬 Для скасування чи зміни часу напишіть у Директ майстру:\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=");
-                            }
-                        }
-                    } else {
-                        if (lastClientMessagePerChat[chatId]) {
-                            await sendTelegramNotification(chatId, lastClientMessagePerChat[chatId]);
-                        } else {
-                            await sendTelegramNotification(chatId, "✨ Вітаємо у студії Явір Ілляни!\n\n💬 З питань запису, скасування чи зміни часу звертайтесь у Директ майстра:\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=");
+                            continue;
                         }
                     }
+
+                    // Варіант Б: Клієнт надіслав просто /start (без параметра)
+                    let pendingKeys = Object.keys(pendingClientMessages);
+                    if (pendingKeys.length > 0) {
+                        let latestRef = pendingKeys[pendingKeys.length - 1];
+                        let msg = pendingClientMessages[latestRef];
+                        lastClientMessagePerChat[chatId] = msg;
+                        await sendTelegramNotification(chatId, msg);
+                        delete pendingClientMessages[latestRef];
+                        continue;
+                    }
+
+                    if (lastClientMessagePerChat[chatId]) {
+                        await sendTelegramNotification(chatId, lastClientMessagePerChat[chatId]);
+                        continue;
+                    }
+
+                    if (lastGlobalClientBookingMessage) {
+                        await sendTelegramNotification(chatId, lastGlobalClientBookingMessage);
+                        continue;
+                    }
+
+                    // Якщо взагалі немає записів
+                    await sendTelegramNotification(chatId, "✨ Вітаємо у студії Явір Ілляни!\n\n💬 З питань запису, скасування чи зміни часу звертайтесь у Директ майстра:\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=");
                 }
             }
         }
@@ -250,30 +254,7 @@ async function pollTelegram() {
 }
 pollTelegram();
 
-async function getLastClientBookingMessage() {
-    try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc&limit=1`, { method: 'GET', headers: supabaseHeaders });
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-            const b = data[0];
-            let priceNum = Number(b.price) || 0;
-            let remainder = priceNum > 500 ? priceNum - 500 : 0;
-            let depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (враховано)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
-
-            return `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
-                   `📅 <b>ДАТА:</b> ${escapeHtml(b.date)}\n` +
-                   `⏰ <b>ЧАС:</b> ${escapeHtml(b.time)}\n` +
-                   `✂️ <b>ПОСЛУГА:</b> ${escapeHtml(b.service)}\n` +
-                   `💰 <b>ЗАГАЛЬНА ВАРТІСТЬ:</b> ${priceNum} ₴\n` +
-                   `${depositInfo}\n\n` +
-                   `📍 <b>Локація:</b> м. Дніпро, вул. Володимира Вернадського, 35-Б\n\n` +
-                   `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
-                   `💬 <b>Для скасування чи зміни часу напишіть у Директ майстру:</b>\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=`;
-        }
-    } catch(e) {}
-    return null;
-}
-
+// ЗАПИСИ
 app.get('/api/bookings', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
@@ -282,6 +263,7 @@ app.get('/api/bookings', async (req, res) => {
     } catch (error) { res.status(500).json([]); }
 });
 
+// ПРЯМИЙ ЗАПИС ПОСТІЙНОГО КЛІЄНТА
 app.post('/api/bookings', async (req, res) => {
     try {
         await finalizeBooking(req.body);
@@ -292,6 +274,7 @@ app.post('/api/bookings', async (req, res) => {
     }
 });
 
+// СТВОРЕННЯ ПЛАТЕЖУ ДЛЯ НОВОГО КЛІЄНТА
 app.post('/api/create-invoice', async (req, res) => {
     try {
         const bookingData = req.body;
@@ -328,15 +311,14 @@ app.post('/api/create-invoice', async (req, res) => {
             
             res.json({ pageUrl: invData.pageUrl });
         } else {
-            console.error("Помилка створення Monobank:", invData);
             res.status(400).json({ error: invData.errText || "Помилка платіжної системи" });
         }
     } catch (error) { 
-        console.error("Invoice error:", error);
         res.status(500).json({ error: "Не вдалося створити платіж" }); 
     }
 });
 
+// ВЕБХУК MONOBANK
 app.post('/api/monobank-webhook', async (req, res) => {
     try {
         const { invoiceId, status } = req.body;
@@ -350,7 +332,6 @@ app.post('/api/monobank-webhook', async (req, res) => {
         }
         res.status(200).send('OK');
     } catch (err) {
-        console.error("Webhook processing error:", err);
         res.status(200).send('OK');
     }
 });
@@ -364,25 +345,13 @@ app.post('/api/cancel-booking', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.post('/api/check-client', async (req, res) => {
-    try {
-        const cleanPhone = (req.body.phone || '').replace(/\D/g, '').slice(-9);
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
-        const clients = await response.json();
-        const found = Array.isArray(clients) && clients.find(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
-        res.json({ isRegular: !!found });
-    } catch (error) { res.status(500).json({ isRegular: false }); }
-});
-
-// БАЗА ПОСТІЙНИХ КЛІЄНТІВ (SUPABASE)
+// БАЗА КЛІЄНТІВ ДЛЯ КАБІНЕТУ
 app.get('/api/clients', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
         const data = await response.json();
         res.json(Array.isArray(data) ? data : []);
-    } catch (error) {
-        res.status(500).json([]);
-    }
+    } catch (error) { res.status(500).json([]); }
 });
 
 app.post('/api/clients', async (req, res) => {
@@ -391,13 +360,12 @@ app.post('/api/clients', async (req, res) => {
         if (!name || !phone) return res.status(400).json({ error: "Введіть ім'я та телефон" });
 
         const cleanPhone = phone.replace(/\D/g, '').slice(-9);
-
         const check = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*`, { method: 'GET', headers: supabaseHeaders });
         const list = await check.json();
         const exists = Array.isArray(list) && list.some(c => (c.phone || '').replace(/\D/g, '').slice(-9) === cleanPhone);
 
         if (exists) {
-            return res.status(400).json({ error: "Клієнт з таким номером вже є в базі постійних!" });
+            return res.status(400).json({ error: "Клієнт з таким номером вже є в базі!" });
         }
 
         const response = await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
@@ -411,22 +379,15 @@ app.post('/api/clients', async (req, res) => {
             return res.status(400).json({ error: err });
         }
         res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: "Помилка сервера" });
-    }
+    } catch (error) { res.status(500).json({ error: "Помилка сервера" }); }
 });
 
 app.post('/api/delete-client', async (req, res) => {
     try {
         const { id } = req.body;
-        await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${id}`, {
-            method: 'DELETE',
-            headers: supabaseHeaders
-        });
+        await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${id}`, { method: 'DELETE', headers: supabaseHeaders });
         res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.listen(process.env.PORT || 3000, () => console.log('Сервер запущено!'));
