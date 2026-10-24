@@ -22,6 +22,22 @@ const supabaseHeaders = {
     "Prefer": "return=representation"
 };
 
+// Змінна для пароля майстра (за замовчуванням 1414)
+let currentMasterPassword = '1414';
+
+// Завантаження актуального пароля з бази даних
+async function initMasterPassword() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.master_password`, { headers: supabaseHeaders });
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0 && data[0].value) {
+            currentMasterPassword = data[0].value;
+            console.log("🔒 Пароль майстра завантажено з бази.");
+        }
+    } catch (e) {}
+}
+initMasterPassword();
+
 function escapeHtml(text) {
     if (!text) return '';
     return String(text)
@@ -33,15 +49,53 @@ function escapeHtml(text) {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'master.html')));
 
+// ПЕРЕВІРКА ПАРОЛЯ ПРИ ВХОДІ В КАБІНЕТ
+app.post('/api/verify-master', (req, res) => {
+    if (req.body.password === currentMasterPassword) {
+        return res.json({ success: true });
+    }
+    res.status(403).json({ success: false, error: 'Невірний пароль!' });
+});
+
+// ЗМІНА ПАРОЛЯ МАЙСТРОМ
+app.post('/api/change-password', async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        if (oldPassword !== currentMasterPassword) {
+            return res.status(403).json({ success: false, error: 'Невірний поточний пароль!' });
+        }
+        if (!newPassword || newPassword.trim().length < 4) {
+            return res.status(400).json({ success: false, error: 'Новий пароль має бути не менше 4 символів!' });
+        }
+
+        currentMasterPassword = newPassword.trim();
+
+        // Зберігаємо пароль у базі Supabase
+        await fetch(`${SUPABASE_URL}/rest/v1/settings`, {
+            method: 'POST',
+            headers: {
+                ...supabaseHeaders,
+                "Prefer": "resolution=merge-duplicates"
+            },
+            body: JSON.stringify({ key: 'master_password', value: currentMasterPassword })
+        });
+
+        console.log("✅ Пароль майстра успішно оновлено!");
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, error: 'Помилка збереження пароля' });
+    }
+});
+
 let blockedDays = [];
 app.get('/api/blocked-days', (req, res) => res.json(blockedDays));
 app.post('/api/block-day', (req, res) => {
-    if (req.body.password !== '1414') return res.status(403).json({ error: 'Невірний пароль!' });
+    if (req.body.password !== currentMasterPassword) return res.status(403).json({ error: 'Невірний пароль!' });
     if (req.body.date && !blockedDays.includes(req.body.date)) blockedDays.push(req.body.date);
     res.json({ success: true, blockedDays });
 });
 app.post('/api/unblock-day', (req, res) => {
-    if (req.body.password !== '1414') return res.status(403).json({ error: 'Невірний пароль!' });
+    if (req.body.password !== currentMasterPassword) return res.status(403).json({ error: 'Невірний пароль!' });
     blockedDays = blockedDays.filter(d => d !== req.body.date);
     res.json({ success: true, blockedDays });
 });
@@ -52,9 +106,7 @@ app.get('/api/works', async (req, res) => {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/works?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
         const data = await response.json();
         res.json(Array.isArray(data) ? data : []);
-    } catch (error) { 
-        res.status(500).json([]); 
-    }
+    } catch (error) { res.status(500).json([]); }
 });
 
 app.post('/api/works', async (req, res) => {
@@ -71,18 +123,13 @@ app.post('/api/works', async (req, res) => {
             return res.status(400).json({ success: false, error: errBody });
         }
         res.json({ success: true });
-    } catch (error) { 
-        res.status(500).json({ success: false, error: error.message }); 
-    }
+    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
 app.post('/api/delete-work', async (req, res) => {
     try {
         const { id } = req.body;
-        await fetch(`${SUPABASE_URL}/rest/v1/works?id=eq.${id}`, {
-            method: 'DELETE',
-            headers: supabaseHeaders
-        });
+        await fetch(`${SUPABASE_URL}/rest/v1/works?id=eq.${id}`, { method: 'DELETE', headers: supabaseHeaders });
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
@@ -102,26 +149,22 @@ async function sendTelegramNotification(chatId, text) {
         });
         let data = await res.json();
         if (!data.ok) {
-            console.error(`❌ Помилка Telegram (chat_id: ${chatId}):`, data.description);
+            console.error(`❌ Помилка Telegram:`, data.description);
         } else {
             console.log(`✅ Telegram сповіщення надіслано (chat_id: ${chatId})`);
         }
-    } catch (e) { 
-        console.error("Telegram fetch error:", e); 
-    }
+    } catch (e) { console.error("Telegram fetch error:", e); }
 }
 
 let pendingBookings = {}; 
 let lastClientMessagePerChat = {};
 let pendingClientMessages = {};
-let lastGlobalClientBookingMessage = null; // Останній актуальний текст запису для клієнта
+let lastGlobalClientBookingMessage = null;
 let lastUpdateId = 0;
 
-// ГОЛОВНА ФУНКЦІЯ ФІНАЛІЗАЦІЇ ЗАПИСУ
 async function finalizeBooking(bookingData) {
     const { name, phone, email, social, service, price, durationHours, date, time, reference, isRegular, bookingRef } = bookingData;
 
-    // 1. Збереження в базі bookings
     const payloadToInsert = { 
         name, phone, email: email || '', social: social || '', 
         service, price, durationHours, date, time, 
@@ -134,11 +177,8 @@ async function finalizeBooking(bookingData) {
             headers: supabaseHeaders,
             body: JSON.stringify(payloadToInsert)
         });
-    } catch (err) {
-        console.error("Помилка Supabase:", err);
-    }
+    } catch (err) { console.error("Помилка Supabase:", err); }
 
-    // 2. Формування правильного блоку оплати
     let priceNum = Number(price) || 0;
     let depositInfo = "";
     
@@ -149,7 +189,6 @@ async function finalizeBooking(bookingData) {
         depositInfo = `💳 <b>ПЕРЕДОПЛАТА:</b> 500 ₴ (сплачено через Monobank ✅)\n💵 <b>ЗАЛИШОК ДО СПЛАТИ:</b> ${remainder} ₴`;
     }
 
-    // Текст для клієнта
     let clientMessage = `✨ <b>ЯВІР ІЛЛЯНА // STUDIO</b>\n\n` +
                       `📅 <b>ДАТА:</b> ${escapeHtml(date)}\n` +
                       `⏰ <b>ЧАС:</b> ${escapeHtml(time)}\n` +
@@ -160,13 +199,10 @@ async function finalizeBooking(bookingData) {
                       `⚠️ <b>ПРАВИЛО СКАСУВАННЯ:</b>\nЗміна або скасування запису можливі <b>не пізніш ніж за 48 годин</b> до візиту.\n\n` +
                       `💬 <b>Для скасування чи зміни часу напишіть у Директ майстру:</b>\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=`;
 
-    // Текст для майстра
     let masterMessage = `🔔 <b>НОВИЙ ЗАПИС!</b>\n\n👤 <b>Клієнт:</b> ${escapeHtml(name)}\n📞 <b>Телефон:</b> ${escapeHtml(phone)}\n💬 <b>Соцмережі:</b> ${escapeHtml(social || '—')}\n\n` + clientMessage;
 
-    // Відправляємо майстру
     await sendTelegramNotification(MASTER_TG_ID, masterMessage);
     
-    // Запам'ятовуємо актуальний текст для клієнта
     lastGlobalClientBookingMessage = clientMessage;
     if (bookingRef) {
         pendingClientMessages[bookingRef] = clientMessage;
@@ -187,7 +223,6 @@ async function pollTelegram() {
                     let chatId = update.message.chat.id;
                     let parts = update.message.text.split(' ');
                     
-                    // Варіант А: Прийшов з кодом ?start=REF...
                     if (parts.length > 1) {
                         let ref = parts[1];
 
@@ -209,9 +244,7 @@ async function pollTelegram() {
                                     await sendTelegramNotification(chatId, "⚠️ Оплата завдатку 500 ₴ ще не підтверджена банком.\nЯкщо ви щойно оплатили, зачекайте 1 хвилину та напишіть /start знову.");
                                     continue;
                                 }
-                            } catch (e) {
-                                console.error("Помилка Mono:", e);
-                            }
+                            } catch (e) {}
                         }
 
                         if (pendingClientMessages[ref]) {
@@ -223,7 +256,6 @@ async function pollTelegram() {
                         }
                     }
 
-                    // Варіант Б: Клієнт надіслав просто /start (без параметра)
                     let pendingKeys = Object.keys(pendingClientMessages);
                     if (pendingKeys.length > 0) {
                         let latestRef = pendingKeys[pendingKeys.length - 1];
@@ -244,7 +276,6 @@ async function pollTelegram() {
                         continue;
                     }
 
-                    // Якщо взагалі немає записів
                     await sendTelegramNotification(chatId, "✨ Вітаємо у студії Явір Ілляни!\n\n💬 З питань запису, скасування чи зміни часу звертайтесь у Директ майстра:\nhttps://www.instagram.com/i.ll.yana?srtk=ZDQwZnZyZnFxdXc=");
                 }
             }
@@ -254,7 +285,6 @@ async function pollTelegram() {
 }
 pollTelegram();
 
-// ЗАПИСИ
 app.get('/api/bookings', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
@@ -263,18 +293,13 @@ app.get('/api/bookings', async (req, res) => {
     } catch (error) { res.status(500).json([]); }
 });
 
-// ПРЯМИЙ ЗАПИС ПОСТІЙНОГО КЛІЄНТА
 app.post('/api/bookings', async (req, res) => {
     try {
         await finalizeBooking(req.body);
         res.json({ success: true });
-    } catch (error) { 
-        console.error("Booking error:", error);
-        res.status(500).json({ success: false, error: error.message }); 
-    }
+    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// СТВОРЕННЯ ПЛАТЕЖУ ДЛЯ НОВОГО КЛІЄНТА
 app.post('/api/create-invoice', async (req, res) => {
     try {
         const bookingData = req.body;
@@ -303,22 +328,15 @@ app.post('/api/create-invoice', async (req, res) => {
         const invData = await response.json();
         
         if (invData.invoiceId && invData.pageUrl) {
-            pendingBookings[bookingRef] = {
-                ...bookingData,
-                invoiceId: invData.invoiceId
-            };
+            pendingBookings[bookingRef] = { ...bookingData, invoiceId: invData.invoiceId };
             pendingBookings[invData.invoiceId] = bookingRef;
-            
             res.json({ pageUrl: invData.pageUrl });
         } else {
             res.status(400).json({ error: invData.errText || "Помилка платіжної системи" });
         }
-    } catch (error) { 
-        res.status(500).json({ error: "Не вдалося створити платіж" }); 
-    }
+    } catch (error) { res.status(500).json({ error: "Не вдалося створити платіж" }); }
 });
 
-// ВЕБХУК MONOBANK
 app.post('/api/monobank-webhook', async (req, res) => {
     try {
         const { invoiceId, status } = req.body;
@@ -331,9 +349,7 @@ app.post('/api/monobank-webhook', async (req, res) => {
             }
         }
         res.status(200).send('OK');
-    } catch (err) {
-        res.status(200).send('OK');
-    }
+    } catch (err) { res.status(200).send('OK'); }
 });
 
 app.post('/api/cancel-booking', async (req, res) => {
@@ -345,7 +361,6 @@ app.post('/api/cancel-booking', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// БАЗА КЛІЄНТІВ ДЛЯ КАБІНЕТУ
 app.get('/api/clients', async (req, res) => {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/clients?select=*&order=id.desc`, { method: 'GET', headers: supabaseHeaders });
